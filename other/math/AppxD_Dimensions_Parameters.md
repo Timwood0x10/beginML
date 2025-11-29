@@ -175,3 +175,44 @@ conv = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1)
 count_parameters(conv, "Conv2d Layer")
 ```
 
+
+## 7. 进阶：训练显存解剖学 (Training Memory Anatomy)
+
+我们在设计模型时算的 $N$ 只是**静态显存**。在训练时，显存占用通常是参数量的 **3-4 倍**甚至更多。显存主要被以下四部分瓜分：
+
+### 7.1 显存四巨头
+1.  **模型参数 (Model Weights)**:
+    *   $N$ 个参数。FP32 占用 $4N$ 字节，FP16/BF16 占用 $2N$ 字节。
+    *   *占比*：较小。
+2.  **优化器状态 (Optimizer States)**:
+    *   **AdamW** 需要维护一阶矩 $m$ 和二阶矩 $v$（通常是 FP32）。
+    *   **公式**：$8N$ (Adam states) + $4N$ (Master weights in Mixed Precision) $\approx 12N$ 字节。
+    *   *占比*：**巨大**。这是为什么 LoRA 省显存的核心原因（冻结了主干参数，不需要维护它们的优化器状态）。
+3.  **梯度 (Gradients)**:
+    *   与参数量一致。FP32 占用 $4N$，FP16 占用 $2N$。
+    *   *占比*：中等。
+4.  **激活值 (Activations)**:
+    *   前向传播时保存的中间变量，用于反向传播计算梯度。
+    *   **公式**：$B \times L \times (H \times W \text{ or } T) \times C$。
+    *   *占比*：**动态且巨大**。与 Batch Size 和序列长度 $T$ 成正比。
+    *   *优化*：**梯度检查点 (Gradient Checkpointing)** 通过“用时间换空间”（重算前向）来消除这部分开销。
+
+### 7.2 显存估算公式 (Mixed Precision Training)
+训练一个 $N$ 参数的模型，Batch Size 为 $B$：
+
+$$ \text{Total Memory} \approx \underbrace{16N}_{\text{Static (Weights+Opt+Grad)}} + \underbrace{\text{Activations}(B, T)}_{\text{Dynamic}} + \underbrace{\text{Fragmentation}}_{\text{Overhead}} $$
+
+*   **16N 的来源**：
+    *   Weights (FP16): $2N$
+    *   Gradients (FP16): $2N$
+    *   Optimizer (FP32 Adam): $12N$ (Copy of weights + Momentum + Variance)
+
+### 7.3 实战推演：为什么 7B 模型需要 >24G 显存？
+*   **模型参数 $N \approx 7 \times 10^9$**。
+*   **静态需求 (16N)**：$16 \times 7 \text{GB} \approx 112 \text{GB}$！
+*   这就是为什么单卡 24G/40G 根本跑不动 7B 的全量微调。
+*   **LoRA 的救赎**：
+    *   冻结主干 -> 优化器状态降为 0 (针对主干)。
+    *   只训练 LoRA 参数 ($r \ll D$) -> 优化器状态极小。
+    *   显存大头只剩下：**Weights (14GB, FP16) + Activations**。
+    *   配合 4-bit 量化 (QLoRA)，Weights 降为 3.5GB，单卡 24G 轻松拿下。

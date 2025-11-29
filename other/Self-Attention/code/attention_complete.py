@@ -63,7 +63,8 @@ for head_idx in range(num_heads):
     scores = Q @ K.T / np.sqrt(d_k)
     
     # Softmax归一化
-    exp_scores = np.exp(scores)
+    scores_stable = scores - np.max(scores, axis=1, keepdims=True)
+    exp_scores = np.exp(scores_stable)
     attention = exp_scores / exp_scores.sum(axis=1, keepdims=True)
     
     # 计算Z矩阵
@@ -289,7 +290,7 @@ html_content = f"""<!DOCTYPE html>
                 <div class="formula" id="q-formula"></div>
                 <div class="calculation">
                     <p><strong>计算说明：</strong>将输入向量投影到查询空间</p>
-                    <p><strong>形状变换：</strong>6×6 × 6×2 = 6×2</p>
+                    <p><strong>形状变换：</strong>6×6 × 6×2 = 6×2 (n_words, d_model) @ (d_model, d_k) -> (n_words, d_k)·</p>
                 </div>
                 <div id="q-plot" class="plot"></div>
                 <table id="q-table"></table>

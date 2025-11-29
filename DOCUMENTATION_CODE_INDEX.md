@@ -36,34 +36,57 @@
 
 ## 📐 Mathematical Foundations
 
-### **Linear Algebra**
+### **📐 Mathematical Foundations**
 | Documentation | Code Examples | Difficulty | Prerequisites |
 |---------------|---------------|------------|---------------|
-| [Matrix Foundations](./other/math/0.Matrix_Foundations.md) | [Matrix Visualization](./other/math/code/matrix_simple_visualization/) | ⭐⭐ | Basic algebra |
-| | [Matrix Operations](./other/math/code/) | ⭐⭐ | Matrix foundations |
-| [Eigenvalues & Eigenvectors](./other/math/0.Matrix_Foundations.md) | [Eigenvalue Demo](./other/math/code/) | ⭐⭐⭐ | Linear algebra |
+| [Calculus in Deep Learning](./other/math/0.1.Calculus_in_Deep_Learning.md) | [Interactive Gradient Descent](./other/math/code/interactive_gradient_descent.py) (9个HTML可视化) | ⭐⭐ | Basic calculus |
+| [Matrix Foundations](./other/math/0.2.Matrix_Foundations.md) | [Matrix Visualization](./other/math/code/matrix_simple_visualization/) | ⭐⭐ | Basic algebra |
+| [Probability & Information](./other/math/0.3.Probability_Information.md) | [ML Curves Dashboard](./other/math/code/ml_curves_visualization/) | ⭐⭐ | Probability basics |
+| [Neural Geometry & Dimensions](./other/math/0.4.Neural_Geometry_Dimensions.md) | [Dimension Analysis](./other/Neural_Network_Dimensions_and_Parameters.md) | ⭐⭐⭐ | Linear algebra + NN basics |
 
-### **Calculus & Optimization**
+### **Core Concepts (1-10)**
 | Documentation | Code Examples | Difficulty | Prerequisites |
 |---------------|---------------|------------|---------------|
-| [Calculus in DL](./other/math/0.Calculus_in_Deep_Learning.md) | [Gradient Descent](./other/math/code/interactive_gradient_descent.py) | ⭐⭐ | Basic calculus |
-| [Optimization Theory](./other/math/3.grand_optimizer.md) | [Optimizer Comparison](./other/math/code/grand_optimizer.py) | ⭐⭐⭐ | Calculus + linear algebra |
-| [Lagrange Multipliers](./other/math/4.Lagrange_Multiplier.md) | [Lagrange Visualization](./other/math/code/Lagrange_Multiplier/) | ⭐⭐⭐ | Multivariable calculus |
-| [Convex Optimization](./other/math/3.grand_optimizer.md) | [Convex Optimization Demo](./other/math/code/) | ⭐⭐⭐⭐ | Optimization theory |
-
-### **Probability & Statistics**
-| Documentation | Code Examples | Difficulty | Prerequisites |
-|---------------|---------------|------------|---------------|
-| [Information Theory](./other/InformationTheory .md) | [Entropy Visualization](./other/math/code/) | ⭐⭐⭐ | Probability basics |
-| [Statistical Learning Theory](./other/math/7.VCdime.md) | [VC Dimension Demo](./other/math/code/VCdime.py) | ⭐⭐⭐⭐ | Probability + linear algebra |
-| [Bayesian Methods](./other/math/) | [Bayesian Regression](./tensorflow/probabilistic_tf/) | ⭐⭐⭐⭐ | Statistics + programming |
-
-### **Loss Functions & Regularization**
-| Documentation | Code Examples | Difficulty | Prerequisites |
-|---------------|---------------|------------|---------------|
+| [Convolution](./other/math/1.convolution.md) | [Convolution Viz](./other/math/code/convolution/) | ⭐⭐⭐ | Linear algebra + signal processing |
 | [Loss Functions](./other/math/2.lossfunction.md) | [Loss Function Demo](./other/math/code/lossfunction/) | ⭐⭐ | Basic calculus |
+| [Grand Optimizer](./other/math/3.grand_optimizer.md) | [Optimizer Comparison](./other/math/code/grand_optimizer.py) | ⭐⭐⭐ | Calculus + optimization |
+| [Lagrange Multiplier](./other/math/4.Lagrange_Multiplier.md) | [Lagrange Visualization](./other/math/code/Lagrange_Multiplier/) | ⭐⭐⭐ | Multivariable calculus |
 | [L1 & L2 Regularization](./other/math/5.L1&L2.md) | [Regularization Visualization](./other/math/code/L1_L2_Regularization/) | ⭐⭐ | Linear algebra |
-| [Advanced Regularization](./tensorflow/notes/regularization.md) | [Dropout/BatchNorm Examples](./tensorflow/) | ⭐⭐⭐ | Neural networks |
+| [SVM](./other/math/6.SVM.md) | [SVM Visualization](./other/math/code/SVM/) | ⭐⭐⭐ | Linear algebra + optimization |
+| [VC Dimension](./other/math/7.VCdime.md) | [VC Dimension Demo](./other/math/code/VCdime.py) | ⭐⭐⭐⭐ | Statistical learning theory |
+| [VC Dimension Derivation](./other/math/7.VCdimeDerivationProcess.md) | [VC Dimension Demo](./other/math/code/VCdime.py) | ⭐⭐⭐⭐⭐ | Advanced mathematics |
+| [Classification Optimization Logic](./other/math/8.TheEssentialOptimizationLogicOfClassificationModels.md) | [Classification Viz](./other/math/code/Classification_Optimization_Logic/) | ⭐⭐⭐ | Optimization theory |
+| [Noise & Bias-Variance](./other/math/9.noise.md) | [ML Curves Dashboard](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐ | Statistics + ML basics |
+| [Important Curves](./other/math/10.Important_Curves.md) | [ML Curves Viz](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐ | ML theory |
+
+### **Advanced Topics (11-26)**
+| Documentation | Code Examples | Difficulty | Prerequisites |
+|---------------|---------------|------------|---------------|
+| [CNN Mathematical Foundations](./other/math/11.CNN_Mathematical_Foundations.md.md) | [CNN Implementation](./tensorflow/cnn/) | ⭐⭐⭐ | Convolution + linear algebra |
+| [Hilbert Space](./other/math/12.Hilbert_space.md) | [Hilbert Space Viz](./other/math/code/hilbert_space_visualization.py) | ⭐⭐⭐⭐ | Functional analysis |
+| [Kernel Regression](./other/math/13.KernelRegression.md) | [Kernel Methods](./tensorflow/probabilistic_tf/) | ⭐⭐⭐⭐ | Linear algebra + statistics |
+| [Neuroevolution](./other/math/14.Neuroevolution.md) | [Genetic Algorithm](./other/math/code/GeneticAlgorithm.py) | ⭐⭐⭐⭐ | Evolutionary algorithms |
+| [Diffusion Models](./other/math/15.DiffusionModel.md) | Research implementations | ⭐⭐⭐⭐⭐ | Advanced probability |
+| [MDP (Markov Decision Process)](./other/math/16.MDP.md) | [RL Examples](./pytorch/rl/) | ⭐⭐⭐⭐ | Probability + RL basics |
+| [Probabilistic Programming](./other/math/17.ProbabilisticProgramming.md) | [Probabilistic TF](./tensorflow/probabilistic_tf/) | ⭐⭐⭐⭐ | Probability + programming |
+| [Training Dynamics](./other/math/18.Training_Dynamics.md) | [Training Visualization](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐⭐ | Optimization + dynamics |
+| [Information Geometry](./other/math/19.Information_Geometry.md) | Advanced research | ⭐⭐⭐⭐⭐ | Differential geometry |
+| [Graph Convolutional Networks](./other/math/20.GCN.md) | [GNN Implementation](./tensorflow/GNN/) | ⭐⭐⭐⭐ | Graph theory + deep learning |
+| [Causation](./other/math/21.Causation.md) | Causal inference examples | ⭐⭐⭐⭐⭐ | Statistics + causal theory |
+| [Optimal Transport](./other/math/22.OptimalTransport.md) | Advanced research | ⭐⭐⭐⭐⭐ | Measure theory |
+| [Game Theory](./other/math/23.GameTheory.md) | Game theory applications | ⭐⭐⭐⭐ | Economics + mathematics |
+| [Multimodal Geometry](./other/math/24.MultimodalGeometry.md) | Multimodal learning | ⭐⭐⭐⭐⭐ | Advanced geometry |
+| [Signal Processing](./other/math/25.Singal_processing.md) | [Audio Processing](./pytorch/audio/) | ⭐⭐⭐ | Fourier analysis |
+| [AI Grand Unification](./other/math/26.AI_Grand_Unification.md) | Theoretical frameworks | ⭐⭐⭐⭐⭐ | Comprehensive AI knowledge |
+
+### **Appendices**
+| Documentation | Code Examples | Difficulty | Prerequisites |
+|---------------|---------------|------------|---------------|
+| [Model Compression](./other/math/AppxACompression.md) | Compression techniques | ⭐⭐⭐⭐ | Deep learning + optimization |
+| [Scaling Laws](./other/math/AppxB_ScalingLaws.md) | Scaling analysis | ⭐⭐⭐⭐ | Large-scale ML |
+| [AI Safety](./other/math/AppxC_safety.md) | Safety considerations | ⭐⭐⭐ | ML ethics |
+| [Dimensions & Parameters](./other/math/AppxD_Dimensions_Parameters.md) | Parameter counting | ⭐⭐ | Neural networks |
+| [LaTeX Symbol Dictionary](./other/math/LaTeX_Symbol_Dictionary.md) | N/A | ⭐ | None |
 
 ---
 
@@ -100,7 +123,7 @@
 |---------------|---------------|------------|---------------|
 | [TensorFlow Basics](./tensorflow/notes/tensor.md) | [Basic Operations](./tensorflow/001_basic_tensor.py) | ⭐ | Python programming |
 | [TensorFlow Linear Models](./tensorflow/linear/) | [Linear Regression](./tensorflow/linear/003_linear_model.py) | ⭐⭐ | Linear algebra |
-| [TensorFlow CNN](./tensorflow/cnn/) | [CNN Models](./tensorflow/cnn/005_CNN.py) | ⭐⭐⭐ | CNN theory |
+| [TensorFlow CNN](./tensorflow/cnn/) | [CNN Models](./tensorflow/cnn/005_CNN.py) (5个文件) | ⭐⭐⭐ | CNN theory |
 | [TensorFlow RNN](./tensorflow/RNN/) | [RNN Models](./tensorflow/RNN/) | ⭐⭐⭐ | RNN theory |
 | [TensorFlow GANs](./tensorflow/GANs/) | [GAN Models](./tensorflow/GANs/001_basic.py) | ⭐⭐⭐⭐ | GAN theory |
 | [Probabilistic TensorFlow](./tensorflow/notes/Probabilistic_TensorFlow.md) | [Bayesian Models](./tensorflow/probabilistic_tf/) | ⭐⭐⭐⭐ | Probability + TensorFlow |
@@ -119,22 +142,24 @@
 
 ## 🎨 Interactive Visualizations
 
+### **🎨 Interactive Visualizations**
+
 ### **Mathematical Concepts**
 | Concept | Documentation | Visualization | Difficulty |
 |---------|---------------|--------------|------------|
-| Gradient Descent | [Optimization Theory](./other/math/3.grand_optimizer.md) | [Interactive GD](./other/math/code/interactive_gradient_descent.py) | ⭐⭐ |
-| Learning Curves | [Important Curves](./other/math/10.Important_Curves.md) | [ML Curves Viz](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐ |
+| Gradient Descent | [Optimization Theory](./other/math/3.grand_optimizer.md) | [Interactive GD](./other/math/code/interactive_gradient_descent.py) (9个HTML可视化) | ⭐⭐ |
+| Learning Curves | [Important Curves](./other/math/10.Important_Curves.md) | [ML Curves Dashboard](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐ |
 | Bias-Variance Tradeoff | [Noise Theory](./other/math/noise.md) | [Bias-Variance Demo](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐ |
 | Convolution Operations | [CNN Theory](./other/math/1.convolution.md) | [Convolution Viz](./other/math/code/convolution/) | ⭐⭐⭐ |
 | SVM Classification | [SVM Theory](./other/math/6.SVM.md) | [SVM Visualization](./other/math/code/SVM/) | ⭐⭐⭐ |
-| Genetic Algorithms | [GA Theory](./other/math/GeneticAlgorithm.md) | [GA Visualization](./other/math/code/GeneticAlgorithm/) | ⭐⭐⭐ |
+| Genetic Algorithms | [GA Theory](./other/math/GeneticAlgorithm.md) | [GA Visualization](./other/math/code/GeneticAlgorithm.py) | ⭐⭐⭐ |
 
 ### **Neural Network Visualizations**
 | Concept | Documentation | Visualization | Difficulty |
 |---------|---------------|--------------|------------|
 | Neural Network Architecture | [NN Guide](./neural-network.md) | [Architecture Explorer](./other/math/code/) | ⭐⭐ |
 | Training Dynamics | [Training Theory](./other/math/) | [Training Animation](./other/math/code/ml_curves_visualization/) | ⭐⭐⭐ |
-| Optimization Paths | [Optimizer Theory](./other/math/3.grand_optimizer.md) | [Optimizer Paths](./other/math/code/grand_optimizer/) | ⭐⭐⭐ |
+| Optimization Paths | [Optimizer Theory](./other/math/3.grand_optimizer.md) | [Optimizer Paths](./other/math/code/grand_optimizer.py) | ⭐⭐⭐ |
 | Loss Landscapes | [Loss Functions](./other/math/2.lossfunction.md) | [Loss Surface Viz](./other/math/code/lossfunction/) | ⭐⭐⭐⭐ |
 
 ---
@@ -203,6 +228,12 @@
 2. Contribute to [Open Source](./CONTRIBUTING.md)
 3. Explore [Cutting-Edge Techniques](#cutting-edge-techniques)
 4. Share knowledge through [Community](./community/)
+
+### **🧬 For Large Model Enthusiasts**
+1. Study [Self-Attention Mechanisms](./other/Self-Attention/)
+2. Learn [Training Techniques](./other/Train_models.md)
+3. Compare [Architectures](./other/Mamba_vs_Transformer_Architecture_Guide.md)
+4. Implement [RAG Systems](./other/RAG_en.md)
 
 
 ---
