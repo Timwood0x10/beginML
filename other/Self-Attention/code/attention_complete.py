@@ -8,7 +8,7 @@ import json
 import os
 
 # 创建输出目录
-output_dir = 'attention_mechanism'
+output_dir = "attention_mechanism"
 os.makedirs(output_dir, exist_ok=True)
 
 print("=" * 60)
@@ -29,14 +29,16 @@ print(f"句子: {' '.join(sentence_words)}")
 print(f"配置: {n_words}个词, {d_model}维, {num_heads}个头, 每头{d_k}维")
 
 # 手工设计词向量
-X = np.array([
-    [1.0, 0.0, 0.0, 0.5, 0.2, 0.1],  # The
-    [0.0, 1.0, 0.0, 0.8, 0.6, 0.4],  # cat
-    [0.0, 0.0, 1.0, 0.3, 0.7, 0.5],  # sits
-    [0.5, 0.0, 0.0, 0.0, 0.3, 0.2],  # on
-    [1.0, 0.0, 0.0, 0.4, 0.1, 0.2],  # the
-    [0.0, 0.8, 0.0, 0.6, 0.3, 0.7]   # mat
-])
+X = np.array(
+    [
+        [1.0, 0.0, 0.0, 0.5, 0.2, 0.1],  # The
+        [0.0, 1.0, 0.0, 0.8, 0.6, 0.4],  # cat
+        [0.0, 0.0, 1.0, 0.3, 0.7, 0.5],  # sits
+        [0.5, 0.0, 0.0, 0.0, 0.3, 0.2],  # on
+        [1.0, 0.0, 0.0, 0.4, 0.1, 0.2],  # the
+        [0.0, 0.8, 0.0, 0.6, 0.3, 0.7],  # mat
+    ]
+)
 
 print(f"\n输入矩阵 X 形状: {X.shape}")
 print(f"X =\n{np.round(X, 2)}")
@@ -53,49 +55,49 @@ for head_idx in range(num_heads):
     W_Q = np.random.randn(d_model, d_k) * 0.1
     W_K = np.random.randn(d_model, d_k) * 0.1
     W_V = np.random.randn(d_model, d_k) * 0.1
-    
+
     # 计算Q, K, V
     Q = X @ W_Q
     K = X @ W_K
     V = X @ W_V
-    
+
     # 计算注意力分数
     scores = Q @ K.T / np.sqrt(d_k)
-    
+
     # Softmax归一化
     scores_stable = scores - np.max(scores, axis=1, keepdims=True)
     exp_scores = np.exp(scores_stable)
     attention = exp_scores / exp_scores.sum(axis=1, keepdims=True)
-    
+
     # 计算Z矩阵
     Z = attention @ V
-    
+
     # 保存详细计算步骤
     head_data = {
-        'head_idx': head_idx,
-        'W_Q': W_Q.tolist(),
-        'W_K': W_K.tolist(),
-        'W_V': W_V.tolist(),
-        'Q': Q.tolist(),
-        'K': K.tolist(),
-        'V': V.tolist(),
-        'scores': scores.tolist(),
-        'attention': attention.tolist(),
-        'Z': Z.tolist(),
-        'calculations': {
-            'Q_formula': f"Q = X @ W_Q[{head_idx}]",
-            'K_formula': f"K = X @ W_K[{head_idx}]", 
-            'V_formula': f"V = X @ W_V[{head_idx}]",
-            'scores_formula': f"Scores = Q @ K.T / sqrt({d_k})",
-            'attention_formula': "Attention = softmax(Scores)",
-            'Z_formula': "Z = Attention @ V"
-        }
+        "head_idx": head_idx,
+        "W_Q": W_Q.tolist(),
+        "W_K": W_K.tolist(),
+        "W_V": W_V.tolist(),
+        "Q": Q.tolist(),
+        "K": K.tolist(),
+        "V": V.tolist(),
+        "scores": scores.tolist(),
+        "attention": attention.tolist(),
+        "Z": Z.tolist(),
+        "calculations": {
+            "Q_formula": f"Q = X @ W_Q[{head_idx}]",
+            "K_formula": f"K = X @ W_K[{head_idx}]",
+            "V_formula": f"V = X @ W_V[{head_idx}]",
+            "scores_formula": f"Scores = Q @ K.T / sqrt({d_k})",
+            "attention_formula": "Attention = softmax(Scores)",
+            "Z_formula": "Z = Attention @ V",
+        },
     }
-    
+
     heads_data.append(head_data)
 
 # 拼接所有头的输出
-concatenated = np.concatenate([np.array(head['Z']) for head in heads_data], axis=1)
+concatenated = np.concatenate([np.array(head["Z"]) for head in heads_data], axis=1)
 W_O = np.random.randn(num_heads * d_k, d_model) * 0.1
 final_output = concatenated @ W_O
 
@@ -570,7 +572,9 @@ html_content = f"""<!DOCTYPE html>
 """
 
 # 保存HTML文件
-with open(os.path.join(output_dir, 'attention_complete.html'), 'w', encoding='utf-8') as f:
+with open(
+    os.path.join(output_dir, "attention_complete.html"), "w", encoding="utf-8"
+) as f:
     f.write(html_content)
 
 print(f"\n✅ 完整工作流可视化页面已保存到: {output_dir}/attention_complete.html")

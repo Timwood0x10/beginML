@@ -8,7 +8,7 @@ import json
 import os
 
 # 创建输出目录
-output_dir = 'attention_mechanism'
+output_dir = "attention_mechanism"
 os.makedirs(output_dir, exist_ok=True)
 
 print("=" * 60)
@@ -32,12 +32,14 @@ np.random.seed(42)
 
 # 创建有意义的词向量
 word_vectors = {
-    "The": np.array([1.0, 0.0, 0.0, 0.5, 0.2, 0.1, 0.3, 0.0]),    # 定冠词特征
-    "cat": np.array([0.0, 1.0, 0.0, 0.8, 0.6, 0.4, 0.0, 0.2]),     # 动物特征
-    "sits": np.array([0.0, 0.0, 1.0, 0.3, 0.7, 0.5, 0.2, 0.4]),    # 动词特征
-    "on": np.array([0.5, 0.0, 0.0, 0.0, 0.3, 0.2, 0.8, 0.1]),      # 介词特征
-    "the": np.array([1.0, 0.0, 0.0, 0.4, 0.1, 0.2, 0.2, 0.0]),     # 定冠词特征（与The相似）
-    "mat": np.array([0.0, 0.8, 0.0, 0.6, 0.3, 0.7, 0.0, 0.5])      # 物体特征
+    "The": np.array([1.0, 0.0, 0.0, 0.5, 0.2, 0.1, 0.3, 0.0]),  # 定冠词特征
+    "cat": np.array([0.0, 1.0, 0.0, 0.8, 0.6, 0.4, 0.0, 0.2]),  # 动物特征
+    "sits": np.array([0.0, 0.0, 1.0, 0.3, 0.7, 0.5, 0.2, 0.4]),  # 动词特征
+    "on": np.array([0.5, 0.0, 0.0, 0.0, 0.3, 0.2, 0.8, 0.1]),  # 介词特征
+    "the": np.array(
+        [1.0, 0.0, 0.0, 0.4, 0.1, 0.2, 0.2, 0.0]
+    ),  # 定冠词特征（与The相似）
+    "mat": np.array([0.0, 0.8, 0.0, 0.6, 0.3, 0.7, 0.0, 0.5]),  # 物体特征
 }
 
 # 构建输入矩阵 X
@@ -63,38 +65,44 @@ print(f"每头维度: {d_k}")
 np.random.seed(42)
 
 # 头1的权重（关注语法关系）
-W_Q1 = np.array([
-    [1.0, 0.0],
-    [0.0, 1.0],
-    [0.5, 0.5],
-    [0.0, 0.0],
-    [0.3, 0.7],
-    [0.7, 0.3],
-    [0.2, 0.8],
-    [0.8, 0.2]
-])
+W_Q1 = np.array(
+    [
+        [1.0, 0.0],
+        [0.0, 1.0],
+        [0.5, 0.5],
+        [0.0, 0.0],
+        [0.3, 0.7],
+        [0.7, 0.3],
+        [0.2, 0.8],
+        [0.8, 0.2],
+    ]
+)
 
-W_K1 = np.array([
-    [0.9, 0.1],
-    [0.1, 0.9],
-    [0.6, 0.4],
-    [0.4, 0.6],
-    [0.2, 0.8],
-    [0.8, 0.2],
-    [0.3, 0.7],
-    [0.7, 0.3]
-])
+W_K1 = np.array(
+    [
+        [0.9, 0.1],
+        [0.1, 0.9],
+        [0.6, 0.4],
+        [0.4, 0.6],
+        [0.2, 0.8],
+        [0.8, 0.2],
+        [0.3, 0.7],
+        [0.7, 0.3],
+    ]
+)
 
-W_V1 = np.array([
-    [1.0, 0.0],
-    [0.0, 1.0],
-    [0.4, 0.6],
-    [0.6, 0.4],
-    [0.5, 0.5],
-    [0.5, 0.5],
-    [0.2, 0.8],
-    [0.8, 0.2]
-])
+W_V1 = np.array(
+    [
+        [1.0, 0.0],
+        [0.0, 1.0],
+        [0.4, 0.6],
+        [0.6, 0.4],
+        [0.5, 0.5],
+        [0.5, 0.5],
+        [0.2, 0.8],
+        [0.8, 0.2],
+    ]
+)
 
 # 其他头的权重（随机生成但有规律）
 W_Q = [W_Q1]
@@ -119,7 +127,7 @@ head_idx = 0
 
 # 步骤1: 计算Q, K, V
 Q1 = X @ W_Q[head_idx]
-K1 = X @ W_K[head_idx] 
+K1 = X @ W_K[head_idx]
 V1 = X @ W_V[head_idx]
 
 print(f"\n步骤1: 投影到Q,K,V空间")
@@ -166,17 +174,19 @@ for i in range(num_heads):
     scores = Q @ K.T / np.sqrt(d_k)
     attention = np.exp(scores) / np.exp(scores).sum(axis=1, keepdims=True)
     Z = attention @ V
-    
-    all_heads.append({
-        'head_idx': i,
-        'Q': Q.tolist(),
-        'K': K.tolist(),
-        'V': V.tolist(),
-        'scores': scores.tolist(),
-        'attention': attention.tolist(),
-        'Z': Z.tolist()
-    })
-    
+
+    all_heads.append(
+        {
+            "head_idx": i,
+            "Q": Q.tolist(),
+            "K": K.tolist(),
+            "V": V.tolist(),
+            "scores": scores.tolist(),
+            "attention": attention.tolist(),
+            "Z": Z.tolist(),
+        }
+    )
+
     print(f"\n头{i+1}: Z矩阵形状 {Z.shape}")
     print(f"Z{i+1} =\n{np.round(Z, 3)}")
 
@@ -187,7 +197,7 @@ for i in range(num_heads):
 print(f"\n{'='*20} 拼接多头输出 {'='*20}")
 
 # 将所有头的Z矩阵拼接
-concatenated_Z = np.concatenate([np.array(head['Z']) for head in all_heads], axis=1)
+concatenated_Z = np.concatenate([np.array(head["Z"]) for head in all_heads], axis=1)
 print(f"拼接后的Z矩阵形状: {concatenated_Z.shape}")
 print(f"Concatenated Z =\n{np.round(concatenated_Z, 3)}")
 
@@ -210,7 +220,7 @@ workflow_data = {
         "selected_words": sentence_words,
         "selected_embeddings": X.tolist(),
         "shape": X.shape,
-        "description": "手工设计的词向量，每个词有不同的语义特征"
+        "description": "手工设计的词向量，每个词有不同的语义特征",
     },
     "single_head_workflow": {
         "head_idx": 0,
@@ -232,7 +242,7 @@ workflow_data = {
                 "matrix": X.tolist(),
                 "shape": X.shape,
                 "formula": "X = [word_vectors]",
-                "details": "手工设计的词向量，包含语法和语义特征"
+                "details": "手工设计的词向量，包含语法和语义特征",
             },
             {
                 "step": 2,
@@ -242,7 +252,7 @@ workflow_data = {
                 "shape": Q1.shape,
                 "weights": W_Q[0].tolist(),
                 "formula": "Q = X × W_Q",
-                "details": f"形状变换: ({X.shape[0]}×{X.shape[1]}) × ({W_Q[0].shape[0]}×{W_Q[0].shape[1]}) = ({Q1.shape[0]}×{Q1.shape[1]})"
+                "details": f"形状变换: ({X.shape[0]}×{X.shape[1]}) × ({W_Q[0].shape[0]}×{W_Q[0].shape[1]}) = ({Q1.shape[0]}×{Q1.shape[1]})",
             },
             {
                 "step": 3,
@@ -252,7 +262,7 @@ workflow_data = {
                 "shape": K1.shape,
                 "weights": W_K[0].tolist(),
                 "formula": "K = X × W_K",
-                "details": f"形状变换: ({X.shape[0]}×{X.shape[1]}) × ({W_K[0].shape[0]}×{W_K[0].shape[1]}) = ({K1.shape[0]}×{K1.shape[1]})"
+                "details": f"形状变换: ({X.shape[0]}×{X.shape[1]}) × ({W_K[0].shape[0]}×{W_K[0].shape[1]}) = ({K1.shape[0]}×{K1.shape[1]})",
             },
             {
                 "step": 4,
@@ -262,7 +272,7 @@ workflow_data = {
                 "shape": V1.shape,
                 "weights": W_V[0].tolist(),
                 "formula": "V = X × W_V",
-                "details": f"形状变换: ({X.shape[0]}×{X.shape[1]}) × ({W_V[0].shape[0]}×{W_V[0].shape[1]}) = ({V1.shape[0]}×{V1.shape[1]})"
+                "details": f"形状变换: ({X.shape[0]}×{X.shape[1]}) × ({W_V[0].shape[0]}×{W_V[0].shape[1]}) = ({V1.shape[0]}×{V1.shape[1]})",
             },
             {
                 "step": 5,
@@ -271,7 +281,7 @@ workflow_data = {
                 "matrix": scores1.tolist(),
                 "shape": scores1.shape,
                 "formula": f"Scores = Q × K.T / √{d_k}",
-                "details": f"形状变换: ({Q1.shape[0]}×{Q1.shape[1]}) × ({K1.shape[0]}×{K1.shape[1]}).T = ({scores1.shape[0]}×{scores1.shape[1]})"
+                "details": f"形状变换: ({Q1.shape[0]}×{Q1.shape[1]}) × ({K1.shape[0]}×{K1.shape[1]}).T = ({scores1.shape[0]}×{scores1.shape[1]})",
             },
             {
                 "step": 6,
@@ -280,7 +290,7 @@ workflow_data = {
                 "matrix": attention1.tolist(),
                 "shape": attention1.shape,
                 "formula": "Attention = softmax(Scores)",
-                "details": f"每行经过softmax后和为1，形状: {attention1.shape}"
+                "details": f"每行经过softmax后和为1，形状: {attention1.shape}",
             },
             {
                 "step": 7,
@@ -289,25 +299,25 @@ workflow_data = {
                 "matrix": Z1.tolist(),
                 "shape": Z1.shape,
                 "formula": "Z = Attention × V",
-                "details": f"形状变换: ({attention1.shape[0]}×{attention1.shape[1]}) × ({V1.shape[0]}×{V1.shape[1]}) = ({Z1.shape[0]}×{Z1.shape[1]})"
-            }
-        ]
+                "details": f"形状变换: ({attention1.shape[0]}×{attention1.shape[1]}) × ({V1.shape[0]}×{V1.shape[1]}) = ({Z1.shape[0]}×{Z1.shape[1]})",
+            },
+        ],
     },
     "all_heads": all_heads,
     "concatenation": {
-        "individual_Z": [head['Z'] for head in all_heads],
+        "individual_Z": [head["Z"] for head in all_heads],
         "concatenated_Z": concatenated_Z.tolist(),
         "W_O": W_O.tolist(),
         "final_output": final_output.tolist(),
         "formula": "Final = Concat(Z₁, Z₂, Z₃, Z₄) × W_O",
-        "details": f"拼接形状: ({n_words}×{d_k}) × {num_heads} = ({n_words}×{num_heads*d_k})"
+        "details": f"拼接形状: ({n_words}×{d_k}) × {num_heads} = ({n_words}×{num_heads*d_k})",
     },
     "parameters": {
         "n_words": n_words,
         "d_model": d_model,
         "num_heads": num_heads,
-        "d_k": d_k
-    }
+        "d_k": d_k,
+    },
 }
 
 # ============================================
@@ -915,7 +925,9 @@ html_content = f"""
 """
 
 # 保存HTML文件
-with open(os.path.join(output_dir, 'attention_workflow.html'), 'w', encoding='utf-8') as f:
+with open(
+    os.path.join(output_dir, "attention_workflow.html"), "w", encoding="utf-8"
+) as f:
     f.write(html_content)
 
 print(f"✅ 工作流可视化页面已保存到: {output_dir}/attention_workflow.html")

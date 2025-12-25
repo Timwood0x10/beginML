@@ -17,6 +17,7 @@ The implementation uses an Exponentiated Quadratic kernel (RBF) and optimizes
 the kernel parameters using maximum likelihood estimation.
 """
 
+
 # Generate synthetic data
 def generate_data(n_samples=50, noise_std=0.1):
     np.random.seed(42)

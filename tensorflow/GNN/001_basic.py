@@ -14,6 +14,7 @@ Key components:
 - Example usage with a synthetic graph
 """
 
+
 class GCNLayer(layers.Layer):
     def __init__(self, units, activation=None, **kwargs):
         super(GCNLayer, self).__init__(**kwargs)
@@ -150,7 +151,7 @@ model = GCN(hidden_units=16, num_classes=2)
 
 # Build model
 model.build([(None, 5, 3), (None, 5, 5)])
-'''
+"""
 Model: "gcn"
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
 ┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
@@ -164,7 +165,7 @@ Model: "gcn"
  Total params: 98 (392.00 B)
  Trainable params: 98 (392.00 B)
  Non-trainable params: 0 (0.00 B)
-'''
+"""
 # print(model.summary())
 
 # Forward pass test

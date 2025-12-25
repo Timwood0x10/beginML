@@ -3,7 +3,7 @@ from tensorflow.keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import os 
+import os
 
 # create the base pre-trained model
 base_model = InceptionV3(

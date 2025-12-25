@@ -58,13 +58,13 @@ train_dataset = train_dataset.batch(BATCH_SIZE, drop_remainder=True)
 def build_embedding_matrix(sequences, word2idx, embedding_dim, embedding_file):
     """
     Builds or loads a word embedding matrix for the vocabulary.
-    
+
     Args:
         sequences: Tokenized and padded text sequences
         word2idx: Dictionary mapping words to indices
         embedding_dim: Dimension of the embedding vectors
         embedding_file: Path to save/load the embedding matrix
-        
+
     Returns:
         numpy.ndarray: Embedding matrix of shape (vocab_size, embedding_dim)
     """
@@ -98,15 +98,16 @@ print("Embedding matrix:", E.shape)
 class SpamClassifierModel(tf.keras.Model):
     """
     CNN-based model for spam classification.
-    
+
     This model uses word embeddings followed by a 1D convolutional layer,
     spatial dropout, global max pooling, and a dense output layer.
-    
+
     The model can be configured to:
     - Train embeddings from scratch
     - Use pre-trained embeddings as fixed feature extractors
     - Use pre-trained embeddings and fine-tune them
     """
+
     def __init__(
         self,
         vocab_sz,
@@ -199,7 +200,7 @@ if __name__ == "__main__":
     # and this works out to being each spam (1) item as being
     # approximately 8 times as important as each ham (0) message.
     CLASS_WEIGHTS = {0: 1, 1: 8}
-    
+
     # Train model
     model.fit(
         train_dataset,
@@ -207,7 +208,7 @@ if __name__ == "__main__":
         validation_data=val_dataset,
         class_weight=CLASS_WEIGHTS,
     )
-    
+
     # Evaluate against test set
     labels, predictions = [], []
     for Xtest, Ytest in test_dataset:

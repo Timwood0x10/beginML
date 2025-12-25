@@ -78,8 +78,9 @@ def make_discriminator_model():
     return model
 
 
-# loss function 
+# loss function
 cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
 
 # Modify discriminator loss with label smoothing
 def discriminator_loss(real_output, fake_output):
@@ -92,6 +93,7 @@ def discriminator_loss(real_output, fake_output):
 
 def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)
+
 
 # setup the optimizers
 generator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)  # use beta_1=0.5

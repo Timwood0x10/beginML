@@ -24,6 +24,7 @@ This implementation uses TensorFlow Probability for model definition and trainin
 
 tfd = tfp.distributions
 
+
 # Generate mixture of Gaussians data
 def generate_mixture_data(n_samples=500):
     np.random.seed(42)
@@ -154,7 +155,10 @@ def visualize_dp_clustering(data, cluster_assignments, true_components=None):
     for cluster in unique_clusters:
         cluster_data = data[cluster_assignments == cluster]
         plt.scatter(
-            cluster_data[:, 0], cluster_data[:, 1], label=f"Cluster {cluster}", alpha=0.7
+            cluster_data[:, 0],
+            cluster_data[:, 1],
+            label=f"Cluster {cluster}",
+            alpha=0.7,
         )
 
     plt.title("Dirichlet Process Mixture Model Clustering Results")
@@ -169,7 +173,10 @@ def visualize_dp_clustering(data, cluster_assignments, true_components=None):
         for comp in unique_components:
             comp_data = data[true_components == comp]
             plt.scatter(
-                comp_data[:, 0], comp_data[:, 1], label=f"True Component {comp}", alpha=0.7
+                comp_data[:, 0],
+                comp_data[:, 1],
+                label=f"True Component {comp}",
+                alpha=0.7,
             )
 
         plt.title("True Data Distribution")
@@ -232,7 +239,7 @@ def main():
     # Set font for English text
     plt.rcParams["font.sans-serif"] = ["Arial"]
     plt.rcParams["axes.unicode_minus"] = True
-    
+
     # Plot loss curve
     plt.figure(figsize=(10, 6))
     plt.plot(losses)

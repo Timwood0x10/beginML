@@ -8,7 +8,7 @@ import json
 import os
 
 # 创建输出目录
-output_dir = 'attention_mechanism'
+output_dir = "attention_mechanism"
 os.makedirs(output_dir, exist_ok=True)
 
 print("=" * 60)
@@ -29,14 +29,16 @@ print(f"句子: {' '.join(sentence_words)}")
 print(f"配置: {n_words}个词, {d_model}维, {num_heads}个头")
 
 # 手工设计简单的词向量
-X = np.array([
-    [1.0, 0.0, 0.0, 0.5, 0.2, 0.1],  # The
-    [0.0, 1.0, 0.0, 0.8, 0.6, 0.4],  # cat
-    [0.0, 0.0, 1.0, 0.3, 0.7, 0.5],  # sits
-    [0.5, 0.0, 0.0, 0.0, 0.3, 0.2],  # on
-    [1.0, 0.0, 0.0, 0.4, 0.1, 0.2],  # the
-    [0.0, 0.8, 0.0, 0.6, 0.3, 0.7]   # mat
-])
+X = np.array(
+    [
+        [1.0, 0.0, 0.0, 0.5, 0.2, 0.1],  # The
+        [0.0, 1.0, 0.0, 0.8, 0.6, 0.4],  # cat
+        [0.0, 0.0, 1.0, 0.3, 0.7, 0.5],  # sits
+        [0.5, 0.0, 0.0, 0.0, 0.3, 0.2],  # on
+        [1.0, 0.0, 0.0, 0.4, 0.1, 0.2],  # the
+        [0.0, 0.8, 0.0, 0.6, 0.3, 0.7],  # mat
+    ]
+)
 
 print(f"\n输入矩阵 X 形状: {X.shape}")
 print(f"X =\n{X}")
@@ -53,27 +55,29 @@ for i in range(num_heads):
     W_Q = np.random.randn(d_model, d_k) * 0.1
     W_K = np.random.randn(d_model, d_k) * 0.1
     W_V = np.random.randn(d_model, d_k) * 0.1
-    
+
     # 计算Q, K, V
     Q = X @ W_Q
     K = X @ W_K
     V = X @ W_V
-    
+
     # 计算注意力
     scores = Q @ K.T / np.sqrt(d_k)
     attention = np.exp(scores) / np.exp(scores).sum(axis=1, keepdims=True)
     Z = attention @ V
-    
-    heads.append({
-        'Q': Q.tolist(),
-        'K': K.tolist(),
-        'V': V.tolist(),
-        'attention': attention.tolist(),
-        'Z': Z.tolist()
-    })
+
+    heads.append(
+        {
+            "Q": Q.tolist(),
+            "K": K.tolist(),
+            "V": V.tolist(),
+            "attention": attention.tolist(),
+            "Z": Z.tolist(),
+        }
+    )
 
 # 拼接输出
-concatenated = np.concatenate([np.array(head['Z']) for head in heads], axis=1)
+concatenated = np.concatenate([np.array(head["Z"]) for head in heads], axis=1)
 W_O = np.random.randn(num_heads * d_k, d_model) * 0.1
 final_output = concatenated @ W_O
 
@@ -347,7 +351,9 @@ html_content = f"""<!DOCTYPE html>
 """
 
 # 保存HTML文件
-with open(os.path.join(output_dir, 'attention_simple.html'), 'w', encoding='utf-8') as f:
+with open(
+    os.path.join(output_dir, "attention_simple.html"), "w", encoding="utf-8"
+) as f:
     f.write(html_content)
 
 print(f"\n✅ 简洁版可视化页面已保存到: {output_dir}/attention_simple.html")

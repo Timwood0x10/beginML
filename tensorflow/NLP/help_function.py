@@ -19,15 +19,15 @@ This module provides utility functions for NLP tasks, including:
 def download_and_read(url):
     """
     Downloads and reads a text dataset from a URL.
-    
+
     This function handles:
     1. Checking if the file already exists locally
     2. Downloading and extracting if needed
     3. Reading and parsing the SMS spam collection dataset
-    
+
     Args:
         url (str): URL to download the dataset from
-        
+
     Returns:
         tuple: (texts, labels) where texts is a list of SMS messages
                and labels is a list of binary values (1 for spam, 0 for ham)

@@ -30,7 +30,6 @@ This architecture is a common pattern for image classification tasks, particular
 """
 
 
-
 def build_model():
     model = models.Sequential()
 

@@ -26,7 +26,7 @@ MODEL_NAME = "imbd_model"  # Name for saving model artifacts
 def load_data():
     """
     Load and preprocess the IMDB dataset.
-    
+
     Returns:
         tuple: Training and testing data with their labels
               ((X_train, y_train), (X_test, y_test))
@@ -42,14 +42,14 @@ def load_data():
 def build_model():
     """
     Build and return the sentiment analysis model architecture.
-    
+
     The model consists of:
     1. Embedding layer to convert word indices to dense vectors
     2. Dropout for regularization
     3. Global max pooling to extract the most important features
     4. Two dense layers with L2 regularization and ReLU activation
     5. Output layer with sigmoid activation for binary classification
-    
+
     Returns:
         keras.Model: Compiled Keras sequential model
     """
@@ -92,10 +92,10 @@ def build_model():
 if __name__ == "__main__":
     # Display TensorFlow version for reproducibility
     print(f"TensorFlow version: {tf.__version__}")
-    
+
     # Load and preprocess the IMDB dataset
     (X_train, y_train), (X_test, y_test) = load_data()
-    
+
     # Build the model architecture
     model = build_model()
 
@@ -130,14 +130,14 @@ _________________________________________________________________
 
     # Compile the model with binary cross-entropy loss (suitable for binary classification)
     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-    
+
     # Implement early stopping to optimize model overfitting
     early_stopping = keras.callbacks.EarlyStopping(
         monitor="val_loss",
         patience=5,
         restore_best_weights=True,
     )
-    
+
     # Train the model with early stopping
     history = model.fit(
         X_train,
@@ -157,7 +157,7 @@ _________________________________________________________________
     # Visualize training history
     # Create a figure with two subplots
     plt.figure(figsize=(12, 6))
-    
+
     # Plot accuracy metrics
     plt.subplot(1, 2, 1)
     plt.plot(history.history["accuracy"], label="train Accuracy")
