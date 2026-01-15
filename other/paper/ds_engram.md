@@ -1,4 +1,4 @@
-# Chapter 12: Engram —— 条件存储：大模型稀疏化的“第二轴”
+# Engram —— 条件存储：大模型稀疏化的“第二轴”
 
 > **摘要**：
 > 现有的稀疏模型（MoE）主要关注**条件计算（Conditional Computation）**。DeepSeek 提出的 **Engram** 引入了**条件存储（Conditional Memory）**。
