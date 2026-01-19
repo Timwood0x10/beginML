@@ -1,5 +1,3 @@
-
-
 # 稀疏智能体革命：从 Mixture-of-Experts 到 Mixture-of-Agents 的架构跃迁
 
 > **摘要**：
@@ -51,7 +49,7 @@ $$
 | **推理成本** | 每次计算全部 12B 参数                  | **每次仅算约 12B (激活项)**       | 推理速度极快，显存占用比极优      |
 | **专业化**   | “全能修理工”翻万用手册               | **“专家顾问团”定向出列**        | 垂直领域精度（代码/数学）显著提升 |
 
-### 📊 Jamba 的关键工程数据
+### Jamba 的关键工程数据
 
 * **总参数量**：52B（知识储备厚度）。
 * **激活参数量**：**12B**（推理计算强度）。
@@ -132,11 +130,10 @@ class AgenticMoERouter:
   
         # 3. 并行执行 (MoA Core)
         responses = [agent.generate(prompt) for agent in selected]
-    
+  
         # 4. 融合聚合 (Aggregator Layer)
         return self.aggregate(responses)
 ```
-
 
 ## 总结与前沿参考
 
