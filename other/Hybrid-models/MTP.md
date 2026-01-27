@@ -41,20 +41,19 @@ $$
 
 其中 $\mathcal{L}_{\text{MTP}_k}$ 是预测第 t+k 个 Token 的交叉熵损失。
 
-**为什么加权 λ？**
+**为什么加权 $\lambda$？**
 
 - λ 平衡主任务稳定性与多步学习。
-- 推导：∂L_total/∂λ = 0 时，λ ≈ 0.3–0.5（V3 ablation）。λ 过高主任务退化，λ 过低多步规划失效。
+- 推导：$\frac{\partial L_{\text{total}}}{\partial \lambda} = 0$时，$ \lambda \approx 0.3–0.5$（V3 ablation）。λ 过高主任务退化，λ 过低多步规划失效。
 
 **因果因子分解**：
-
 $$
 P(y_{t:t+N} | x_{<t}) = \prod_{i=0}^{N-1} P(y_{t+i} | x_{<t}, y_{t:t+i-1})
 $$
 
 **为什么因果分解保持顺序？**
 
-- 每个 P(y_{t+i}) 只依赖 <t+i，确保生成不乱序。
+- 每个 $P(y_{t+i})$ 只依赖 <t+i，确保生成不乱序。
 - 训练时联合优化所有头，梯度共享主干特征，捕捉隐含依赖（perplexity 降 3–5%）。
 
 **为什么联合优化提升语义规划？**
@@ -76,14 +75,12 @@ DeepSeek-V3 训练效率 3–4 倍的关键是 **DualPipe**：将 MTP 计算与�
 
 ![img](./image/standardpipline.png)
 
-
 - **为什么隐藏 Bubble**：MTP 计算独立于主干梯度回传，DualPipe 让 MTP FLOPs 与主干重叠，实际训练吞吐提升 3–4 倍（V3 报告 Section 3.4）。
 
 * **上图 (Standard PP)** **：传统 1F1B 流水线中，**灰色区域 (Bubble) **清晰可见。这是 GPU 在等待下游设备返回梯度时的“空转期”，宝贵的算力被白白浪费。**
 * **下图 (DualPipe)**：DeepSeek 引入了独立的 **橙色块 (MTP Tasks)**。请注意，这些橙色块精确地嵌入到了原本灰色的空隙中。
 
   * **Overlap (重叠)**：当主干网络（蓝色）因通信依赖而暂停时，MTP 模块（橙色）立刻接管 GPU 算力，进行未来的 Token 预测。
-
 
 **核心机制描述**：
 
@@ -93,15 +90,13 @@ DeepSeek-V3 训练效率 3–4 倍的关键是 **DualPipe**：将 MTP 计算与�
   如图所示，在 Stage 1（主干计算）与 Stage 3（反向传播）之间的通信间隙，DualPipe 调度器插入了 Stage 2（MTP 预测）。
 
 ```
-  Total Time≈max(TMain,TMTP)instead ofTMain+TMTP
+  Total Time≈max(TMain,TMTP)
 ```
 
 * **零开销训练 (Zero-Overhead Training)**：
   由于橙色块（MTP）几乎完全被蓝色块（主干）的通信间隙掩盖，**MTP 的训练成本在时间维度上被“隐藏”了**。这就是为什么 DeepSeek 能在不显著增加训练时长的情况下，额外训练出一个强大的 MTP 预测头。
 
 ---
-
-
 
 ## 三、MTP 的双重价值
 

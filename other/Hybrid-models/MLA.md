@@ -21,7 +21,7 @@ $$
 - L：序列长度
 - $N_{layers}$：层数
 - $d_{model}$：模型维度
-- {n_{kv_heads}} / n_{heads}：GQA 压缩系数（Llama-3 为 8/64 = 1/8）
+- ${n_{kv_{heads}}} / n_{heads}$：GQA 压缩系数（Llama-3 为 8/64 = 1/8）
 
 **为什么是这个公式**：每个 token 每层都需要独立的 K/V 向量；GQA 通过共享 KV 头减少存储（n_kv_heads << n_heads），数学上等价于低秩近似（KV 矩阵 rank 降低）。
 **Llama-3-70B 示例**（128k 上下文，GQA）：
@@ -75,7 +75,7 @@ $$
 \text{RoPE}(x, m) = x \cdot R_m^T, \quad R_m = \begin{bmatrix} \cos m\theta & -\sin m\theta \\ \sin m\theta & \cos m\theta \end{bmatrix}
 $$
 
-**为什么是正交矩阵**：R_m^T R_m = I（范数不变）。
+**为什么是正交矩阵**：$R_m^T$ $ R_m = I$（范数不变）。
 
 **为什么直接旋转压缩后向量会破坏低秩**（数学证明）：
 设 c 是低秩向量，rank(c) = r。旋转后 R_m c 的 rank 可能增加（R_m 满秩），导致 W_up (R_m c) 无法精确恢复原高维 K，误差放大。

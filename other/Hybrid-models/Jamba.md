@@ -38,7 +38,7 @@ Jamba 并非纯 Mamba，而是通过**交织（Interleaving）** Attention 层�
 
 Jamba 通过重复多个“Jamba Groups”构建，每个 Group 内部包含了 Attention 与 Mamba 的特定比例（如 1:7）。
 
-    ![img](./image/Jamba/struct.png)
+![img](./image/Jamba/struct.png)
 
 
 ### **微观结构：单个混合 Block 内部**

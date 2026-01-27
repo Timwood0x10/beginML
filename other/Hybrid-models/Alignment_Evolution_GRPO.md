@@ -4,7 +4,6 @@
 > 对齐 (Alignment) 的本质是在保持模型多样性的前提下，最大化人类偏好奖励。
 > 本章通过严谨的数学推导，证明 **DPO (Direct Preference Optimization)** 如何利用凸优化对偶性消除 Reward Model。
 > 随后，我们解构 **DeepSeek-R1** 的核心算法 **GRPO**，展示如何通过“群组相对优势”在无需 Critic 模型的情况下实现 System 2 推理能力的涌现。
-> 来源声明：DPO 原论文 (arXiv:2305.18290)，DeepSeekMath GRPO 首提 (arXiv:2402.03300)，DeepSeek-R1 应用 (arXiv:2501.12948)。所有公式严格对齐论文表述。
 
 ## 一、对齐的数学第一性原理：KL 正则化目标
 
@@ -27,7 +26,7 @@ $$
 
 ### 2. 最优解的封闭形式
 
-这是一个变分优化问题。根据 Gibbs 分布性质，最优策略 \($\pi^*$\) 为：
+这是一个变分优化问题。根据 Gibbs 分布性质，最优策略 ($\pi^*$\) 为：
 
 $$
 \pi^*(y|x) = \frac{1}{Z(x)} \pi_{\text{ref}}(y|x) \exp \left( \frac{1}{\beta} r(x, y) \right)
@@ -63,7 +62,7 @@ $$
 
 ### Step 2: Bradley-Terry 偏好模型
 
-人类在 \($y_w$\) (win) 和 \($y_l$) (loss) 中选择 ($y_w$) 的概率：
+人类在 ($y_w$\) (win) 和 \($y_l$) (loss) 中选择 ($y_w$) 的概率：
 
 $$
 P(y_w \succ y_l | x) = \sigma(r(x, y_w) - r(x, y_l))
@@ -81,7 +80,7 @@ Z(x) 被完美抵消。
 
 ### Step 4: DPO 最终损失
 
-替换 ($\pi^*$) 为 \($\pi_\theta$\)，最大化偏好数据似然：
+替换 ($\pi^*$) 为 ($\pi_\theta$)，最大化偏好数据似然：
 
 $$
 \mathcal{L}_{\text{DPO}}(\theta) = -\mathbb{E}_{(x,y_w,y_l)} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)} \right) \right]
@@ -95,9 +94,9 @@ $$
 
 **解析**：
 
-- Boost Winner：增大 \($y_w$\) 概率。
-- Suppress Loser：减小 \($y_l$\) 概率。
-- Error Weight \($\sigma(\hat{r}_l - \hat{r}_w)$\)：动态调节。信心高时 $\sigma \to 0$ ，梯度小，防止过度对齐；信心低时 σ 大，强力修正。
+- Boost Winner：增大 ($y_w$) 概率。
+- Suppress Loser：减小 ($y_l$) 概率。
+- Error Weight $\sigma(\hat{r}_l - \hat{r}_w)$：动态调节。信心高时 $\sigma \to 0$ ，梯度小，防止过度对齐；信心低时 σ 大，强力修正。
 
 **为什么 DPO 稳定？**
 
@@ -109,7 +108,7 @@ GRPO（Group Relative Policy Optimization）首提于 DeepSeekMath (arXiv:2402.0
 
 ### 1. 算法逻辑：Group Sampling
 
-对于每个 Prompt \(x\)，从当前策略 \($\pi_{\theta_{\text{old}}}$\) 采样一组回答：
+对于每个 Prompt \(x\)，从当前策略 ($\pi_{\theta_{\text{old}}}$) 采样一组回答：
 
 $$
 \{o_1, o_2, \dots, o_G\}, \quad G \text{ 通常 } 64-128
