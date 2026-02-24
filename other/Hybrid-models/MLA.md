@@ -9,7 +9,7 @@
 
 在传统 Transformer 中，推理速度往往不取决于算力（TFLOPS），而取决于**内存带宽**（H100 3TB/s vs 1979 TFLOPS）。每生成一个 Token 都需要从显存读取 KV Cache，导致带宽成为瓶颈。
 
-### 1. 精确显存开销公式（完整推导）
+### 1. 精确显存开销公式（完整推导） 
 
 KV Cache 存储每个 token 的 Key 和 Value 向量。假设 bf16 精度（2 bytes/element）：
 

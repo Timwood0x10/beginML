@@ -51,7 +51,7 @@ $$
 * $y_w$: Winner (人类觉得更好的回答)
 * $y_l$: Loser (较差的回答)
 
-### 2. 数学模型：Bradley-Terry Model
+### 2. 数学模型：Bradley-Terry Model 
 
 我们将偏好关系转化为概率分布。假设奖励函数 $r_\theta(x, y)$ 输出一个标量分数，则 $y_w$ 优于 $y_l$ 的概率建模为 Sigmoid 函数：
 
