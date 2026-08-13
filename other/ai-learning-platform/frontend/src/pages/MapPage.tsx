@@ -300,17 +300,18 @@ export default function MapPage() {
                 if (dist > 0.45) return null
                 const b = toSvg(q.x, q.y)
                 const touchesHover = hover && (hover.id === p.id || hover.id === q.id)
-                // Base opacity lifted in dark mode where the paper is dark
-                // and faint strokes vanish against it.
-                const floor = dark ? 0.24 : 0.06
-                const baseOpacity = Math.max(floor, (dark ? 0.66 : 0.32) - dist * 0.55)
-                // Hover: related strokes turn into dark ink; the rest fade
+                // Base opacity: dark mode is lifted hard (the dark parchment
+                // swallows faint strokes), light mode raised a little so the
+                // ink reads against the warm paper.
+                const floor = dark ? 0.35 : 0.11
+                const baseOpacity = Math.max(floor, (dark ? 0.9 : 0.46) - dist * 0.4)
+                // Hover: related strokes turn into bright ink; the rest fade
                 // like strokes worn away by age. In dark mode use warm cream
-                // ink so edges stay visible on the dark parchment.
-                const opacity = touchesHover ? 0.95 : hover ? baseOpacity * 0.45 : baseOpacity
+                // ink so edges stay clearly visible on the dark parchment.
+                const opacity = touchesHover ? 0.98 : hover ? baseOpacity * 0.45 : baseOpacity
                 const color = touchesHover
-                  ? (dark ? '#F8F2E4' : '#3D322C')
-                  : (dark ? '#E4D8BD' : '#6E5D4F')
+                  ? (dark ? '#FBF6EA' : '#2E241B')
+                  : (dark ? '#F0E7D0' : '#45382A')
                 return (
                   <line
                     key={`${p.id}-${q.id}`}
@@ -320,7 +321,7 @@ export default function MapPage() {
                     y2={b.y}
                     stroke={color}
                     strokeOpacity={opacity}
-                    strokeWidth={touchesHover ? 1.7 : dark ? 1.3 : 1.1}
+                    strokeWidth={touchesHover ? 1.8 : dark ? 1.6 : 1.25}
                     strokeDasharray="4 2.5"
                     className="map-ink-line transition-all duration-300"
                   />

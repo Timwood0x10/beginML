@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
+import { PageFlip } from 'page-flip'
 import { api } from '../api'
 import type { NoteDetail, Heading } from '../types'
 import { Spinner, ErrorState } from '../components/States'
@@ -14,8 +15,8 @@ import { useBookPagination } from '../hooks/useBookPagination'
 // Width adapts to the container via ResizeObserver; height follows ratio.
 const MAX_PAGE_WIDTH = 720
 const PAGE_RATIO = 1.12 // height = width * ratio (a slightly tall page)
-// .book-base/.sheet-face padding — the measure container must mirror it so
-// measured heights match the rendered content area exactly.
+// .page padding — the measure container must mirror it so measured heights
+// match the rendered content area exactly.
 const BOOK_PAD = { top: 48, right: 56, bottom: 40, left: 56 }
 const BOOK_PAD_Y = BOOK_PAD.top + BOOK_PAD.bottom
 
@@ -54,13 +55,12 @@ export default function NotePage() {
   const [error, setError] = useState<string | null>(null)
   const [activeSlug, setActiveSlug] = useState<string>('')
   const [pageIndex, setPageIndex] = useState(0)
-  const [flip, setFlip] = useState<{ dir: 'next' | 'prev'; from: number; to: number } | null>(null)
-  const [drag, setDrag] = useState<{ dir: 'next' | 'prev'; from: number; to: number; progress: number; settling: boolean } | null>(null)
-  const dragStartRef = useRef<{ x: number; dir: 'next' | 'prev'; from: number; to: number } | null>(null)
-  const [pendingScroll, setPendingScroll] = useState<string | null>(null)
   const [pageWidth, setPageWidth] = useState(660)
-  const contentRef = useRef<HTMLDivElement | null>(null)
   const articleRef = useRef<HTMLElement | null>(null)
+  // The flipbook lives inside this div. StPageFlip owns the subtree; React
+  // only provides the empty host so the instance can be rebuilt on demand.
+  const bookElRef = useRef<HTMLDivElement | null>(null)
+  const pageFlipRef = useRef<PageFlip | null>(null)
 
   const pageHeight = Math.round(pageWidth * PAGE_RATIO)
 
@@ -112,6 +112,61 @@ export default function NotePage() {
     [pages],
   )
 
+  // --- StPageFlip lifecycle ----------------------------------------------
+  // Rebuilds the book whenever the note (pages) or the leaf geometry changes.
+  useEffect(() => {
+    const el = bookElRef.current
+    if (!el || pages.length === 0) return
+
+    // Keep a reference to the parent BEFORE destroy() — StPageFlip removes
+    // the host element from the DOM when destroyed, so parentElement would
+    // be null afterwards.
+    const parent = el.parentElement
+    if (pageFlipRef.current) {
+      pageFlipRef.current.destroy()
+      pageFlipRef.current = null
+    }
+    if (parent && !el.isConnected) parent.appendChild(el)
+    el.replaceChildren()
+
+    const pageEls = pages.map((html) => {
+      const div = document.createElement('div')
+      div.className = 'page prose-ailearn'
+      div.innerHTML = html
+      return div
+    })
+    el.append(...pageEls)
+
+    const flip = new PageFlip(el, {
+      width: pageWidth,
+      height: pageHeight,
+      size: 'fixed',
+      showCover: false,
+      usePortrait: true,
+      flippingTime: 750,
+      drawShadow: true,
+      maxShadowOpacity: 0.55,
+      startPage: 0,
+      useMouseEvents: true,
+      mobileScrollSupport: true,
+      swipeDistance: 30,
+      clickEventForward: true,
+    })
+    flip.loadFromHTML(pageEls)
+    // StPageFlip auto-marks the last page as "hard" (sturdy cover) which uses
+    // a 3D rotateY path; earlier pages use a 2D polygon clip-path. The two
+    // paths render slightly different fold animations — force every page to
+    // "soft" so forward and backward flips look identical.
+    for (let i = 0; i < pageEls.length; i++) {
+      const p = flip.getPage(i) as { setDensity?: (d: string) => void } | undefined
+      p?.setDensity?.('soft')
+    }
+    flip.on('flip', (e) => setPageIndex(e.data))
+    pageFlipRef.current = flip
+    // Start on the current page after a rebuild (e.g. resize mid-read).
+    if (pageIndex > 0) flip.turnToPage(pageIndex)
+  }, [pages, pageWidth, pageHeight]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleTocClick = useCallback(
     (e: React.MouseEvent, h: Heading) => {
       e.preventDefault()
@@ -120,21 +175,23 @@ export default function NotePage() {
       const slug = slugify(h.text)
       const target = findPageForSlug(slug)
       if (target < 0) return
-      if (target === pageIndex) {
-        contentRef.current?.querySelector(`#${CSS.escape(slug)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        setActiveSlug(slug)
-        return
-      }
-      setPendingScroll(slug)
-      setFlip({ dir: target > pageIndex ? 'next' : 'prev', from: pageIndex, to: target })
+      setActiveSlug(slug)
+      if (target === pageIndex) return
+      pageFlipRef.current?.flip(target)
     },
     [findPageForSlug, pageIndex],
   )
 
-  // Scroll-spy for the TOC (only observes the currently visible page)
+  // Scroll-spy for the TOC (observes only the currently visible leaf). On
+  // pages whose content scrolls inside the leaf (oversized blocks) the spy
+  // follows the internal scroll; regular leaves simply highlight the first
+  // heading.
   useEffect(() => {
-    if (!note || !contentRef.current) return
-    const headings = contentRef.current.querySelectorAll<HTMLElement>('h2, h3')
+    const host = bookElRef.current
+    if (!host) return
+    const pageEl = host.querySelectorAll<HTMLElement>('.page')[pageIndex]
+    if (!pageEl) return
+    const headings = pageEl.querySelectorAll<HTMLElement>('h2, h3')
     if (headings.length === 0) return
     const observer = new IntersectionObserver(
       (entries) => {
@@ -143,74 +200,11 @@ export default function NotePage() {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
         if (visible[0]) setActiveSlug(visible[0].target.id)
       },
-      { rootMargin: '-96px 0px -70% 0px', threshold: 0 },
+      { rootMargin: '-16px 0px -70% 0px', threshold: 0 },
     )
     headings.forEach((h) => observer.observe(h))
     return () => observer.disconnect()
-  }, [note, pageIndex])
-
-  // --- drag-to-flip -------------------------------------------------------
-  // Horizontal drag maps to the sheet's rotateY (0 -> -180deg), like
-  // quick_flipbook's progress. Release past halfway completes the turn,
-  // otherwise the leaf springs back.
-  const beginDrag = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (flip || drag || pages.length <= 1) return
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      // Right half drags forward; left half drags backward.
-      const dir: 'next' | 'prev' = x > rect.width / 2 ? 'next' : 'prev'
-      const from = pageIndex
-      const to = dir === 'next' ? from + 1 : from - 1
-      if (to < 0 || to >= pages.length) return
-      e.currentTarget.setPointerCapture(e.pointerId)
-      dragStartRef.current = { x: e.clientX, dir, from, to }
-      setDrag({ dir, from, to, progress: 0, settling: false })
-    },
-    [flip, drag, pageIndex, pages.length],
-  )
-
-  const moveDrag = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const start = dragStartRef.current
-      if (!start || !drag || drag.settling) return
-      const rect = e.currentTarget.getBoundingClientRect()
-      const dx = e.clientX - start.x
-      // Forward: dragging left increases progress. Backward: dragging right.
-      const span = rect.width * 0.8
-      const raw = start.dir === 'next' ? -dx / span : dx / span
-      const progress = Math.max(0, Math.min(1, raw))
-      setDrag((d) => (d ? { ...d, progress } : d))
-    },
-    [drag],
-  )
-
-  const endDrag = useCallback(() => {
-    const start = dragStartRef.current
-    dragStartRef.current = null
-    if (!start || !drag) return
-    // Past halfway: settle the turn; otherwise spring back to 0.
-    if (drag.progress > 0.45) {
-      setDrag((d) => (d ? { ...d, progress: 1, settling: true } : d))
-    } else {
-      setDrag((d) => (d ? { ...d, progress: 0, settling: true } : d))
-    }
-  }, [drag])
-
-  const onDragSettle = useCallback(() => {
-    if (!drag) return
-    if (drag.progress >= 1) {
-      setPageIndex(drag.to)
-      if (pendingScroll) {
-        requestAnimationFrame(() => {
-          contentRef.current?.querySelector(`#${CSS.escape(pendingScroll)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          setActiveSlug(pendingScroll)
-          setPendingScroll(null)
-        })
-      }
-    }
-    setDrag(null)
-  }, [drag, pendingScroll])
+  }, [note, pageIndex, pages])
 
   // Keyboard: ← back
   useEffect(() => {
@@ -294,65 +288,13 @@ export default function NotePage() {
             dangerouslySetInnerHTML={{ __html: note.html }}
           />
 
-          {/* Book body: base page + turning sheet (drag or animated flip) */}
-          <div
-            className="book mt-4"
-            style={{ width: pageWidth, height: pageHeight, touchAction: 'none' }}
-            onPointerDown={beginDrag}
-            onPointerMove={moveDrag}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
-          >
-            {/* Base page — the leaf revealed underneath the turning sheet */}
-            <div
-              ref={contentRef}
-              className="book-base prose-ailearn"
-              style={{ width: pageWidth, height: pageHeight }}
-            >
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: pages[flip ? flip.to : drag ? drag.to : pageIndex] ?? '',
-                }}
-              />
-            </div>
-
-            {/* Turning sheet — front holds the outgoing page, back is paper */}
-            {(flip || drag) && (
-              <div
-                className={`book-sheet is-turning ${
-                  flip ? (flip.dir === 'next' ? 'flip-next' : 'flip-prev') : ''
-                } ${drag ? (drag.settling ? 'drag-settling' : 'drag-live') : ''}`}
-                style={drag ? { transform: `rotateY(${-180 * drag.progress}deg)` } : undefined}
-                onAnimationEnd={() => {
-                  if (!flip) return
-                  setPageIndex(flip.to)
-                  setFlip(null)
-                  if (pendingScroll) {
-                    // After the leaf settles, reveal the requested heading.
-                    requestAnimationFrame(() => {
-                      contentRef.current?.querySelector(`#${CSS.escape(pendingScroll)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                      setActiveSlug(pendingScroll)
-                      setPendingScroll(null)
-                    })
-                  }
-                }}
-                onTransitionEnd={drag ? onDragSettle : undefined}
-              >
-                <div className="sheet-face front prose-ailearn">
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: pages[flip ? flip.from : drag ? drag.from : pageIndex] ?? '',
-                    }}
-                  />
-                </div>
-                <div className="sheet-face back" />
-              </div>
-            )}
-
+          {/* Book — StPageFlip turns the pages with a real paper fold. The
+              host div is a stable React-owned shell; the library manages the
+              page DOM and canvas layers inside it. */}
+          <div className="book-3d mt-4" style={{ width: pageWidth, height: pageHeight }}>
+            <div ref={bookElRef} className="book-flip-host" style={{ width: pageWidth, height: pageHeight }} />
             {/* Peel hint — invites dragging when idle (hidden while turning) */}
-            {!flip && !drag && (
-              <div className="book-peel-hint" aria-hidden="true" />
-            )}
+            <div className="book-peel-hint" aria-hidden="true" />
           </div>
 
           {/* Page navigation */}
@@ -360,11 +302,8 @@ export default function NotePage() {
             <div className="flex flex-col items-center gap-3 mt-6">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => {
-                    if (flip || pageIndex === 0) return
-                    setFlip({ dir: 'prev', from: pageIndex, to: pageIndex - 1 })
-                  }}
-                  disabled={flip !== null || pageIndex === 0}
+                  onClick={() => pageFlipRef.current?.flipPrev()}
+                  disabled={pageIndex === 0}
                   aria-label="Previous page"
                   className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/10 disabled:opacity-30 transition"
                 >
@@ -374,11 +313,8 @@ export default function NotePage() {
                   {toRoman(pageIndex + 1)} / {toRoman(pages.length)}
                 </span>
                 <button
-                  onClick={() => {
-                    if (flip || pageIndex >= pages.length - 1) return
-                    setFlip({ dir: 'next', from: pageIndex, to: pageIndex + 1 })
-                  }}
-                  disabled={flip !== null || pageIndex >= pages.length - 1}
+                  onClick={() => pageFlipRef.current?.flipNext()}
+                  disabled={pageIndex >= pages.length - 1}
                   aria-label="Next page"
                   className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/10 disabled:opacity-30 transition"
                 >
@@ -390,8 +326,8 @@ export default function NotePage() {
                   <button
                     key={i}
                     onClick={() => {
-                      if (flip || i === pageIndex) return
-                      setFlip({ dir: i > pageIndex ? 'next' : 'prev', from: pageIndex, to: i })
+                      if (i === pageIndex) return
+                      pageFlipRef.current?.flip(i)
                     }}
                     aria-label={`Page ${i + 1}`}
                     className={`page-dot ${i === pageIndex ? 'active' : ''}`}

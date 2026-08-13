@@ -206,14 +206,19 @@ html.dark .prose-ailearn .ailearn-math-error {
   animation: ink-bleed 0.7s ease-out both;
 }
 
-/* Quill strokes: connection lines are "drawn" by the nib. */
+/* Quill strokes: connection lines are "drawn" by the nib. The dash is kept
+   tight so strokes read as continuous ink; on the dark parchment the gap is
+   smaller still so lines don't dissolve into dots. */
 @keyframes ink-draw {
   from { stroke-dashoffset: 120; }
   to   { stroke-dashoffset: 0; }
 }
 .map-ink-line {
-  stroke-dasharray: 6 3;
+  stroke-dasharray: 4 2.5;
   animation: ink-draw 1.1s ease-out both;
+}
+html.dark .map-ink-line {
+  stroke-dasharray: 3 1.8;
 }
 
 /* Compass rose: rhumb lines rotate imperceptibly, like consulting an
@@ -257,181 +262,54 @@ html.dark .map-tooltip {
 }
 
 /* ------------------------------------------------------------------ */
-/* Codex (book) reader — real page-flip                               */
+/* Codex (book) reader — real page-flip via StPageFlip                */
 /* ------------------------------------------------------------------ */
-.book {
+.book-3d {
   position: relative;
   margin: 0 auto;
-  perspective: 2000px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  touch-action: pan-y;
 }
 
-/* The turning leaf: a double-sided sheet rotating around the spine.
-   `transform-origin: left center` makes it swing like real paper.
-   Keyframe animations let the flip start the moment the sheet mounts. */
-.book-sheet {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transform-origin: left center;
-  will-change: transform;
+/* StPageFlip mounts its DOM inside this host. The host is exactly the leaf
+   size so the library's fixed-size book fits 1:1. */
+.book-flip-host {
+  position: relative;
 }
-.book-sheet.flip-next { animation: sheet-flip-next 0.95s cubic-bezier(0.4, 0.08, 0.22, 1) forwards; }
-.book-sheet.flip-prev { animation: sheet-flip-prev 0.95s cubic-bezier(0.4, 0.08, 0.22, 1) forwards; }
-/* Drag-driven flipping: the sheet follows the pointer with no easing while
-   dragging, then springs to completion (or back) with a silk transition. */
-.book-sheet.drag-live { transition: none; }
-.book-sheet.drag-settling { transition: transform 0.35s cubic-bezier(0.4, 0.08, 0.22, 1); }
-/* Both directions sweep the leaf to the left (0 -> -180deg), revealing the
-   base page underneath. The sheet's front always carries the OUTGOING page,
-   so backward jumps look like turning a leaf to expose the earlier chapter
-   rather than a confusing flicker of the old page. */
-@keyframes sheet-flip-next {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(-180deg); }
-}
-@keyframes sheet-flip-prev {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(-180deg); }
-}
+.book-flip-host .stf__parent { margin: 0 auto; }
 
-/* One side of the sheet. The back is the blank paper underside. */
-.sheet-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  overflow: hidden;
-  background:
-    radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
-    linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
-  color: #3D322C;
-  box-shadow:
-    0 8px 28px rgba(61,50,44,0.18),
-    0 2px 8px rgba(61,50,44,0.10),
-    inset 0 0 60px rgba(140,122,107,0.12);
-  border-radius: 2px;
-}
-html.dark .sheet-face {
-  background:
-    radial-gradient(120% 100% at 0% 50%, rgba(0,0,0,0.3) 0%, transparent 22%),
-    linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
-  color: #D9CDB8;
-  box-shadow:
-    0 8px 28px rgba(61,50,44,0.55),
-    0 2px 8px rgba(61,50,44,0.35),
-    inset 0 0 60px rgba(0,0,0,0.25);
-}
-.sheet-face.back {
-  transform: rotateY(180deg);
-  /* The back of a leaf is darker parchment — slightly shadowed, with a
-     faint mirrored texture and a hint of ink bleeding through from the
-     page that was pressed against it. */
-  background:
-    radial-gradient(120% 100% at 100% 50%, rgba(61,50,44,0.16) 0%, transparent 30%),
-    linear-gradient(135deg, #E8D8C6 0%, #E2CFB8 55%, #DCC7AC 100%);
-  box-shadow:
-    inset 0 0 60px rgba(61,50,44,0.18),
-    inset 0 0 120px rgba(61,50,44,0.06);
-}
-html.dark .sheet-face.back {
-  background:
-    radial-gradient(120% 100% at 100% 50%, rgba(0,0,0,0.45) 0%, transparent 30%),
-    linear-gradient(135deg, #211B13 0%, #1D1710 55%, #19130D 100%);
-  box-shadow:
-    inset 0 0 60px rgba(0,0,0,0.4),
-    inset 0 0 120px rgba(0,0,0,0.15);
-}
-/* Faint "ink bleeding through" marks on the paper back — like the ghost of
-   the text from the neighbouring leaf. */
-.sheet-face.back::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(rgba(61,50,44,0.12) 1px, transparent 1.5px),
-    linear-gradient(120deg, transparent 20%, rgba(61,50,44,0.10) 45%, transparent 70%);
-  background-size: 34px 26px, 100% 100%;
-  opacity: 0.6;
-  mix-blend-mode: multiply;
-}
-html.dark .sheet-face.back::after {
-  background-image:
-    radial-gradient(rgba(0,0,0,0.35) 1px, transparent 1.5px),
-    linear-gradient(120deg, transparent 20%, rgba(0,0,0,0.3) 45%, transparent 70%);
-  background-size: 34px 26px, 100% 100%;
-}
-
-/* Paper edge — a thin bright sliver along the spine of the turning sheet. */
-.book-sheet::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 3px;
-  z-index: 3;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(244,234,225,0.95) 0%, rgba(232,216,200,0.4) 60%, transparent 100%);
-}
-html.dark .book-sheet::before {
-  background: linear-gradient(90deg, rgba(42,35,25,0.95) 0%, rgba(32,27,19,0.4) 60%, transparent 100%);
-}
-
-/* Shading that sweeps the sheet while it turns (feels like paper lifting). */
-.book-sheet::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0;
-  background: linear-gradient(90deg,
-    rgba(61,50,44,0.0) 0%,
-    rgba(61,50,44,0.12) 38%,
-    rgba(61,50,44,0.0) 62%);
-}
-html.dark .book-sheet::after {
-  background: linear-gradient(90deg,
-    rgba(61,50,44,0.0) 0%,
-    rgba(61,50,44,0.45) 38%,
-    rgba(61,50,44,0.0) 62%);
-}
-.book-sheet.is-turning::after {
-  opacity: 1;
-  transition: opacity 0.2s ease;
-}
-
-/* Base page (the one revealed underneath the turning sheet). */
-.book-base {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background:
-    radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
-    linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
-  color: #3D322C;
+/* Each note leaf — parchment texture, generous padding, soft inner shadow.
+   The page padding must mirror BOOK_PAD in NotePage.tsx so the pagination
+   measurements match the rendered content area exactly. */
+.page {
+  box-sizing: border-box;
   padding: 48px 56px 40px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
+    linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
+  color: #3D322C;
   box-shadow:
-    0 8px 28px rgba(61,50,44,0.18),
-    0 2px 8px rgba(61,50,44,0.10),
-    inset 0 0 60px rgba(140,122,107,0.12);
+    inset 0 0 60px rgba(140,122,107,0.12),
+    inset 0 0 8px rgba(61,50,44,0.06);
+  border: 1px solid rgba(140,122,107,0.18);
   border-radius: 2px;
 }
-html.dark .book-base {
+html.dark .page {
   background:
     radial-gradient(120% 100% at 0% 50%, rgba(0,0,0,0.3) 0%, transparent 22%),
     linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
   color: #D9CDB8;
   box-shadow:
-    0 8px 28px rgba(61,50,44,0.55),
-    0 2px 8px rgba(61,50,44,0.35),
-    inset 0 0 60px rgba(0,0,0,0.25);
+    inset 0 0 60px rgba(0,0,0,0.25),
+    inset 0 0 8px rgba(0,0,0,0.15);
+  border-color: rgba(0,0,0,0.35);
 }
 
-/* Spine crease — shadow along the binding edge */
-.book-base::before,
-.sheet-face::before {
+/* Spine crease — shadow along the binding edge of each leaf */
+.page::before {
   content: '';
   position: absolute;
   top: 0;
@@ -441,9 +319,19 @@ html.dark .book-base {
   pointer-events: none;
   background: linear-gradient(90deg, rgba(61,50,44,0.16) 0%, rgba(61,50,44,0.05) 55%, transparent 100%);
 }
-html.dark .book-base::before,
-html.dark .sheet-face::before {
+html.dark .page::before {
   background: linear-gradient(90deg, rgba(61,50,44,0.5) 0%, rgba(61,50,44,0.15) 55%, transparent 100%);
+}
+
+/* StPageFlip draws its fold shadows with warm-brown ink (the dist colours
+   are patched from pure black) and the leaf's own parchment shows through
+   as the "back of the paper" while a page turns. Keep the shadow layers
+   click-transparent so links/buttons on pages still work. */
+.stf__innerShadow,
+.stf__outerShadow,
+.stf__hardShadow,
+.stf__hardInnerShadow {
+  pointer-events: none;
 }
 
 /* A block too tall for one leaf (huge table/code/image) scrolls inside its
@@ -461,10 +349,12 @@ html.dark .sheet-face::before {
 /* Peel hint — the bottom-left corner gently lifts when idle, inviting  */
 /* the reader to drag.                                                 */
 /* ------------------------------------------------------------------ */
+/* The corner sits idle for a few seconds, then gently lifts ~5px up and
+   springs back — enough to whisper "drag me" without nagging. */
 @keyframes peel-hint {
-  0%, 68%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.9; }
-  82% { transform: translate(-2px, -6px) rotate(7deg); opacity: 1; }
-  92% { transform: translate(-1px, -3px) rotate(3deg); opacity: 0.95; }
+  0%, 64%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.85; }
+  78% { transform: translate(-2px, -5px) rotate(6deg); opacity: 1; }
+  90% { transform: translate(-1px, -2px) rotate(2deg); opacity: 0.95; }
 }
 .book-peel-hint {
   position: absolute;
@@ -474,9 +364,9 @@ html.dark .sheet-face::before {
   height: 18px;
   border-radius: 3px;
   pointer-events: none;
-  z-index: 6;
+  z-index: 40;
   transform-origin: bottom left;
-  animation: peel-hint 4.5s ease-in-out 1.5s infinite;
+  animation: peel-hint 5s ease-in-out 2s infinite;
   background: linear-gradient(135deg, #F4EAE1 42%, #DCC7AC 55%);
   box-shadow: 1px 2px 6px rgba(61,50,44,0.28);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 70%);
