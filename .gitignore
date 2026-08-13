@@ -1,1 +1,46 @@
-.DS_Store 
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local tooling / caches
+.agents/
+.codescope/
+
+# AI Learning Platform runtime artifacts
+other/ai-learning-platform/.run/
+# (node_modules/, dist/, *.log already covered by the global rules above)
+
+# Root-level orphan scaffold (AIScope/Trae) — not part of this project.
+# The real frontend config lives under other/ai-learning-platform/frontend/.
+/package-lock.json
+/tailwind.config.js
+/tsconfig.json
+/vite.config.ts
+/index.html
+/eslint.config.js

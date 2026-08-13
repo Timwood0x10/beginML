@@ -1,0 +1,198 @@
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { api } from '../api'
+import type { LabModule, LabParams, LabResult } from './types'
+import { ControlRow, defaultParams } from './Controls'
+import GradientDescentLab from './modules/GradientDescentLab'
+import AttentionLab from './modules/AttentionLab'
+import PcaLab from './modules/PcaLab'
+import RegularizationLab from './modules/RegularizationLab'
+import SvmLab from './modules/SvmLab'
+
+// Renders the right visualization for each module id.
+const LAB_COMPONENTS: Record<string, React.ComponentType<{ result: LabResult | null; loading: boolean; error: string | null; onAction: (key: string) => void; params: LabParams; setParams: (p: LabParams) => void }>> = {
+  'gradient-descent': GradientDescentLab,
+  attention: AttentionLab,
+  pca: PcaLab,
+  regularization: RegularizationLab,
+  svm: SvmLab,
+}
+
+export default function LabPage() {
+  const { moduleId } = useParams<{ moduleId: string }>()
+  const navigate = useNavigate()
+  const [modules, setModules] = useState<LabModule[]>([])
+  const [result, setResult] = useState<LabResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [params, setParams] = useState<LabParams>({})
+
+  useEffect(() => {
+    let alive = true
+    api.lab.modules().then((r) => alive && setModules(r.modules)).catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  const active = useMemo(
+    () => modules.find((m) => m.id === moduleId) ?? modules[0],
+    [modules, moduleId],
+  )
+
+  // Reset params when switching modules
+  useEffect(() => {
+    if (active) setParams(defaultParams(active.controls))
+  }, [active])
+
+  const compute = useCallback(async (nextParams: LabParams) => {
+    if (!active) return
+    setLoading(true)
+    setError(null)
+    try {
+      const r = await api.lab.compute(active.id, nextParams)
+      setResult(r)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
+  }, [active])
+
+  // (Re)compute whenever the active module or its params change
+  useEffect(() => {
+    if (active && Object.keys(params).length > 0) compute(params)
+  }, [active, params, compute])
+
+  const onControlChange = (key: string, value: string | number | boolean) => {
+    setParams((p) => ({ ...p, [key]: value }))
+  }
+  const onAction = (key: string) => {
+    // Modules can intercept action keys (e.g. SVM reset). Default: no-op.
+    if (active?.id === 'svm' && key === 'reset') setParams((p) => ({ ...p }))
+  }
+
+  if (modules.length === 0) {
+    return <div className="p-8 text-on-surface-variant dark:text-outline">Loading modules…</div>
+  }
+
+  const Lab = active ? LAB_COMPONENTS[active.id] : null
+
+  return (
+    <div className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
+      {/* Sidebar — template-style floating island */}
+      <aside className="hidden md:flex flex-col w-72 shrink-0 bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
+        <div className="px-2 mb-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface flex items-center justify-center">
+              <span className="material-symbols-outlined fill" style={{ fontSize: 22 }}>science</span>
+            </div>
+            <div>
+              <h2 className="font-headline text-headline-lg-mobile text-primary dark:text-inverse-primary leading-tight">Math Lab</h2>
+              <p className="text-caption text-on-surface-variant dark:text-outline">Interactive visualizations</p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex flex-col gap-1 mb-5">
+          {modules.map((m) => {
+            const isActive = active?.id === m.id
+            return (
+              <button
+                key={m.id}
+                onClick={() => navigate(`/lab/${m.id}`)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
+                  isActive
+                    ? 'bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface font-semibold shadow-sm'
+                    : 'text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5'
+                }`}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{m.icon}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-body-md truncate">{m.title}</span>
+                  <span className={`block text-caption truncate ${isActive ? 'opacity-80' : ''}`}>{m.subtitle}</span>
+                </span>
+              </button>
+            )
+          })}
+        </nav>
+
+        {active && (
+          <div className="border-t border-outline-variant/50 dark:border-white/5 pt-4 flex flex-col gap-4">
+            <div className="px-2">
+              <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">Controls</h4>
+              <div className="flex flex-col gap-4">
+                {active.controls.map((c) => (
+                  <ControlRow
+                    key={c.key}
+                    control={c}
+                    value={params[c.key]}
+                    onChange={onControlChange}
+                    onAction={onAction}
+                  />
+                ))}
+              </div>
+            </div>
+            {loading && (
+              <div className="px-2 text-caption text-outline inline-flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full border-2 border-outline-variant border-t-primary animate-spin" />
+                computing…
+              </div>
+            )}
+          </div>
+        )}
+      </aside>
+
+      {/* Mobile module picker */}
+      <div className="md:hidden flex gap-2 overflow-x-auto pb-1 -mx-margin-mobile px-margin-mobile">
+        {modules.map((m) => {
+          const isActive = active?.id === m.id
+          return (
+            <button
+              key={m.id}
+              onClick={() => navigate(`/lab/${m.id}`)}
+              className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-label-md font-semibold border ${
+                isActive
+                  ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                  : 'bg-surface-container dark:bg-dark-surface-elevated text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10'
+              }`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 17 }}>{m.icon}</span>
+              {m.title}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Main visualization area */}
+      <main className="flex-1 min-w-0 flex flex-col gap-5">
+        {active && (
+          <header className="bg-surface-container-low dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+            <span className="text-caption uppercase tracking-wider font-semibold text-primary dark:text-inverse-primary">{active.category}</span>
+            <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface mt-1">{active.title}</h1>
+            <p className="text-body-md text-on-surface-variant dark:text-outline mt-2 max-w-3xl leading-relaxed">{active.blurb}</p>
+          </header>
+        )}
+
+        {/* Mobile controls in a collapsible card */}
+        {active && (
+          <details className="md:hidden bg-surface-container dark:bg-dark-surface-elevated rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5">
+            <summary className="font-label-md text-label-md font-semibold cursor-pointer inline-flex items-center gap-2">
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>tune</span>
+              Controls
+            </summary>
+            <div className="flex flex-col gap-4 mt-4">
+              {active.controls.map((c) => (
+                <ControlRow key={c.key} control={c} value={params[c.key]} onChange={onControlChange} onAction={onAction} />
+              ))}
+            </div>
+          </details>
+        )}
+
+        {error ? (
+          <div className="bg-error-container text-on-error-container rounded-2xl p-6 text-body-md">{error}</div>
+        ) : Lab ? (
+          <Lab result={result} loading={loading} error={error} onAction={onAction} params={params} setParams={setParams} />
+        ) : null}
+      </main>
+    </div>
+  )
+}
