@@ -170,12 +170,45 @@ def humanize_filename(stem: str) -> str:
     return text.strip().title()
 
 
+def normalize_math(content: str) -> str:
+    """Normalize display math so pymdownx-arithmatex always recognizes it.
+
+    Notes use ``$$...$$`` for block math, often without surrounding blank
+    lines. The ``nl2br`` markdown extension then inserts ``<br>`` tags that
+    break arithmatex's block detection, leaving the dollar signs as literal
+    text. We rewrite both multi-line and single-line ``$$`` forms to the
+    bracket delimiters ``\\[...\\]`` with blank lines around them, which
+    arithmatex matches reliably regardless of surrounding newlines.
+    """
+    # Multi-line:  $$\n ... \n$$  (own block)
+    content = re.sub(
+        r"^[ \t]*\$\$\s*\n(.*?)\n\s*\$\$\s*$",
+        r"\n\n\\[\n\1\n\\]\n\n",
+        content,
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    # Single-line:  $$ ... $$
+    content = re.sub(r"\$\$(.+?)\$\$", r"\\[\1\\]", content, flags=re.DOTALL)
+    # Ensure any bracket-delimited block \[ ... \] sits in its own paragraph
+    # (blank lines around it) so arithmatex emits a display <div> rather than
+    # an inline <span>. This covers notes that already used \[...\] directly.
+    content = re.sub(
+        r"[ \t]*(\\\[.*?\\\])[ \t]*",
+        lambda m: f"\n\n{m.group(1)}\n\n",
+        content,
+        flags=re.DOTALL,
+    )
+    # Collapse 3+ newlines created above back to a clean pair.
+    content = re.sub(r"\n{3,}", "\n\n", content)
+    return content
+
+
 def rewrite_image_paths(html: str, relative_note_path: str) -> str:
     """
     Rewrite relative image src in rendered HTML so they resolve against
     the note's directory through the /assets endpoint.
 
-    e.g. `images/foo.png` in math/3.md → /assets/math-images/foo.png
+    e.g. `images/foo.png` in math/3.md -> /assets/math-images/foo.png
     """
     note_dir = (NOTES_ROOT / relative_note_path).parent
 
@@ -553,6 +586,7 @@ def get_note(note_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Note file missing on disk")
 
     content = file_path.read_text(encoding="utf-8", errors="replace")
+    content = normalize_math(content)
     html = render_markdown(
         content,
         extensions=MARKDOWN_EXTENSIONS,

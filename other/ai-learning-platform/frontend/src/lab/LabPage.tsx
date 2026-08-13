@@ -43,6 +43,7 @@ export default function LabPage() {
   const navigate = useNavigate()
   const [modules, setModules] = useState<LabModule[]>([])
   const [result, setResult] = useState<LabResult | null>(null)
+  const [resultFor, setResultFor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [params, setParams] = useState<LabParams>({})
@@ -62,6 +63,7 @@ export default function LabPage() {
   // Reset state when switching modules — prevents stale-result crashes.
   useEffect(() => {
     setResult(null)
+    setResultFor(null)
     setError(null)
     if (active) setParams(defaultParams(active.controls))
   }, [active])
@@ -69,11 +71,15 @@ export default function LabPage() {
   const compute = useCallback(async (nextParams: LabParams) => {
     if (!active) return
     const token = ++reqToken.current
+    const moduleId = active.id
     setLoading(true)
     setError(null)
     try {
-      const r = await api.lab.compute(active.id, nextParams)
-      if (token === reqToken.current) setResult(r)
+      const r = await api.lab.compute(moduleId, nextParams)
+      if (token === reqToken.current) {
+        setResult(r)
+        setResultFor(moduleId)
+      }
     } catch (e) {
       if (token === reqToken.current) {
         setError(e instanceof Error ? e.message : String(e))
@@ -99,6 +105,10 @@ export default function LabPage() {
   }
 
   const Lab = active ? LAB_COMPONENTS[active.id] : null
+  // Only pass result to the component if it belongs to the active module.
+  // The reset useEffect runs AFTER render, so this guard prevents a newly
+  // mounted module from briefly receiving the previous module's data shape.
+  const safeResult = active && resultFor === active.id ? result : null
 
   return (
     <div className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
@@ -204,7 +214,7 @@ export default function LabPage() {
         {error ? (
           <div className="bg-error-container text-on-error-container rounded-2xl p-6 text-body-md">{error}</div>
         ) : Lab ? (
-          <Lab result={result} loading={loading} error={error} onAction={onAction} params={params} setParams={setParams} />
+          <Lab result={safeResult} loading={loading} error={error} onAction={onAction} params={params} setParams={setParams} />
         ) : null}
       </main>
     </div>
