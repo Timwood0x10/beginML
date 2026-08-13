@@ -130,7 +130,11 @@ def extract_title(content: str) -> str:
 
 
 def extract_description(content: str) -> str:
-    """First non-heading, non-empty paragraph — used for card subtitles."""
+    """First non-heading, non-empty paragraph — used for card subtitles.
+
+    Inline math ($...$, \\(...\\)) and display math ($$...$$, \\[...\\]) are
+    stripped so card previews never leak raw LaTeX.
+    """
     lines = content.split("\n")
     buffer: list[str] = []
     in_paragraph = False
@@ -148,7 +152,12 @@ def extract_description(content: str) -> str:
         in_paragraph = True
         buffer.append(stripped)
     text = " ".join(buffer)
+    text = re.sub(r"\$\$[\s\S]*?\$\$", "", text)        # $$...$$ display math
+    text = re.sub(r"\\\([\s\S]*?\\\)", "", text)         # \(...\) inline math
+    text = re.sub(r"\\\[[\s\S]*?\\\]", "", text)         # \[...\] display math
+    text = re.sub(r"\$[^$\n]*?\$", "", text)             # $...$ inline math
     text = re.sub(r"[#*`_>\[\]]", "", text).strip()
+    text = re.sub(r"\s{2,}", " ", text).strip()
     if len(text) > 220:
         text = text[:217].rstrip() + "…"
     return text

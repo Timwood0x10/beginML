@@ -55,6 +55,8 @@ export default function NotePage() {
   const [activeSlug, setActiveSlug] = useState<string>('')
   const [pageIndex, setPageIndex] = useState(0)
   const [flip, setFlip] = useState<{ dir: 'next' | 'prev'; from: number; to: number } | null>(null)
+  const [drag, setDrag] = useState<{ dir: 'next' | 'prev'; from: number; to: number; progress: number; settling: boolean } | null>(null)
+  const dragStartRef = useRef<{ x: number; dir: 'next' | 'prev'; from: number; to: number } | null>(null)
   const [pendingScroll, setPendingScroll] = useState<string | null>(null)
   const [pageWidth, setPageWidth] = useState(660)
   const contentRef = useRef<HTMLDivElement | null>(null)
@@ -147,6 +149,69 @@ export default function NotePage() {
     return () => observer.disconnect()
   }, [note, pageIndex])
 
+  // --- drag-to-flip -------------------------------------------------------
+  // Horizontal drag maps to the sheet's rotateY (0 -> -180deg), like
+  // quick_flipbook's progress. Release past halfway completes the turn,
+  // otherwise the leaf springs back.
+  const beginDrag = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (flip || drag || pages.length <= 1) return
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      // Right half drags forward; left half drags backward.
+      const dir: 'next' | 'prev' = x > rect.width / 2 ? 'next' : 'prev'
+      const from = pageIndex
+      const to = dir === 'next' ? from + 1 : from - 1
+      if (to < 0 || to >= pages.length) return
+      e.currentTarget.setPointerCapture(e.pointerId)
+      dragStartRef.current = { x: e.clientX, dir, from, to }
+      setDrag({ dir, from, to, progress: 0, settling: false })
+    },
+    [flip, drag, pageIndex, pages.length],
+  )
+
+  const moveDrag = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const start = dragStartRef.current
+      if (!start || !drag || drag.settling) return
+      const rect = e.currentTarget.getBoundingClientRect()
+      const dx = e.clientX - start.x
+      // Forward: dragging left increases progress. Backward: dragging right.
+      const span = rect.width * 0.8
+      const raw = start.dir === 'next' ? -dx / span : dx / span
+      const progress = Math.max(0, Math.min(1, raw))
+      setDrag((d) => (d ? { ...d, progress } : d))
+    },
+    [drag],
+  )
+
+  const endDrag = useCallback(() => {
+    const start = dragStartRef.current
+    dragStartRef.current = null
+    if (!start || !drag) return
+    // Past halfway: settle the turn; otherwise spring back to 0.
+    if (drag.progress > 0.45) {
+      setDrag((d) => (d ? { ...d, progress: 1, settling: true } : d))
+    } else {
+      setDrag((d) => (d ? { ...d, progress: 0, settling: true } : d))
+    }
+  }, [drag])
+
+  const onDragSettle = useCallback(() => {
+    if (!drag) return
+    if (drag.progress >= 1) {
+      setPageIndex(drag.to)
+      if (pendingScroll) {
+        requestAnimationFrame(() => {
+          contentRef.current?.querySelector(`#${CSS.escape(pendingScroll)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          setActiveSlug(pendingScroll)
+          setPendingScroll(null)
+        })
+      }
+    }
+    setDrag(null)
+  }, [drag, pendingScroll])
+
   // Keyboard: ← back
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -229,22 +294,37 @@ export default function NotePage() {
             dangerouslySetInnerHTML={{ __html: note.html }}
           />
 
-          {/* Book body: base page + turning sheet */}
-          <div className="book mt-4" style={{ width: pageWidth, height: pageHeight }}>
+          {/* Book body: base page + turning sheet (drag or animated flip) */}
+          <div
+            className="book mt-4"
+            style={{ width: pageWidth, height: pageHeight, touchAction: 'none' }}
+            onPointerDown={beginDrag}
+            onPointerMove={moveDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
             {/* Base page — the leaf revealed underneath the turning sheet */}
             <div
               ref={contentRef}
               className="book-base prose-ailearn"
               style={{ width: pageWidth, height: pageHeight }}
             >
-              <div dangerouslySetInnerHTML={{ __html: pages[flip ? flip.to : pageIndex] ?? '' }} />
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: pages[flip ? flip.to : drag ? drag.to : pageIndex] ?? '',
+                }}
+              />
             </div>
 
             {/* Turning sheet — front holds the outgoing page, back is paper */}
-            {flip && (
+            {(flip || drag) && (
               <div
-                className={`book-sheet is-turning ${flip.dir === 'next' ? 'flip-next' : 'flip-prev'}`}
+                className={`book-sheet is-turning ${
+                  flip ? (flip.dir === 'next' ? 'flip-next' : 'flip-prev') : ''
+                } ${drag ? (drag.settling ? 'drag-settling' : 'drag-live') : ''}`}
+                style={drag ? { transform: `rotateY(${-180 * drag.progress}deg)` } : undefined}
                 onAnimationEnd={() => {
+                  if (!flip) return
                   setPageIndex(flip.to)
                   setFlip(null)
                   if (pendingScroll) {
@@ -256,12 +336,22 @@ export default function NotePage() {
                     })
                   }
                 }}
+                onTransitionEnd={drag ? onDragSettle : undefined}
               >
                 <div className="sheet-face front prose-ailearn">
-                  <div dangerouslySetInnerHTML={{ __html: pages[flip.from] ?? '' }} />
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: pages[flip ? flip.from : drag ? drag.from : pageIndex] ?? '',
+                    }}
+                  />
                 </div>
                 <div className="sheet-face back" />
               </div>
+            )}
+
+            {/* Peel hint — invites dragging when idle (hidden while turning) */}
+            {!flip && !drag && (
+              <div className="book-peel-hint" aria-hidden="true" />
             )}
           </div>
 
@@ -312,63 +402,67 @@ export default function NotePage() {
           )}
         </article>
 
-        {/* Right rail: TOC + related */}
+        {/* Right rail: TOC + related. The whole rail sticks as one unit so
+            the related-notes card stays on screen while reading — sticking
+            only the TOC let the related card scroll out of view. */}
         <aside className="lg:w-72 shrink-0 flex flex-col gap-6">
-          {toc.length > 0 && (
-            <div className="lg:sticky lg:top-28 bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
-              <div className="flex items-center gap-2 mb-3 text-on-surface dark:text-dark-on-surface">
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>list</span>
-                <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.contents}</h4>
+          <div className="flex flex-col gap-6 lg:sticky lg:top-8">
+            {toc.length > 0 && (
+              <div className="max-h-[38vh] overflow-y-auto bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
+                <div className="flex items-center gap-2 mb-3 text-on-surface dark:text-dark-on-surface">
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>list</span>
+                  <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.contents}</h4>
+                </div>
+                <nav className="flex flex-col">
+                  {toc.map((h) => {
+                    const slug = slugify(h.text)
+                    return (
+                      <a
+                        key={h.slug + h.text}
+                        href={`#${slug}`}
+                        onClick={(e) => handleTocClick(e, h)}
+                        className={`toc-link ${h.level === 3 ? 'ml-3' : ''} ${
+                          activeSlug === slug ? 'active' : ''
+                        }`}
+                      >
+                        {h.text}
+                      </a>
+                    )
+                  })}
+                </nav>
               </div>
-              <nav className="flex flex-col">
-                {toc.map((h) => {
-                  const slug = slugify(h.text)
-                  return (
-                    <a
-                      key={h.slug + h.text}
-                      href={`#${slug}`}
-                      onClick={(e) => handleTocClick(e, h)}
-                      className={`toc-link ${h.level === 3 ? 'ml-3' : ''} ${
-                        activeSlug === slug ? 'active' : ''
-                      }`}
-                    >
-                      {h.text}
-                    </a>
-                  )
-                })}
-              </nav>
-            </div>
-          )}
+            )}
 
-          {note.related.length > 0 && (
-            <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
-              <div className="flex items-center gap-2 mb-4 text-on-surface dark:text-dark-on-surface">
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>hub</span>
-                <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.related}</h4>
+            {note.related.length > 0 && (
+              <div className="max-h-[42vh] overflow-y-auto bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
+                <div className="flex items-center gap-2 mb-4 text-on-surface dark:text-dark-on-surface">
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>hub</span>
+                  <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.related}</h4>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {note.related.map((r) => (
+                    <Link
+                      key={r.id}
+                      to={`/note/${r.id}`}
+                      className="group block rounded-xl px-3 py-2.5 -mx-1 hover:bg-surface-variant dark:hover:bg-white/5 transition-colors"
+                    >
+                      <div className="text-body-md text-on-surface dark:text-dark-on-surface font-semibold leading-snug group-hover:text-primary dark:group-hover:text-inverse-primary line-clamp-2">
+                        {r.title}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-caption text-outline">{t.home.categoryNames[r.category.id] ?? r.category.en}</span>
+                        {typeof r.score === 'number' && (
+                          <span className="text-caption text-outline">
+                            · {Math.round(r.score * 100)}% {t.note.similar}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                {note.related.map((r) => (
-                  <Link
-                    key={r.id}
-                    to={`/note/${r.id}`}
-                    className="group block rounded-xl px-3 py-2.5 -mx-1 hover:bg-surface-variant dark:hover:bg-white/5 transition-colors"
-                  >
-                    <div className="text-body-md text-on-surface dark:text-dark-on-surface font-semibold leading-snug group-hover:text-primary dark:group-hover:text-inverse-primary line-clamp-2">
-                      {r.title}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-caption text-outline">{t.home.categoryNames[r.category.id] ?? r.category.en}</span>
-                      {typeof r.score === 'number' && (
-                        <span className="text-caption text-outline">
-                          · {Math.round(r.score * 100)}% {t.note.similar}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <button
             onClick={() => navigate(-1)}

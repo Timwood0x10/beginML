@@ -27,8 +27,9 @@ export default function Layout() {
         }}
       />
 
-      {/* Top navigation bar — floating island per template */}
-      <nav className="hidden md:flex justify-between items-center w-[calc(100%-48px)] max-w-container-max mx-auto bg-surface-container dark:bg-dark-surface-elevated rounded-2xl px-6 py-3 mt-4 shadow-ambient dark:shadow-dark-ambient sticky top-4 z-40 border border-outline-variant/40 dark:border-white/10">
+      {/* Top navigation bar — floating island per template. Not sticky:
+          it scrolls away with the page instead of following the reader. */}
+      <nav className="hidden md:flex justify-between items-center w-[calc(100%-48px)] max-w-container-max mx-auto bg-surface-container dark:bg-dark-surface-elevated rounded-2xl px-6 py-3 mt-4 shadow-ambient dark:shadow-dark-ambient z-40 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center">
             <span className="material-symbols-outlined fill" style={{ fontSize: 20 }}>auto_stories</span>
@@ -79,7 +80,7 @@ export default function Layout() {
       </nav>
 
       {/* Mobile top bar */}
-      <div className="md:hidden flex items-center justify-between px-5 py-4 bg-surface-container dark:bg-dark-surface-elevated sticky top-0 z-40 border-b border-outline-variant/40 dark:border-white/10">
+      <div className="md:hidden flex items-center justify-between px-5 py-4 bg-surface-container dark:bg-dark-surface-elevated z-40 border-b border-outline-variant/40 dark:border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center">
             <span className="material-symbols-outlined fill" style={{ fontSize: 18 }}>auto_stories</span>

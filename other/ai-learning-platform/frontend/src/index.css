@@ -277,13 +277,21 @@ html.dark .map-tooltip {
 }
 .book-sheet.flip-next { animation: sheet-flip-next 0.95s cubic-bezier(0.4, 0.08, 0.22, 1) forwards; }
 .book-sheet.flip-prev { animation: sheet-flip-prev 0.95s cubic-bezier(0.4, 0.08, 0.22, 1) forwards; }
+/* Drag-driven flipping: the sheet follows the pointer with no easing while
+   dragging, then springs to completion (or back) with a silk transition. */
+.book-sheet.drag-live { transition: none; }
+.book-sheet.drag-settling { transition: transform 0.35s cubic-bezier(0.4, 0.08, 0.22, 1); }
+/* Both directions sweep the leaf to the left (0 -> -180deg), revealing the
+   base page underneath. The sheet's front always carries the OUTGOING page,
+   so backward jumps look like turning a leaf to expose the earlier chapter
+   rather than a confusing flicker of the old page. */
 @keyframes sheet-flip-next {
   from { transform: rotateY(0deg); }
   to   { transform: rotateY(-180deg); }
 }
 @keyframes sheet-flip-prev {
-  from { transform: rotateY(-180deg); }
-  to   { transform: rotateY(0deg); }
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
 }
 
 /* One side of the sheet. The back is the blank paper underside. */
@@ -309,12 +317,49 @@ html.dark .sheet-face {
     linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
   color: #D9CDB8;
   box-shadow:
-    0 8px 28px rgba(0,0,0,0.5),
-    0 2px 8px rgba(0,0,0,0.35),
+    0 8px 28px rgba(61,50,44,0.55),
+    0 2px 8px rgba(61,50,44,0.35),
     inset 0 0 60px rgba(0,0,0,0.25);
 }
 .sheet-face.back {
   transform: rotateY(180deg);
+  /* The back of a leaf is darker parchment — slightly shadowed, with a
+     faint mirrored texture and a hint of ink bleeding through from the
+     page that was pressed against it. */
+  background:
+    radial-gradient(120% 100% at 100% 50%, rgba(61,50,44,0.16) 0%, transparent 30%),
+    linear-gradient(135deg, #E8D8C6 0%, #E2CFB8 55%, #DCC7AC 100%);
+  box-shadow:
+    inset 0 0 60px rgba(61,50,44,0.18),
+    inset 0 0 120px rgba(61,50,44,0.06);
+}
+html.dark .sheet-face.back {
+  background:
+    radial-gradient(120% 100% at 100% 50%, rgba(0,0,0,0.45) 0%, transparent 30%),
+    linear-gradient(135deg, #211B13 0%, #1D1710 55%, #19130D 100%);
+  box-shadow:
+    inset 0 0 60px rgba(0,0,0,0.4),
+    inset 0 0 120px rgba(0,0,0,0.15);
+}
+/* Faint "ink bleeding through" marks on the paper back — like the ghost of
+   the text from the neighbouring leaf. */
+.sheet-face.back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(61,50,44,0.12) 1px, transparent 1.5px),
+    linear-gradient(120deg, transparent 20%, rgba(61,50,44,0.10) 45%, transparent 70%);
+  background-size: 34px 26px, 100% 100%;
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+html.dark .sheet-face.back::after {
+  background-image:
+    radial-gradient(rgba(0,0,0,0.35) 1px, transparent 1.5px),
+    linear-gradient(120deg, transparent 20%, rgba(0,0,0,0.3) 45%, transparent 70%);
+  background-size: 34px 26px, 100% 100%;
 }
 
 /* Paper edge — a thin bright sliver along the spine of the turning sheet. */
@@ -348,9 +393,9 @@ html.dark .book-sheet::before {
 }
 html.dark .book-sheet::after {
   background: linear-gradient(90deg,
-    rgba(0,0,0,0.0) 0%,
-    rgba(0,0,0,0.4) 38%,
-    rgba(0,0,0,0.0) 62%);
+    rgba(61,50,44,0.0) 0%,
+    rgba(61,50,44,0.45) 38%,
+    rgba(61,50,44,0.0) 62%);
 }
 .book-sheet.is-turning::after {
   opacity: 1;
@@ -379,8 +424,8 @@ html.dark .book-base {
     linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
   color: #D9CDB8;
   box-shadow:
-    0 8px 28px rgba(0,0,0,0.5),
-    0 2px 8px rgba(0,0,0,0.35),
+    0 8px 28px rgba(61,50,44,0.55),
+    0 2px 8px rgba(61,50,44,0.35),
     inset 0 0 60px rgba(0,0,0,0.25);
 }
 
@@ -398,7 +443,7 @@ html.dark .book-base {
 }
 html.dark .book-base::before,
 html.dark .sheet-face::before {
-  background: linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 55%, transparent 100%);
+  background: linear-gradient(90deg, rgba(61,50,44,0.5) 0%, rgba(61,50,44,0.15) 55%, transparent 100%);
 }
 
 /* A block too tall for one leaf (huge table/code/image) scrolls inside its
@@ -411,6 +456,35 @@ html.dark .sheet-face::before {
 }
 .book-oversize::-webkit-scrollbar { width: 6px; height: 6px; }
 .book-oversize::-webkit-scrollbar-thumb { background: #8C7A6B; border-radius: 6px; }
+
+/* ------------------------------------------------------------------ */
+/* Peel hint — the bottom-left corner gently lifts when idle, inviting  */
+/* the reader to drag.                                                 */
+/* ------------------------------------------------------------------ */
+@keyframes peel-hint {
+  0%, 68%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.9; }
+  82% { transform: translate(-2px, -6px) rotate(7deg); opacity: 1; }
+  92% { transform: translate(-1px, -3px) rotate(3deg); opacity: 0.95; }
+}
+.book-peel-hint {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 6;
+  transform-origin: bottom left;
+  animation: peel-hint 4.5s ease-in-out 1.5s infinite;
+  background: linear-gradient(135deg, #F4EAE1 42%, #DCC7AC 55%);
+  box-shadow: 1px 2px 6px rgba(61,50,44,0.28);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 70%);
+}
+html.dark .book-peel-hint {
+  background: linear-gradient(135deg, #2A2319 42%, #19130D 55%);
+  box-shadow: 1px 2px 6px rgba(0,0,0,0.4);
+}
 
 .page-dot {
   width: 7px;

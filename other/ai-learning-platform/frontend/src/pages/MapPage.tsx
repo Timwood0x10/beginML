@@ -4,6 +4,7 @@ import { api } from '../api'
 import type { MapResponse, MapPoint } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import { useI18n } from '../i18n/context'
+import { useTheme } from '../hooks/useTheme'
 
 // Natural pigment palette — antique inks from traditional painting.
 const CATEGORY_COLORS: Record<string, string> = {
@@ -23,6 +24,8 @@ interface ViewBox {
 
 export default function MapPage() {
   const { t } = useI18n()
+  const { theme } = useTheme()
+  const dark = theme === 'dark'
   const [data, setData] = useState<MapResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +38,10 @@ export default function MapPage() {
   const [dragging, setDragging] = useState(false)
   const dragRef = useRef<{ startX: number; startY: number; vx: number; vy: number; moved: boolean } | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
+  // Canvas pixel size lives in state (not just a ref) so the first data
+  // render — which happens before the ref attaches — still recomputes node
+  // coordinates once the SVG mounts, and window resizes re-layout the map.
+  const [svgSize, setSvgSize] = useState<{ w: number; h: number } | null>(null)
   const navigate = useNavigate()
 
   const load = useCallback(async () => {
@@ -79,17 +86,29 @@ export default function MapPage() {
     return best.id
   }, [points])
 
+  // Measure the canvas once it exists (it only renders after data loads).
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const measure = () => {
+      const rect = svg.getBoundingClientRect()
+      setSvgSize({ w: rect.width, h: rect.height })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(svg)
+    return () => ro.disconnect()
+  }, [data])
+
   // Coordinate transforms — data space [-1.2, 1.2] -> SVG pixel space
   const toSvg = useCallback(
     (px: number, py: number) => {
-      const svg = svgRef.current
-      if (!svg) return { x: 0, y: 0 }
-      const rect = svg.getBoundingClientRect()
-      const x = ((px - view.x) / view.w) * rect.width
-      const y = ((py - view.y) / view.h) * rect.height
+      if (!svgSize) return { x: 0, y: 0 }
+      const x = ((px - view.x) / view.w) * svgSize.w
+      const y = ((py - view.y) / view.h) * svgSize.h
       return { x, y }
     },
-    [view],
+    [view, svgSize],
   )
 
   // --- pan handlers ---
@@ -281,11 +300,17 @@ export default function MapPage() {
                 if (dist > 0.45) return null
                 const b = toSvg(q.x, q.y)
                 const touchesHover = hover && (hover.id === p.id || hover.id === q.id)
-                const baseOpacity = Math.max(0.06, 0.32 - dist * 0.55)
+                // Base opacity lifted in dark mode where the paper is dark
+                // and faint strokes vanish against it.
+                const floor = dark ? 0.24 : 0.06
+                const baseOpacity = Math.max(floor, (dark ? 0.66 : 0.32) - dist * 0.55)
                 // Hover: related strokes turn into dark ink; the rest fade
-                // like strokes worn away by age.
-                const opacity = touchesHover ? 0.85 : hover ? baseOpacity * 0.4 : baseOpacity
-                const color = touchesHover ? '#3D322C' : '#6E5D4F'
+                // like strokes worn away by age. In dark mode use warm cream
+                // ink so edges stay visible on the dark parchment.
+                const opacity = touchesHover ? 0.95 : hover ? baseOpacity * 0.45 : baseOpacity
+                const color = touchesHover
+                  ? (dark ? '#F8F2E4' : '#3D322C')
+                  : (dark ? '#E4D8BD' : '#6E5D4F')
                 return (
                   <line
                     key={`${p.id}-${q.id}`}
@@ -295,7 +320,7 @@ export default function MapPage() {
                     y2={b.y}
                     stroke={color}
                     strokeOpacity={opacity}
-                    strokeWidth={touchesHover ? 1.6 : 1.1}
+                    strokeWidth={touchesHover ? 1.7 : dark ? 1.3 : 1.1}
                     strokeDasharray="4 2.5"
                     className="map-ink-line transition-all duration-300"
                   />
