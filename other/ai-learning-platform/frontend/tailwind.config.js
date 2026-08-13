@@ -85,6 +85,7 @@ export default {
         headline: ['Literata', 'serif'],
         body: ['Manrope', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        codex: ['"Playfair Display"', 'Garamond', 'Georgia', 'serif'],
       },
       fontSize: {
         'headline-xl': ['48px', { lineHeight: '56px', letterSpacing: '-0.02em', fontWeight: '700' }],

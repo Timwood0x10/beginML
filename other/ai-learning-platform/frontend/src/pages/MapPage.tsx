@@ -5,12 +5,13 @@ import type { MapResponse, MapPoint } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import { useI18n } from '../i18n/context'
 
+// Natural pigment palette — antique inks from traditional painting.
 const CATEGORY_COLORS: Record<string, string> = {
-  math: '#C8604A',
-  attention: '#5B6BB0',
-  hybrid: '#8B6BB0',
-  paper: '#4A90A0',
-  general: '#8a8376',
+  math: '#2B4C6F',       // lapis lazuli / stone blue
+  attention: '#A8382A',  // vermilion / cinnabar red
+  hybrid: '#C88A35',     // orpiment / amber yellow
+  paper: '#3A6B58',      // malachite / dark turquoise
+  general: '#3D322C',    // concentrated ink / dark tea
 }
 
 interface ViewBox {
@@ -31,6 +32,7 @@ export default function MapPage() {
 
   // Pan & zoom state (viewBox in data units)
   const [view, setView] = useState<ViewBox>({ x: -1.4, y: -1.3, w: 2.8, h: 2.6 })
+  const [dragging, setDragging] = useState(false)
   const dragRef = useRef<{ startX: number; startY: number; vx: number; vy: number; moved: boolean } | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
   const navigate = useNavigate()
@@ -62,6 +64,21 @@ export default function MapPage() {
     return data.points.filter((p) => p.category !== activeCat)
   }, [data, activeCat])
 
+  // The node nearest the map centre wears the double hand-drawn ring.
+  const centerId = useMemo(() => {
+    if (points.length === 0) return null
+    let best = points[0]
+    let bestDist = Infinity
+    for (const p of points) {
+      const d = Math.hypot(p.x, p.y)
+      if (d < bestDist) {
+        bestDist = d
+        best = p
+      }
+    }
+    return best.id
+  }, [points])
+
   // Coordinate transforms — data space [-1.2, 1.2] -> SVG pixel space
   const toSvg = useCallback(
     (px: number, py: number) => {
@@ -79,6 +96,7 @@ export default function MapPage() {
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if ((e.target as Element).closest('[data-point]')) return
     ;(e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId)
+    setDragging(true)
     dragRef.current = { startX: e.clientX, startY: e.clientY, vx: view.x, vy: view.y, moved: false }
   }
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -99,6 +117,7 @@ export default function MapPage() {
   }
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     dragRef.current = null
+    setDragging(false)
     try {
       ;(e.currentTarget as SVGSVGElement).releasePointerCapture(e.pointerId)
     } catch {
@@ -130,7 +149,7 @@ export default function MapPage() {
   return (
     <div className="flex flex-col gap-6 pt-2">
       <header className="flex flex-col gap-3">
-        <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface">
+        <h1 className="font-codex text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface tracking-tight">
           {t.map.title}
         </h1>
         <p className="text-body-lg text-on-surface-variant dark:text-outline max-w-3xl leading-relaxed">
@@ -173,18 +192,87 @@ export default function MapPage() {
           onWheel={onWheel}
         >
           <defs>
-            <pattern id="map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-outline-variant/40 dark:text-white/5" />
+            {/* Parchment canvas — warm aged-paper gradient */}
+            <linearGradient id="parchment-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#F4EAE1" />
+              <stop offset="55%" stopColor="#EEDFD0" />
+              <stop offset="100%" stopColor="#E8D8C8" />
+            </linearGradient>
+            <linearGradient id="parchment-grad-dark" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#2A2319" />
+              <stop offset="55%" stopColor="#241E16" />
+              <stop offset="100%" stopColor="#1E1913" />
+            </linearGradient>
+            {/* Fibre texture — faint vertical/horizontal paper strands */}
+            <pattern id="fibre-pattern" width="160" height="160" patternUnits="userSpaceOnUse">
+              <path d="M0 40 C 40 30, 80 50, 160 38" fill="none" stroke="#C9B79F" strokeWidth="0.4" strokeOpacity="0.25" />
+              <path d="M0 110 C 60 100, 100 120, 160 108" fill="none" stroke="#C9B79F" strokeWidth="0.3" strokeOpacity="0.2" />
+              <path d="M40 0 C 30 40, 50 80, 38 160" fill="none" stroke="#C9B79F" strokeWidth="0.35" strokeOpacity="0.22" />
+              <path d="M110 0 C 100 60, 120 100, 108 160" fill="none" stroke="#C9B79F" strokeWidth="0.3" strokeOpacity="0.18" />
             </pattern>
+            {/* Vignette — dark corners like a map laid on a table */}
+            <radialGradient id="parchment-vignette" cx="50%" cy="50%" r="72%">
+              <stop offset="62%" stopColor="#000000" stopOpacity="0" />
+              <stop offset="100%" stopColor="#3D322C" stopOpacity="0.22" />
+            </radialGradient>
+            <radialGradient id="parchment-vignette-dark" cx="50%" cy="50%" r="72%">
+              <stop offset="62%" stopColor="#000000" stopOpacity="0" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
+            </radialGradient>
+            {/* Old glow kept for the seal ring only (very subtle) */}
             <radialGradient id="map-glow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.15" />
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.12" />
               <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
             </radialGradient>
           </defs>
 
-          <rect x="0" y="0" width="100%" height="100%" fill="url(#map-grid)" />
+          {/* Parchment base */}
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#parchment-grad)" className="dark:opacity-0" />
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#parchment-grad-dark)" className="hidden dark:block" />
 
-          {/* Connection lines between very-similar notes */}
+          {/* Rhumb lines — compass rose / portolan circles, faint ink */}
+          <g className={`map-compass ${dragging ? 'dragging' : ''}`}>
+            <g className="text-[#8C7A6B] dark:text-[#8C7A6B]" opacity="0.15">
+              {[1, 2, 3, 4, 5].map((k) => (
+                <circle
+                  key={`rhumb-${k}`}
+                  cx="50%"
+                  cy="50%"
+                  r={`${k * 12}%`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="0.6"
+                  strokeDasharray="3 4"
+                />
+              ))}
+              {Array.from({ length: 16 }).map((_, i) => {
+                const angle = (i / 16) * Math.PI * 2
+                const len = 62
+                return (
+                  <line
+                    key={`ray-${i}`}
+                    x1="50%"
+                    y1="50%"
+                    x2={`${50 + Math.cos(angle) * len}%`}
+                    y2={`${50 + Math.sin(angle) * len}%`}
+                    stroke="currentColor"
+                    strokeWidth="0.4"
+                    strokeDasharray="2 5"
+                  />
+                )
+              })}
+              <circle cx="50%" cy="50%" r="1.2%" fill="currentColor" />
+            </g>
+          </g>
+
+          {/* Fibre texture over the base */}
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#fibre-pattern)" className="dark:opacity-0" />
+
+          {/* Vignette on top of everything */}
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#parchment-vignette)" className="dark:opacity-0" pointerEvents="none" />
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#parchment-vignette-dark)" className="hidden dark:block" pointerEvents="none" />
+
+          {/* Connection lines — faint hand-drawn ink strokes (portolan style) */}
           <g>
             {points.map((p, i) => {
               const a = toSvg(p.x, p.y)
@@ -192,7 +280,12 @@ export default function MapPage() {
                 const dist = Math.hypot(p.x - q.x, p.y - q.y)
                 if (dist > 0.45) return null
                 const b = toSvg(q.x, q.y)
-                const opacity = Math.max(0.05, 0.35 - dist * 0.6)
+                const touchesHover = hover && (hover.id === p.id || hover.id === q.id)
+                const baseOpacity = Math.max(0.06, 0.32 - dist * 0.55)
+                // Hover: related strokes turn into dark ink; the rest fade
+                // like strokes worn away by age.
+                const opacity = touchesHover ? 0.85 : hover ? baseOpacity * 0.4 : baseOpacity
+                const color = touchesHover ? '#3D322C' : '#6E5D4F'
                 return (
                   <line
                     key={`${p.id}-${q.id}`}
@@ -200,9 +293,11 @@ export default function MapPage() {
                     y1={a.y}
                     x2={b.x}
                     y2={b.y}
-                    stroke={CATEGORY_COLORS[p.category] ?? '#8a8376'}
+                    stroke={color}
                     strokeOpacity={opacity}
-                    strokeWidth={1}
+                    strokeWidth={touchesHover ? 1.6 : 1.1}
+                    strokeDasharray="4 2.5"
+                    className="map-ink-line transition-all duration-300"
                   />
                 )
               })
@@ -224,17 +319,22 @@ export default function MapPage() {
             )
           })}
 
-          {/* Active points */}
+          {/* Active points — hand-drawn ink dots / wax-seal stamps */}
           {points.map((p) => {
             const { x, y } = toSvg(p.x, p.y)
-            const color = CATEGORY_COLORS[p.category] ?? '#8a8376'
+            const color = CATEGORY_COLORS[p.category] ?? '#3D322C'
             const isHovered = hover?.id === p.id
             const r = 5 + Math.min(8, p.readingTime / 4)
+            // The node nearest the map centre gets a double hand-drawn ring.
+            const isCenter = p.id === centerId
+            // Non-hovered nodes fade when something else is inspected.
+            const faded = hover && !isHovered
             return (
               <g
                 key={p.id}
                 data-point
-                className="cursor-pointer"
+                className={`map-ink-node cursor-pointer ${faded ? 'map-node-faded' : ''}`}
+                style={{ animationDelay: `${(p.readingTime % 10) * 60}ms` }}
                 onPointerEnter={() => setHover(p)}
                 onPointerLeave={() => setHover((h) => (h?.id === p.id ? null : h))}
                 onPointerUp={(e) => {
@@ -243,19 +343,30 @@ export default function MapPage() {
                   navigate(`/note/${p.id}`)
                 }}
               >
+                {/* faint halo only while hovering (ink dampened on the paper) */}
                 {isHovered && (
-                  <circle cx={x} cy={y} r={r + 10} fill={color} opacity={0.18} />
+                  <circle cx={x} cy={y} r={r + 8} fill={color} opacity={0.14} />
                 )}
+                {/* seal dot — pigment fill with a parchment edge like a cut-out */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isHovered ? r + 2 : r}
+                  r={isHovered ? r + 1.5 : r}
                   fill={color}
-                  stroke="white"
-                  strokeWidth={2}
-                  className="dark:stroke-dark-surface transition-all"
-                  style={{ filter: isHovered ? `drop-shadow(0 4px 8px ${color}66)` : undefined }}
+                  fillOpacity={isHovered ? 1 : 0.88}
+                  stroke="#F4EAE1"
+                  strokeWidth={1.4}
+                  className="dark:stroke-[#1E1913] transition-all duration-200"
                 />
+                {/* ink pooling — a deeper pigment core */}
+                <circle cx={x} cy={y} r={Math.max(1.6, r * 0.42)} fill={color} fillOpacity={1} />
+                {/* double hand-drawn ring on the centre node */}
+                {isCenter && (
+                  <>
+                    <circle cx={x} cy={y} r={r + 4.5} fill="none" stroke={color} strokeWidth={0.8} strokeDasharray="2.5 2" opacity={0.55} />
+                    <circle cx={x} cy={y} r={r + 8} fill="none" stroke={color} strokeWidth={0.5} strokeDasharray="1 3.5" opacity={0.3} />
+                  </>
+                )}
                 {/* invisible hit area */}
                 <circle cx={x} cy={y} r={Math.max(r + 6, 14)} fill="transparent" />
               </g>
@@ -263,20 +374,20 @@ export default function MapPage() {
           })}
         </svg>
 
-        {/* Hover tooltip */}
+        {/* Hover tooltip — a scrap of parchment pinned beside the map */}
         {hover && mouse && (
           <div
-            className="pointer-events-none absolute z-20 bg-inverse-surface text-inverse-on-surface rounded-xl px-4 py-3 shadow-ambient-lg max-w-xs"
+            className="map-tooltip pointer-events-none absolute z-20 rounded-lg px-4 py-3 max-w-xs"
             style={{ left: mouse.x + 16, top: mouse.y + 16 }}
           >
             <div className="flex items-center gap-2 mb-1">
               <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ background: CATEGORY_COLORS[hover.category] ?? '#8a8376' }}
+                className="w-2 h-2"
+                style={{ background: CATEGORY_COLORS[hover.category] ?? '#3D322C', borderRadius: '1px' }}
               />
               <span className="text-caption uppercase tracking-wider opacity-70">{hover.category}</span>
             </div>
-            <div className="font-headline text-base font-semibold leading-snug">{hover.title}</div>
+            <div className="font-codex text-base font-semibold leading-snug">{hover.title}</div>
             <div className="text-caption opacity-80 mt-1 inline-flex items-center gap-1">
               <span className="material-symbols-outlined" style={{ fontSize: 13 }}>schedule</span>
               {hover.readingTime} {t.common.minutes} · {t.map.open}
@@ -292,6 +403,24 @@ export default function MapPage() {
       </div>
     </div>
   )
+}
+
+function toRoman(n: number): string {
+  if (n <= 0 || n >= 4000) return String(n)
+  const table: [number, string][] = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ]
+  let out = ''
+  let v = n
+  for (const [num, sym] of table) {
+    while (v >= num) {
+      out += sym
+      v -= num
+    }
+  }
+  return out
 }
 
 function LegendPill({
@@ -310,20 +439,25 @@ function LegendPill({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-label-md font-semibold border transition-all ${
+      className={`font-codex inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-label-md font-semibold transition-all ${
         active
-          ? 'border-transparent text-on-surface dark:text-dark-on-surface shadow-sm'
-          : 'bg-surface-container-lowest dark:bg-dark-surface-elevated text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/40'
+          ? 'bg-[#C9B79F] text-[#3D322C] shadow-[0_1px_2px_rgba(61,50,44,0.25)]'
+          : 'bg-[#EAE0D3] dark:bg-[#2A2319] text-[#6E5D4F] dark:text-[#C9BCA6] hover:bg-[#E0D3C0] dark:hover:bg-[#332B20]'
       }`}
-      style={active ? { backgroundColor: color, color: '#fff' } : undefined}
+      style={{
+        border: '1px solid #7A6858',
+        boxShadow: active
+          ? '0 1px 2px rgba(61,50,44,0.25), inset 0 0 0 1px #7A6858'
+          : '1px 1px 3px rgba(0,0,0,0.05), inset 0 0 0 1px #C9B79F',
+      }}
     >
       <span
-        className="w-2.5 h-2.5 rounded-full"
-        style={{ background: active ? 'rgba(255,255,255,0.85)' : color }}
+        className="w-2 h-2"
+        style={{ background: active ? '#3D322C' : color, borderRadius: '1px' }}
       />
       {label}
-      <span className={`px-1.5 py-0.5 rounded-full text-caption ${active ? 'bg-white/20' : 'bg-surface-variant dark:bg-white/10'}`}>
-        {count}
+      <span className={`px-1.5 py-0.5 rounded-sm text-caption ${active ? 'bg-white/30' : 'bg-[#D8C8B0] dark:bg-white/10'}`}>
+        {toRoman(count)}
       </span>
     </button>
   )
