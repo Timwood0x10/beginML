@@ -1,17 +1,19 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
-
-const navItems = [
-  { to: '/', label: 'Roadmap', icon: 'space_dashboard', end: true },
-  { to: '/browse', label: 'Library', icon: 'menu_book' },
-  { to: '/path', label: 'Learning Path', icon: 'route' },
-  { to: '/map', label: 'Knowledge Map', icon: 'hub' },
-  { to: '/lab', label: 'Math Lab', icon: 'science' },
-]
+import { useI18n } from '../i18n/context'
 
 export default function Layout() {
   const { theme, toggle } = useTheme()
+  const { lang, toggleLang, t } = useI18n()
   const location = useLocation()
+
+  const navItems = [
+    { to: '/', label: t.nav.roadmap, icon: 'space_dashboard', end: true },
+    { to: '/browse', label: t.nav.library, icon: 'menu_book' },
+    { to: '/path', label: t.nav.path, icon: 'route' },
+    { to: '/map', label: t.nav.map, icon: 'hub' },
+    { to: '/lab', label: t.nav.lab, icon: 'science' },
+  ]
 
   return (
     <div className="min-h-screen flex flex-col bg-surface dark:bg-dark-surface text-on-surface dark:text-dark-on-surface relative overflow-x-hidden">
@@ -58,6 +60,13 @@ export default function Layout() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={toggleLang}
+            aria-label="Switch language"
+            className="h-10 px-3 rounded-full flex items-center justify-center text-label-md font-semibold text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5 transition-colors"
+          >
+            {lang === 'zh' ? 'EN' : '中文'}
+          </button>
+          <button
             onClick={toggle}
             aria-label="Toggle theme"
             className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5 transition-colors"
@@ -77,14 +86,23 @@ export default function Layout() {
           </div>
           <span className="font-headline font-bold text-lg">AIScope</span>
         </div>
-        <button
-          onClick={toggle}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
-            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-          </span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleLang}
+            aria-label="Switch language"
+            className="h-9 px-2.5 rounded-full flex items-center justify-center text-label-md font-semibold text-on-surface-variant dark:text-outline"
+          >
+            {lang === 'zh' ? 'EN' : '中文'}
+          </button>
+          <button
+            onClick={toggle}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Mobile bottom nav */}

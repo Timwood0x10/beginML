@@ -3,42 +3,15 @@ import { Link } from 'react-router-dom'
 import { api } from '../api'
 import type { NotesResponse, Note } from '../types'
 import { Spinner, ErrorState } from '../components/States'
+import { useI18n } from '../i18n/context'
 
 const CATEGORY_ORDER = ['math', 'attention', 'hybrid', 'paper', 'general']
-const CATEGORY_META: Record<
-  string,
-  { phase: string; title: string; blurb: string; icon: string }
-> = {
-  math: {
-    phase: 'Phase I',
-    title: 'Mathematical foundations',
-    blurb: 'Calculus, linear algebra, probability and optimization — the bedrock beneath every model.',
-    icon: 'functions',
-  },
-  attention: {
-    phase: 'Phase II',
-    title: 'Self-attention & Transformers',
-    blurb: 'From scaled dot-product attention to multi-head, encoders, decoders and RoPE.',
-    icon: 'psychology',
-  },
-  hybrid: {
-    phase: 'Phase III',
-    title: 'Hybrid & frontier architectures',
-    blurb: 'MoE, Mamba/SSMs, MLA, MTP, quantization and post-Transformer reasoning.',
-    icon: 'bolt',
-  },
-  paper: {
-    phase: 'Phase IV',
-    title: 'Research close-readings',
-    blurb: 'Annotated papers and empirical studies, read alongside the foundations.',
-    icon: 'description',
-  },
-  general: {
-    phase: 'Reference',
-    title: 'General notes',
-    blurb: 'Foundational overviews and reference material.',
-    icon: 'article',
-  },
+const CATEGORY_ICONS: Record<string, string> = {
+  math: 'functions',
+  attention: 'psychology',
+  hybrid: 'bolt',
+  paper: 'description',
+  general: 'article',
 }
 
 function pathKey(note: Note): string {
@@ -48,6 +21,7 @@ function pathKey(note: Note): string {
 }
 
 export default function PathPage() {
+  const { t } = useI18n()
   const [data, setData] = useState<NotesResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -77,12 +51,13 @@ export default function PathPage() {
         pathKey(a).localeCompare(pathKey(b), undefined, { numeric: true }),
       )
       const minutes = notes.reduce((s, n) => s + n.readingTime, 0)
-      return { id, meta: CATEGORY_META[id] ?? CATEGORY_META.general, notes, minutes }
+      const meta = t.path.phases[id] ?? t.path.phases.general
+      return { id, meta: { ...meta, icon: CATEGORY_ICONS[id] ?? 'article' }, notes, minutes }
     })
-  }, [data])
+  }, [data, t])
 
-  if (loading) return <Spinner label="Laying out your learning path…" />
-  if (error || !data) return <ErrorState message={error ?? 'Failed to load path.'} />
+  if (loading) return <Spinner label={t.common.loading} />
+  if (error || !data) return <ErrorState message={error ?? t.common.loading} />
 
   const totalMinutes = phases.reduce((s, p) => s + p.minutes, 0)
 
@@ -91,14 +66,13 @@ export default function PathPage() {
       <header className="flex flex-col gap-3">
         <span className="inline-flex items-center gap-2 self-start text-caption font-semibold uppercase tracking-[0.15em] text-primary dark:text-inverse-primary">
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>route</span>
-          Guided curriculum
+          {t.path.badge}
         </span>
         <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface max-w-3xl">
-          A deliberate path through the notes
+          {t.path.title}
         </h1>
         <p className="font-body-lg text-on-surface-variant dark:text-outline max-w-2xl leading-relaxed">
-          {data.total} notes arranged in four phases — foundations first, then architectures, then
-          the frontier. Roughly {Math.round(totalMinutes / 60)} hours of focused reading.
+          {data.total} {t.home.notes} · {t.path.subtitle}
         </p>
       </header>
 
@@ -180,7 +154,7 @@ export default function PathPage() {
                         </h3>
                         {isCurrent && (
                           <span className="px-2 py-0.5 rounded-full text-caption font-semibold bg-primary/10 text-primary dark:bg-inverse-primary/15 dark:text-inverse-primary">
-                            Start here
+                            {t.path.startHere}
                           </span>
                         )}
                       </div>
@@ -192,11 +166,11 @@ export default function PathPage() {
                       <div className="flex items-center gap-3 mt-2 text-caption text-outline">
                         <span className="inline-flex items-center gap-1">
                           <span className="material-symbols-outlined" style={{ fontSize: 13 }}>schedule</span>
-                          {note.readingTime} min
+                          {note.readingTime} {t.common.minutes}
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <span className="material-symbols-outlined" style={{ fontSize: 13 }}>subject</span>
-                          {note.wordCount.toLocaleString()} words
+                          {note.wordCount.toLocaleString()} {t.home.words}
                         </span>
                       </div>
                     </div>

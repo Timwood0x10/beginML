@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import type { Note } from '../types'
 import CategoryBadge from './CategoryBadge'
+import { useI18n } from '../i18n/context'
 
 export default function NoteCard({ note }: { note: Note }) {
+  const { t } = useI18n()
   return (
     <Link
       to={`/note/${note.id}`}
@@ -12,7 +14,7 @@ export default function NoteCard({ note }: { note: Note }) {
         <CategoryBadge category={note.category} />
         <span className="inline-flex items-center gap-1 text-caption text-on-surface-variant dark:text-outline">
           <span className="material-symbols-outlined" style={{ fontSize: 14 }}>schedule</span>
-          {note.readingTime} min
+          {note.readingTime} {t.common.minutes}
         </span>
       </div>
 
@@ -25,10 +27,10 @@ export default function NoteCard({ note }: { note: Note }) {
 
       <div className="flex items-center justify-between pt-3 border-t border-outline-variant/50 dark:border-white/10">
         <span className="text-caption text-on-surface-variant dark:text-outline">
-          {note.wordCount.toLocaleString()} words
+          {note.wordCount.toLocaleString()} {t.home.words}
         </span>
         <span className="inline-flex items-center gap-1 text-label-md text-primary dark:text-inverse-primary font-semibold opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all">
-          Read
+          {t.common.read}
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
         </span>
       </div>

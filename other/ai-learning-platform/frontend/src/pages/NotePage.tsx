@@ -1,38 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import katex from 'katex'
-import 'katex/dist/katex.min.css'
 import { api } from '../api'
 import type { NoteDetail, Heading } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import CategoryBadge from '../components/CategoryBadge'
+import { useI18n } from '../i18n/context'
 
-// KaTeX auto-render is a separate UMD script shipped with the katex package.
-// Load its type definition loosely; the module self-registers on the katex object.
-// @ts-expect-error -- no bundled types for the contrib entry
-import renderMathInElement from 'katex/dist/contrib/auto-render.mjs'
-
-/**
- * Typeset all math in `root` using KaTeX auto-render. The backend wraps math
- * via pymdownx-arithmatex in \(...\) / \[...\]; we also accept $...$ so any
- * math the markdown layer left untouched still renders.
- */
-function typesetMath(root: HTMLElement) {
-  renderMathInElement(root, {
-    delimiters: [
-      { left: '$$', right: '$$', display: true },
-      { left: '\\[', right: '\\]', display: true },
-      { left: '\\(', right: '\\)', display: false },
-      { left: '$', right: '$', display: false },
-    ],
-    throwOnError: false,
-    output: 'html',
-    strict: false,
-    // Skip code elements so dollar signs in code are not treated as math.
-    ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-  })
-  void katex
-}
+// Math is rendered server-side as MathML by the backend (latex2mathml) and
+// rendered natively by the browser — no frontend math library needed.
 
 function slugify(text: string): string {
   return text
@@ -43,6 +18,7 @@ function slugify(text: string): string {
 }
 
 export default function NotePage() {
+  const { lang, t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [note, setNote] = useState<NoteDetail | null>(null)
@@ -56,7 +32,7 @@ export default function NotePage() {
     setLoading(true)
     setError(null)
     try {
-      const detail = await api.note(id)
+      const detail = await api.note(id, lang)
       setNote(detail)
       window.scrollTo({ top: 0 })
     } catch (e) {
@@ -64,7 +40,7 @@ export default function NotePage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, lang])
 
   useEffect(() => {
     load()
@@ -83,7 +59,6 @@ export default function NotePage() {
       a.setAttribute('target', '_blank')
       a.setAttribute('rel', 'noopener noreferrer')
     })
-    typesetMath(root)
   }, [note])
 
   // Scroll-spy for the TOC
@@ -127,11 +102,11 @@ export default function NotePage() {
           className="inline-flex items-center gap-1 hover:text-primary dark:hover:text-inverse-primary transition-colors font-semibold"
         >
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_back</span>
-          Back
+          {t.common.back}
         </button>
         <span className="text-outline-variant dark:text-white/20">/</span>
         <Link to="/browse" className="hover:text-primary dark:hover:text-inverse-primary transition-colors">
-          Library
+          {t.nav.library}
         </Link>
         <span className="text-outline-variant dark:text-white/20">/</span>
         <span className="text-on-surface dark:text-dark-on-surface truncate max-w-[50vw]">{note.title}</span>
@@ -145,11 +120,11 @@ export default function NotePage() {
               <CategoryBadge category={note.category} size="md" />
               <span className="inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline">
                 <span className="material-symbols-outlined" style={{ fontSize: 15 }}>schedule</span>
-                {note.readingTime} min read
+                {note.readingTime} {t.note.minRead}
               </span>
               <span className="inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline">
                 <span className="material-symbols-outlined" style={{ fontSize: 15 }}>subject</span>
-                {note.wordCount.toLocaleString()} words
+                {note.wordCount.toLocaleString()} {t.home.words}
               </span>
             </div>
             <h1 className="font-headline text-3xl md:text-4xl font-bold text-on-surface dark:text-inverse-on-surface leading-tight">
@@ -175,7 +150,7 @@ export default function NotePage() {
             <div className="lg:sticky lg:top-28 bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
               <div className="flex items-center gap-2 mb-3 text-on-surface dark:text-dark-on-surface">
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>list</span>
-                <h4 className="font-label-md text-label-md uppercase tracking-wider">Contents</h4>
+                <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.contents}</h4>
               </div>
               <nav className="flex flex-col">
                 {toc.map((h) => (
@@ -197,7 +172,7 @@ export default function NotePage() {
             <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
               <div className="flex items-center gap-2 mb-4 text-on-surface dark:text-dark-on-surface">
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>hub</span>
-                <h4 className="font-label-md text-label-md uppercase tracking-wider">Related notes</h4>
+                <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.related}</h4>
               </div>
               <div className="flex flex-col gap-1">
                 {note.related.map((r) => (
@@ -210,10 +185,10 @@ export default function NotePage() {
                       {r.title}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-caption text-outline">{r.category.en}</span>
+                      <span className="text-caption text-outline">{t.home.categoryNames[r.category.id] ?? r.category.en}</span>
                       {typeof r.score === 'number' && (
                         <span className="text-caption text-outline">
-                          · {Math.round(r.score * 100)}% similar
+                          · {Math.round(r.score * 100)}% {t.note.similar}
                         </span>
                       )}
                     </div>
@@ -228,7 +203,7 @@ export default function NotePage() {
             className="lg:hidden w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-surface-container dark:bg-dark-surface-elevated border border-outline-variant/60 dark:border-white/10 font-label-md text-label-md text-on-surface dark:text-dark-on-surface"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_back</span>
-            Back to library
+            {t.note.backToLibrary}
           </button>
         </aside>
       </div>

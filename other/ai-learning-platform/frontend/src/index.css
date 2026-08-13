@@ -168,6 +168,30 @@ html.dark .prose-ailearn hr { border-top-color: #54483A; }
 .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.5em 0; }
 .prose-ailearn .arithmatex { font-size: 1.02em; }
 
+/* Native MathML rendering (server-side latex2mathml) */
+.prose-ailearn math {
+  font-size: 1.05em;
+}
+.prose-ailearn math[display="block"] {
+  display: block;
+  text-align: center;
+  margin: 1.2em auto;
+  overflow-x: auto;
+}
+.prose-ailearn .ailearn-math-error {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: #F5D9CE;
+  color: #5C1D12;
+  padding: 0.1em 0.4em;
+  border-radius: 0.35rem;
+}
+html.dark .prose-ailearn .ailearn-math-error {
+  background: #4A2A20;
+  color: #E9B8B2;
+}
+
 /* TOC sidebar links */
 .toc-link {
   display: block;

@@ -4,6 +4,7 @@ import { api } from '../api'
 import type { Note, StatsResponse } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import CategoryBadge from '../components/CategoryBadge'
+import { useI18n } from '../i18n/context'
 
 const CATEGORY_ICONS: Record<string, string> = {
   math: 'functions',
@@ -13,15 +14,8 @@ const CATEGORY_ICONS: Record<string, string> = {
   general: 'article',
 }
 
-const CATEGORY_BLURBS: Record<string, string> = {
-  math: 'Calculus, linear algebra, optimization & the geometry of deep learning.',
-  attention: 'Self-attention, multi-head, encoders, decoders, RoPE & inference.',
-  hybrid: 'MoE, Mamba, MLA, quantization and the post-Transformer frontier.',
-  paper: 'Annotated research papers and close readings.',
-  general: 'Foundational notes across the AI landscape.',
-}
-
 export default function HomePage() {
+  const { t } = useI18n()
   const [stats, setStats] = useState<StatsResponse | null>(null)
   const [recent, setRecent] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,8 +46,8 @@ export default function HomePage() {
     load()
   }, [])
 
-  if (loading) return <Spinner label="Indexing your notes…" />
-  if (error || !stats) return <ErrorState message={error ?? 'Failed to load.'} onRetry={load} />
+  if (loading) return <Spinner label={t.common.loading} />
+  if (error || !stats) return <ErrorState message={error ?? t.common.loading} onRetry={load} />
 
   const totalHours = Math.round(stats.totalReadingMinutes / 60)
 
@@ -63,15 +57,14 @@ export default function HomePage() {
       <header className="flex flex-col gap-4 pt-2 md:pt-6">
         <span className="inline-flex items-center gap-2 self-start text-caption font-semibold uppercase tracking-[0.15em] text-primary dark:text-inverse-primary">
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>auto_awesome</span>
-          Your personal knowledge atlas
+          {t.home.badge}
         </span>
         <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface max-w-3xl leading-tight">
-          A quiet library for{' '}
-          <span className="italic text-primary dark:text-inverse-primary">deep understanding</span>.
+          {t.home.title1}{' '}
+          <span className="italic text-primary dark:text-inverse-primary">{t.home.title2}</span>
         </h1>
         <p className="font-body-lg text-body-lg text-on-surface-variant dark:text-outline max-w-2xl leading-relaxed">
-          {stats.totalNotes} interactive notes on the mathematics, architecture and frontiers of
-          modern AI — searchable, interconnected, and mapped with scikit-learn.
+          {stats.totalNotes} {t.home.subtitle}
         </p>
 
         <div className="flex flex-wrap gap-3 mt-2">
@@ -80,24 +73,24 @@ export default function HomePage() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface font-label-md shadow-ambient hover:opacity-90 transition"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>menu_book</span>
-            Browse the library
+            {t.home.browseCta}
           </Link>
           <Link
             to="/map"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-surface-container dark:bg-dark-surface-elevated text-on-surface dark:text-dark-on-surface border border-outline-variant/60 dark:border-white/10 font-label-md hover:bg-surface-container-high transition"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>hub</span>
-            Open the knowledge map
+            {t.home.mapCta}
           </Link>
         </div>
       </header>
 
       {/* Stat cards */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon="description" value={stats.totalNotes.toString()} label="Notes" />
-        <StatCard icon="schedule" value={`${totalHours}h`} label="Reading time" />
-        <StatCard icon="category" value={stats.categories.length.toString()} label="Subjects" />
-        <StatCard icon="functions" value={`${(stats.totalWords / 1000).toFixed(1)}k`} label="Words" />
+        <StatCard icon="description" value={stats.totalNotes.toString()} label={t.home.notes} />
+        <StatCard icon="schedule" value={`${totalHours}h`} label={t.home.readingTime} />
+        <StatCard icon="category" value={stats.categories.length.toString()} label={t.home.subjects} />
+        <StatCard icon="functions" value={`${(stats.totalWords / 1000).toFixed(1)}k`} label={t.home.words} />
       </section>
 
       {/* Roadmap nodes — mirrors templates/learning_roadmap */}
@@ -105,17 +98,17 @@ export default function HomePage() {
         <div className="flex items-end justify-between mb-6">
           <div>
             <h2 className="font-headline text-headline-lg-mobile text-on-surface dark:text-inverse-on-surface">
-              Your learning journey
+              {t.home.journey}
             </h2>
             <p className="text-body-md text-on-surface-variant dark:text-outline mt-1">
-              Follow the path from first principles to frontier architectures.
+              {t.home.journeyDesc}
             </p>
           </div>
           <Link
             to="/path"
             className="hidden md:inline-flex items-center gap-1 text-label-md text-primary dark:text-inverse-primary font-semibold hover:opacity-80"
           >
-            Full path
+            {t.home.fullPath}
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
           </Link>
         </div>
@@ -124,7 +117,7 @@ export default function HomePage() {
           <div className="hidden md:block absolute top-[5.5rem] left-0 right-0 h-px bg-outline-variant dark:bg-white/10 -z-0" />
 
           {stats.categories.slice(0, 4).map((cat, i) => {
-            const status = i === 0 ? 'Start here' : i === 1 ? 'Up next' : 'Explore'
+            const status = i === 0 ? t.home.startHere : i === 1 ? t.home.upNext : t.home.explore
             const accent = i === 0
             return (
               <Link
@@ -163,17 +156,17 @@ export default function HomePage() {
                 </div>
                 <div className="relative">
                   <h3 className="font-headline text-headline-lg-mobile text-on-surface dark:text-inverse-on-surface mb-1.5">
-                    {cat.en}
+                    {t.home.categoryNames[cat.id] ?? cat.en}
                   </h3>
                   <p className="text-body-md text-on-surface-variant dark:text-outline leading-relaxed">
-                    {CATEGORY_BLURBS[cat.id] ?? 'A collection of curated notes.'}
+                    {t.home.categoryBlurbs[cat.id] ?? t.home.categoryBlurbs.general}
                   </p>
                 </div>
                 <div className="mt-auto relative">
                   <div className="flex justify-between text-caption text-on-surface-variant dark:text-outline mb-2">
-                    <span>{cat.count} notes</span>
+                    <span>{cat.count} {t.home.notes}</span>
                     <span className="inline-flex items-center gap-1 text-primary dark:text-inverse-primary font-semibold opacity-0 group-hover:opacity-100 transition">
-                      Open
+                      {t.home.open}
                       <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
                     </span>
                   </div>
@@ -188,13 +181,13 @@ export default function HomePage() {
       <section>
         <div className="flex items-end justify-between mb-6">
           <h2 className="font-headline text-headline-lg-mobile text-on-surface dark:text-inverse-on-surface">
-            Start reading
+            {t.home.startReading}
           </h2>
           <Link
             to="/browse"
             className="text-label-md text-primary dark:text-inverse-primary font-semibold hover:opacity-80 inline-flex items-center gap-1"
           >
-            View all
+            {t.home.viewAll}
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
           </Link>
         </div>
@@ -209,7 +202,7 @@ export default function HomePage() {
                 <CategoryBadge category={note.category} />
                 <span className="text-caption text-outline inline-flex items-center gap-1">
                   <span className="material-symbols-outlined" style={{ fontSize: 13 }}>schedule</span>
-                  {note.readingTime} min
+                  {note.readingTime} {t.common.minutes}
                 </span>
               </div>
               <h3 className="font-headline text-lg md:text-xl text-on-surface dark:text-inverse-on-surface mb-2 leading-snug group-hover:text-primary dark:group-hover:text-inverse-primary transition-colors">
@@ -219,9 +212,9 @@ export default function HomePage() {
                 {note.description}
               </p>
               <div className="mt-5 pt-4 border-t border-outline-variant/40 dark:border-white/10 flex items-center justify-between">
-                <span className="text-caption text-outline">{note.wordCount.toLocaleString()} words</span>
+                <span className="text-caption text-outline">{note.wordCount.toLocaleString()} {t.home.words}</span>
                 <span className="inline-flex items-center gap-1 text-label-md font-semibold text-primary dark:text-inverse-primary">
-                  Read
+                  {t.common.read}
                   <span className="material-symbols-outlined" style={{ fontSize: 15 }}>arrow_forward</span>
                 </span>
               </div>
@@ -233,25 +226,25 @@ export default function HomePage() {
       {/* Supporting resources bento */}
       <section>
         <h2 className="font-headline text-headline-lg-mobile text-on-surface dark:text-inverse-on-surface mb-6">
-          Supporting resources
+          {t.home.resources}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <BentoCard
             icon="search"
-            title="Semantic search"
-            description="TF-IDF powered by scikit-learn finds notes by meaning, not just keywords."
+            title={t.home.resSearchTitle}
+            description={t.home.resSearchDesc}
             to="/browse"
           />
           <BentoCard
             icon="hub"
-            title="Knowledge map"
-            description="A 2D map of every note, positioned by multi-dimensional scaling of their content."
+            title={t.home.resMapTitle}
+            description={t.home.resMapDesc}
             to="/map"
           />
           <BentoCard
             icon="route"
-            title="Guided path"
-            description="Follow a timeline through the notes — from calculus to hybrid architectures."
+            title={t.home.resPathTitle}
+            description={t.home.resPathDesc}
             to="/path"
           />
         </div>

@@ -4,6 +4,7 @@ import { api } from '../api'
 import type { Note, NotesResponse } from '../types'
 import NoteCard from '../components/NoteCard'
 import { Spinner, ErrorState, EmptyState } from '../components/States'
+import { useI18n } from '../i18n/context'
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -15,6 +16,7 @@ function useDebounced<T>(value: T, delay: number): T {
 }
 
 export default function BrowsePage() {
+  const { t } = useI18n()
   const [params, setParams] = useSearchParams()
   const categoryParam = params.get('category')
   const [search, setSearch] = useState(params.get('q') ?? '')
@@ -69,12 +71,12 @@ export default function BrowsePage() {
       {/* Header */}
       <header className="flex flex-col gap-3">
         <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface">
-          Library
+          {t.browse.title}
         </h1>
         <p className="text-body-lg text-on-surface-variant dark:text-outline max-w-2xl">
           {data
-            ? `${data.total} notes across ${categories.length} subjects — semantic search powered by scikit-learn.`
-            : 'Loading your notes…'}
+            ? `${data.total} ${t.home.notes} · ${t.browse.subtitle}`
+            : t.common.loading}
         </p>
       </header>
 
@@ -88,7 +90,7 @@ export default function BrowsePage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by concept, e.g. gradient descent, RoPE, MoE…"
+            placeholder={t.browse.searchPlaceholder}
             className="w-full bg-surface-container dark:bg-dark-surface-elevated text-on-surface dark:text-dark-on-surface placeholder:text-outline rounded-2xl py-3.5 pl-12 pr-12 border border-outline-variant/50 dark:border-white/10 focus:border-primary dark:focus:border-inverse-primary focus:ring-2 focus:ring-primary/20 outline-none text-body-md transition"
           />
           {search && (
@@ -107,7 +109,7 @@ export default function BrowsePage() {
             active={!categoryParam}
             onClick={() => setCategory(null)}
             icon="all_inclusive"
-            label="All"
+            label={t.browse.all}
             count={data ? data.total : undefined}
           />
           {categories.map((c) => (
@@ -116,7 +118,7 @@ export default function BrowsePage() {
               active={categoryParam === c.id}
               onClick={() => setCategory(c.id)}
               icon={c.icon}
-              label={c.en}
+              label={t.home.categoryNames[c.id] ?? c.en}
               count={c.count}
             />
           ))}
@@ -125,20 +127,20 @@ export default function BrowsePage() {
 
       {/* Content */}
       {loading ? (
-        <Spinner label={debounced ? `Searching for “${debounced}”…` : 'Loading notes…'} />
+        <Spinner label={debounced ? `${t.common.loading} “${debounced}”` : t.common.loading} />
       ) : error ? (
         <ErrorState message={error} onRetry={load} />
       ) : sortedNotes.length === 0 ? (
         <EmptyState
-          title="No notes match your filters"
-          subtitle={debounced ? `Nothing matched “${debounced}”. Try another concept, or clear the search.` : 'Try selecting a different subject.'}
+          title={t.browse.noResults}
+          subtitle={debounced ? `“${debounced}” — ${t.browse.noResultsSub}` : t.browse.tryOther}
         />
       ) : (
         <>
           <div className="flex items-center justify-between text-caption text-on-surface-variant dark:text-outline">
             <span>
-              Showing <strong className="text-on-surface dark:text-dark-on-surface">{sortedNotes.length}</strong> of {data?.total}
-              {debounced && <> · ranked by relevance</>}
+              {t.browse.showing} <strong className="text-on-surface dark:text-dark-on-surface">{sortedNotes.length}</strong> {t.browse.of} {data?.total}
+              {debounced && <> · {t.browse.rankedBy}</>}
             </span>
             {(debounced || categoryParam) && (
               <button
@@ -149,7 +151,7 @@ export default function BrowsePage() {
                 className="text-primary dark:text-inverse-primary font-semibold hover:underline inline-flex items-center gap-1"
               >
                 <span className="material-symbols-outlined" style={{ fontSize: 14 }}>filter_alt_off</span>
-                Clear filters
+                {t.browse.clearFilters}
               </button>
             )}
           </div>

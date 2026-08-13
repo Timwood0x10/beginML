@@ -16,6 +16,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
+import latex2mathml.converter as latex_converter
 import numpy as np
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -201,6 +202,39 @@ def normalize_math(content: str) -> str:
     # Collapse 3+ newlines created above back to a clean pair.
     content = re.sub(r"\n{3,}", "\n\n", content)
     return content
+
+
+# Matches pymdownx-arithmatex output: <span class="arithmatex">\(...\)</span>
+# and <div class="arithmatex">\[...\]</div>.
+_ARITHMATEX_RE = re.compile(
+    r'<(span|div) class="arithmatex">\\([\(\[])(.*?)\\([\)\]])</\1>',
+    flags=re.DOTALL,
+)
+
+
+def mathml_from_tex(tex: str, display: bool) -> str:
+    """Render LaTeX to MathML server-side (native browser rendering)."""
+    try:
+        mode = "block" if display else "inline"
+        return latex_converter.convert(tex, display=mode)
+    except Exception:
+        # Fall back to a safe inline wrapper so content never vanishes.
+        tag = "div" if display else "span"
+        return f'<{tag} class="ailearn-math-error">\\[{tex}\\]</{tag}>'
+
+
+def render_math_to_mathml(html: str) -> str:
+    """Replace arithmatex wrappers with server-rendered MathML."""
+
+    def repl(match: re.Match) -> str:
+        tag, left, tex, right = match.group(1), match.group(2), match.group(3), match.group(4)
+        display = left == "["
+        mml = mathml_from_tex(tex.strip(), display)
+        if mml.startswith("<math") and not mml.startswith("<" + tag):
+            return mml
+        return f'<{tag} class="ailearn-math">{mml}</{tag}>'
+
+    return _ARITHMATEX_RE.sub(repl, html)
 
 
 def rewrite_image_paths(html: str, relative_note_path: str) -> str:
@@ -575,8 +609,27 @@ def list_notes(
     }
 
 
+def localized_note(note: dict[str, Any], lang: str) -> dict[str, Any]:
+    """Return a note dict with title/description translated when an .en.md
+    sibling exists and lang == 'en'."""
+    if lang != "en":
+        return note
+    file_path = NOTES_ROOT / note["path"]
+    en_path = file_path.with_name(file_path.stem + ".en.md")
+    if not en_path.exists():
+        return note
+    try:
+        content = en_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return note
+    out = dict(note)
+    out["title"] = extract_title(content) or note["title"]
+    out["description"] = extract_description(content) or note["description"]
+    return out
+
+
 @app.get("/api/notes/{note_id}")
-def get_note(note_id: str) -> dict[str, Any]:
+def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
     note = note_index.by_id.get(note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -585,7 +638,12 @@ def get_note(note_id: str) -> dict[str, Any]:
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Note file missing on disk")
 
-    content = file_path.read_text(encoding="utf-8", errors="replace")
+    # English translations live next to the original as `<stem>.en.md`.
+    en_path = file_path.with_name(file_path.stem + ".en.md")
+    use_en = lang == "en" and en_path.exists()
+    source_path = en_path if use_en else file_path
+
+    content = source_path.read_text(encoding="utf-8", errors="replace")
     content = normalize_math(content)
     html = render_markdown(
         content,
@@ -593,13 +651,23 @@ def get_note(note_id: str) -> dict[str, Any]:
         extension_configs=MARKDOWN_EXTENSION_CONFIGS,
         output_format="html5",
     )
+    html = render_math_to_mathml(html)
     html = rewrite_image_paths(html, note["path"])
+
+    # Prefer the translated file's own title/description when present.
+    title = extract_title(content) or note["title"]
+    description = extract_description(content) or note["description"]
+    headings = note_index._extract_headings(content) if use_en else note["headings"]
 
     return {
         **note,
+        "title": title,
+        "description": description,
+        "headings": headings,
         "content": content,
         "html": html,
-        "related": note_index.related(note_id),
+        "translated": use_en,
+        "related": [localized_note(r, lang) for r in note_index.related(note_id)],
     }
 
 

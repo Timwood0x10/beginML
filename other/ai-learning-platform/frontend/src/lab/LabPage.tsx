@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import type { LabModule, LabParams, LabResult } from './types'
 import { ControlRow, defaultParams } from './Controls'
+import { useI18n } from '../i18n/context'
+import { labModulesZh, labModulesEn, controlLabelsZh, controlLabelsEn } from '../i18n/lab'
 import GradientDescentLab from './modules/GradientDescentLab'
 import AttentionLab from './modules/AttentionLab'
 import PcaLab from './modules/PcaLab'
@@ -41,6 +43,7 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
 }
 
 export default function LabPage() {
+  const { lang, t } = useI18n()
   const { moduleId } = useParams<{ moduleId: string }>()
   const navigate = useNavigate()
   const [modules, setModules] = useState<LabModule[]>([])
@@ -50,6 +53,9 @@ export default function LabPage() {
   const [error, setError] = useState<string | null>(null)
   const [params, setParams] = useState<LabParams>({})
   const reqToken = useRef(0)
+
+  const labMeta = lang === 'zh' ? labModulesZh : labModulesEn
+  const controlLabels = lang === 'zh' ? controlLabelsZh : controlLabelsEn
 
   useEffect(() => {
     let alive = true
@@ -103,7 +109,7 @@ export default function LabPage() {
   }
 
   if (modules.length === 0) {
-    return <div className="p-8 text-on-surface-variant dark:text-outline">Loading modules...</div>
+    return <div className="p-8 text-on-surface-variant dark:text-outline">{t.common.loading}</div>
   }
 
   const Lab = active ? LAB_COMPONENTS[active.id] : null
@@ -121,8 +127,8 @@ export default function LabPage() {
               <span className="material-symbols-outlined fill" style={{ fontSize: 22 }}>science</span>
             </div>
             <div>
-              <h2 className="font-headline text-headline-lg-mobile text-primary dark:text-inverse-primary leading-tight">Math Lab</h2>
-              <p className="text-caption text-on-surface-variant dark:text-outline">Interactive visualizations</p>
+              <h2 className="font-headline text-headline-lg-mobile text-primary dark:text-inverse-primary leading-tight">{t.lab.title}</h2>
+              <p className="text-caption text-on-surface-variant dark:text-outline">{t.lab.subtitle}</p>
             </div>
           </div>
         </div>
@@ -142,8 +148,8 @@ export default function LabPage() {
               >
                 <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{m.icon}</span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-body-md truncate">{m.title}</span>
-                  <span className={`block text-caption truncate ${isActive ? 'opacity-80' : ''}`}>{m.subtitle}</span>
+                  <span className="block text-body-md truncate">{labMeta[m.id]?.title ?? m.title}</span>
+                  <span className={`block text-caption truncate ${isActive ? 'opacity-80' : ''}`}>{labMeta[m.id]?.subtitle ?? m.subtitle}</span>
                 </span>
               </button>
             )
@@ -153,17 +159,17 @@ export default function LabPage() {
         {active && active.controls.length > 0 && (
           <div className="border-t border-outline-variant/50 dark:border-white/10 pt-4 flex flex-col gap-4">
             <div className="px-2">
-              <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">Controls</h4>
+              <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">{t.lab.controls}</h4>
               <div className="flex flex-col gap-4">
                 {active.controls.map((c) => (
-                  <ControlRow key={c.key} control={c} value={params[c.key]} onChange={onControlChange} onAction={onAction} />
+                  <ControlRow key={c.key} control={c} label={controlLabels[c.key] ?? c.label} value={params[c.key]} onChange={onControlChange} onAction={onAction} />
                 ))}
               </div>
             </div>
             {loading && (
               <div className="px-2 text-caption text-outline inline-flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full border-2 border-outline-variant border-t-primary animate-spin" />
-                computing...
+                {t.lab.computing}
               </div>
             )}
           </div>
@@ -184,7 +190,7 @@ export default function LabPage() {
               }`}
             >
               <span className="material-symbols-outlined" style={{ fontSize: 17 }}>{m.icon}</span>
-              {m.title}
+              {labMeta[m.id]?.title ?? m.title}
             </button>
           )
         })}
@@ -193,9 +199,9 @@ export default function LabPage() {
       <main className="flex-1 min-w-0 flex flex-col gap-5">
         {active && (
           <header className="bg-surface-container-low dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
-            <span className="text-caption uppercase tracking-wider font-semibold text-primary dark:text-inverse-primary">{active.category}</span>
-            <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface mt-1">{active.title}</h1>
-            <p className="text-body-md text-on-surface-variant dark:text-outline mt-2 max-w-3xl leading-relaxed">{active.blurb}</p>
+            <span className="text-caption uppercase tracking-wider font-semibold text-primary dark:text-inverse-primary">{t.home.categoryNames[active.category] ?? active.category}</span>
+            <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface mt-1">{labMeta[active.id]?.title ?? active.title}</h1>
+            <p className="text-body-md text-on-surface-variant dark:text-outline mt-2 max-w-3xl leading-relaxed">{labMeta[active.id]?.blurb ?? active.blurb}</p>
           </header>
         )}
 
@@ -203,11 +209,11 @@ export default function LabPage() {
           <details className="md:hidden bg-surface-container dark:bg-dark-surface-elevated rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10">
             <summary className="font-label-md text-label-md font-semibold cursor-pointer inline-flex items-center gap-2">
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>tune</span>
-              Controls
+              {t.lab.controls}
             </summary>
             <div className="flex flex-col gap-4 mt-4">
               {active.controls.map((c) => (
-                <ControlRow key={c.key} control={c} value={params[c.key]} onChange={onControlChange} onAction={onAction} />
+                <ControlRow key={c.key} control={c} label={controlLabels[c.key] ?? c.label} value={params[c.key]} onChange={onControlChange} onAction={onAction} />
               ))}
             </div>
           </details>

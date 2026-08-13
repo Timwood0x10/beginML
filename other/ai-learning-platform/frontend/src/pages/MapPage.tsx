@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import type { MapResponse, MapPoint } from '../types'
 import { Spinner, ErrorState } from '../components/States'
+import { useI18n } from '../i18n/context'
 
 const CATEGORY_COLORS: Record<string, string> = {
   math: '#C8604A',
@@ -20,6 +21,7 @@ interface ViewBox {
 }
 
 export default function MapPage() {
+  const { t } = useI18n()
   const [data, setData] = useState<MapResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -122,19 +124,17 @@ export default function MapPage() {
 
   const resetView = () => setView({ x: -1.4, y: -1.3, w: 2.8, h: 2.6 })
 
-  if (loading) return <Spinner label="Computing semantic map (MDS)…" />
-  if (error || !data) return <ErrorState message={error ?? 'Failed to load map.'} onRetry={load} />
+  if (loading) return <Spinner label={t.common.loading} />
+  if (error || !data) return <ErrorState message={error ?? t.common.loading} onRetry={load} />
 
   return (
     <div className="flex flex-col gap-6 pt-2">
       <header className="flex flex-col gap-3">
         <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface">
-          Knowledge map
+          {t.map.title}
         </h1>
         <p className="text-body-lg text-on-surface-variant dark:text-outline max-w-3xl leading-relaxed">
-          Every note is placed by{' '}
-          <span className="text-primary dark:text-inverse-primary font-semibold">multi-dimensional scaling</span>{' '}
-          of its TF-IDF vector — nearby notes discuss similar ideas. Drag to pan, scroll to zoom, click a node to read.
+          {t.map.subtitle}
         </p>
       </header>
 
@@ -145,16 +145,16 @@ export default function MapPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container dark:bg-dark-surface-elevated border border-outline-variant/60 dark:border-white/10 text-label-md font-semibold text-on-surface dark:text-dark-on-surface hover:border-primary/40 transition"
         >
           <span className="material-symbols-outlined" style={{ fontSize: 17 }}>center_focus_strong</span>
-          Reset view
+          {t.map.reset}
         </button>
         <span className="w-px h-6 bg-outline-variant/60 mx-1" />
-        <LegendPill active={!activeCat} color="#8A7A61" label="All" onClick={() => setActiveCat(null)} count={data.points.length} />
+        <LegendPill active={!activeCat} color="#8A7A61" label={t.map.all} onClick={() => setActiveCat(null)} count={data.points.length} />
         {data.categories.map((c) => (
           <LegendPill
             key={c.id}
             active={activeCat === c.id}
             color={CATEGORY_COLORS[c.id] ?? '#8a8376'}
-            label={c.en}
+            label={t.home.categoryNames[c.id] ?? c.en}
             count={c.count ?? 0}
             onClick={() => setActiveCat(activeCat === c.id ? null : c.id)}
           />
@@ -279,7 +279,7 @@ export default function MapPage() {
             <div className="font-headline text-base font-semibold leading-snug">{hover.title}</div>
             <div className="text-caption opacity-80 mt-1 inline-flex items-center gap-1">
               <span className="material-symbols-outlined" style={{ fontSize: 13 }}>schedule</span>
-              {hover.readingTime} min read · click to open
+              {hover.readingTime} {t.common.minutes} · {t.map.open}
             </div>
           </div>
         )}
@@ -287,7 +287,7 @@ export default function MapPage() {
         {/* Hint */}
         <div className="absolute bottom-4 left-4 bg-surface-container/90 dark:bg-dark-surface-elevated/90 backdrop-blur rounded-full px-4 py-2 text-caption text-on-surface-variant dark:text-outline inline-flex items-center gap-2 border border-outline-variant/50 dark:border-white/10">
           <span className="material-symbols-outlined" style={{ fontSize: 15 }}>drag_pan</span>
-          Drag to pan · scroll to zoom
+          {t.map.hint}
         </div>
       </div>
     </div>

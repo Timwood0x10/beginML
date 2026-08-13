@@ -26,7 +26,10 @@ export const api = {
     const suffix = qs.toString() ? `?${qs}` : ''
     return request<NotesResponse>(`/notes${suffix}`)
   },
-  note: (id: string) => request<NoteDetail>(`/notes/${id}`),
+  note: (id: string, lang?: string) => {
+    const qs = lang ? `?lang=${encodeURIComponent(lang)}` : ''
+    return request<NoteDetail>(`/notes/${id}${qs}`)
+  },
   map: (category?: string | null) => {
     const qs = category ? `?category=${encodeURIComponent(category)}` : ''
     return request<MapResponse>(`/map${qs}`)

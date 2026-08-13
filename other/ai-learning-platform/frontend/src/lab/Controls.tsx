@@ -6,16 +6,19 @@ import type { LabControl, LabParams } from './types'
  */
 export function ControlRow({
   control,
+  label: labelOverride,
   value,
   onChange,
   onAction,
 }: {
   control: LabControl
+  label?: string
   value: LabParams[string] | undefined
   onChange: (key: string, value: string | number | boolean) => void
   onAction?: (key: string) => void
 }) {
-  const { key, label, type } = control
+  const { key, type } = control
+  const label = labelOverride ?? control.label
 
   if (type === 'action') {
     return (

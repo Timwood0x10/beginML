@@ -12,6 +12,7 @@ dependencies = [
     "markdown>=3.7",
     "pymdown-extensions>=10.11",
     "pygments>=2.18.0",
+    "latex2mathml>=3.81.0",
 ]
 
 [build-system]
