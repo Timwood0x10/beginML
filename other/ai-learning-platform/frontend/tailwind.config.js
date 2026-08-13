@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// AILearn Soft-Modernist design tokens (from templates/ailearn_soft_utility/DESIGN.md)
+// AIScope Soft-Modernist design tokens (from templates/ailearn_soft_utility/DESIGN.md)
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],

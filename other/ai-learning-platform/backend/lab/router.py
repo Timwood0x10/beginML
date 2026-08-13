@@ -14,7 +14,20 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from . import attention, optimizers, pca, regularization, svm
+from . import (
+    activations,
+    attention,
+    convolution,
+    distributions,
+    entropy,
+    losses,
+    matrix_transform,
+    neural_net,
+    optimizers,
+    pca,
+    regularization,
+    svm,
+)
 from .modules import MODULES, get_module
 
 router = APIRouter(prefix="/api/lab", tags=["lab"])
@@ -22,6 +35,13 @@ router = APIRouter(prefix="/api/lab", tags=["lab"])
 # module_id -> compute(module_params) -> dict
 _COMPUTERS = {
     "gradient-descent": optimizers.compute,
+    "activations": activations.compute,
+    "losses": losses.compute,
+    "convolution": convolution.compute,
+    "matrix-transform": matrix_transform.compute,
+    "distributions": distributions.compute,
+    "entropy": entropy.compute,
+    "neural-net": neural_net.compute,
     "attention": attention.compute,
     "pca": pca.compute,
     "regularization": regularization.compute,

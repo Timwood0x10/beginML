@@ -32,7 +32,7 @@ export default function Layout() {
             <span className="material-symbols-outlined fill" style={{ fontSize: 20 }}>auto_stories</span>
           </div>
           <span className="font-headline font-bold text-headline-lg-mobile text-on-surface dark:text-inverse-on-surface tracking-tight">
-            AILearn
+            AIScope
           </span>
         </div>
 
@@ -75,7 +75,7 @@ export default function Layout() {
           <div className="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center">
             <span className="material-symbols-outlined fill" style={{ fontSize: 18 }}>auto_stories</span>
           </div>
-          <span className="font-headline font-bold text-lg">AILearn</span>
+          <span className="font-headline font-bold text-lg">AIScope</span>
         </div>
         <button
           onClick={toggle}
@@ -116,7 +116,7 @@ export default function Layout() {
       <footer className="w-full max-w-container-max mx-auto px-gutter py-10 border-t border-outline-variant/50 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-caption text-on-surface-variant dark:text-outline relative z-10">
         <div className="flex items-center gap-2 font-label-md text-primary dark:text-inverse-primary">
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>auto_stories</span>
-          AILearn · Scholarly notes on AI &amp; mathematics
+          AIScope · Scholarly notes on AI &amp; mathematics
         </div>
         <div className="text-center">
           Built with FastAPI, scikit-learn &amp; React — Soft-Modernist template

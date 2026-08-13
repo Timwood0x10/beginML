@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# AILearn — one-command launcher
+# AIScope — one-command launcher
 # Starts the FastAPI backend (uv) and the Vite frontend (npm) together.
 #
 # Usage:
@@ -30,7 +30,7 @@ c_warn()     { printf '\033[33m%s\033[0m\n' "$1"; }
 c_err()      { printf '\033[31m%s\033[0m\n' "$1"; }
 
 stop_services() {
-  c_endpoint "Stopping AILearn services..."
+  c_endpoint "Stopping AIScope services..."
   for f in "$FRONTEND_PID_FILE" "$BACKEND_PID_FILE"; do
     if [[ -f "$f" ]]; then
       pid="$(cat "$f" 2>/dev/null || true)"
@@ -125,7 +125,7 @@ done
 
 echo
 c_ok "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-c_ok " AILearn is running"
+c_ok " AIScope is running"
 c_ok "   Frontend : $FRONTEND_URL"
 c_ok "   Backend  : $BACKEND_URL/api/health"
 c_ok "   Logs     : $BACKEND_LOG | $FRONTEND_LOG"

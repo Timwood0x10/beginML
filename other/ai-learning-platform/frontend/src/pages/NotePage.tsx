@@ -7,32 +7,31 @@ import type { NoteDetail, Heading } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import CategoryBadge from '../components/CategoryBadge'
 
+// KaTeX auto-render is a separate UMD script shipped with the katex package.
+// Load its type definition loosely; the module self-registers on the katex object.
+// @ts-expect-error -- no bundled types for the contrib entry
+import renderMathInElement from 'katex/dist/contrib/auto-render.mjs'
+
 /**
- * Render pymdownx-arithmatex output. Generic mode wraps math in
- * <span class="arithmatex">\(...\)</span> (inline) and
- * <div class="arithmatex">\[...\]</div> (block). We extract the TeX and
- * typeset with KaTeX directly.
+ * Typeset all math in `root` using KaTeX auto-render. The backend wraps math
+ * via pymdownx-arithmatex in \(...\) / \[...\]; we also accept $...$ so any
+ * math the markdown layer left untouched still renders.
  */
 function typesetMath(root: HTMLElement) {
-  const nodes = root.querySelectorAll<HTMLElement>('.arithmatex')
-  nodes.forEach((node) => {
-    const raw = node.textContent ?? ''
-    let tex = raw.trim()
-    // strip \( \) / \[ \] / $ delimiters
-    tex = tex.replace(/\\\(([\s\S]*)\\\)/, '$1')
-    tex = tex.replace(/\\\[([\s\S]*)\\\]/, '$1')
-    tex = tex.replace(/^\$+|\$+$/g, '').trim()
-    const display = node.tagName.toLowerCase() === 'div'
-    try {
-      katex.render(tex, node, {
-        displayMode: display,
-        throwOnError: false,
-        output: 'html',
-      })
-    } catch {
-      node.textContent = raw
-    }
+  renderMathInElement(root, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '\\[', right: '\\]', display: true },
+      { left: '\\(', right: '\\)', display: false },
+      { left: '$', right: '$', display: false },
+    ],
+    throwOnError: false,
+    output: 'html',
+    strict: false,
+    // Skip code elements so dollar signs in code are not treated as math.
+    ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
   })
+  void katex
 }
 
 function slugify(text: string): string {

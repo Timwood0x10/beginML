@@ -30,20 +30,180 @@ MODULES: list[dict[str, Any]] = [
         ],
     },
     {
+        "id": "activations",
+        "title": "Activation Functions",
+        "subtitle": "Sigmoid, tanh, ReLU, GELU and friends",
+        "icon": "show_chart",
+        "category": "Neural Networks",
+        "blurb": (
+            "Compare common activation functions and their derivatives. Drag "
+            "the evaluation point to see the tangent line (local gradient) "
+            "move along the curve."
+        ),
+        "controls": [
+            {"key": "function", "label": "Function", "type": "select",
+             "options": ["relu", "sigmoid", "tanh", "leaky-relu", "gelu", "swish", "softplus"]},
+            {"key": "point", "label": "Probe point x", "type": "range",
+             "min": -5.0, "max": 5.0, "step": 0.1, "default": 1.0},
+            {"key": "xMin", "label": "X min", "type": "range",
+             "min": -10.0, "max": 0.0, "step": 0.5, "default": -6.0},
+            {"key": "xMax", "label": "X max", "type": "range",
+             "min": 0.0, "max": 10.0, "step": 0.5, "default": 6.0},
+        ],
+    },
+    {
+        "id": "losses",
+        "title": "Loss Functions",
+        "subtitle": "MSE, MAE, Huber, cross-entropy, hinge",
+        "icon": "water_drop",
+        "category": "Optimization",
+        "blurb": (
+            "Visualize regression and classification losses. Move the probe "
+            "point to inspect the gradient and see why each loss behaves the "
+            "way it does."
+        ),
+        "controls": [
+            {"key": "loss", "label": "Loss", "type": "select",
+             "options": ["mse", "mae", "huber", "bce", "hinge", "cross-entropy"]},
+            {"key": "target", "label": "Target", "type": "range",
+             "min": -2.0, "max": 2.0, "step": 0.1, "default": 0.0},
+            {"key": "probe", "label": "Probe", "type": "range",
+             "min": -3.0, "max": 3.0, "step": 0.1, "default": 0.8},
+        ],
+    },
+    {
+        "id": "convolution",
+        "title": "Convolution",
+        "subtitle": "Sliding kernels on 1D signals",
+        "icon": "stacked_bar_chart",
+        "category": "Signal Processing",
+        "blurb": (
+            "Slide a kernel across an input signal and inspect each windowed "
+            "dot product. Animate the kernel or scrub the position manually."
+        ),
+        "controls": [
+            {"key": "kernel", "label": "Kernel", "type": "select",
+             "options": ["edge-detect", "identity", "gaussian", "box-blur", "sharpen", "emboss"]},
+            {"key": "length", "label": "Signal length", "type": "range",
+             "min": 16, "max": 64, "step": 1, "default": 32},
+        ],
+    },
+    {
+        "id": "matrix-transform",
+        "title": "Matrix Transforms",
+        "subtitle": "Eigenvectors, determinants and linear maps",
+        "icon": "grid_view",
+        "category": "Linear Algebra",
+        "blurb": (
+            "Apply a 2x2 matrix to a grid, unit square and circle. Inspect "
+            "eigenvectors, determinant, trace and rank in real time."
+        ),
+        "controls": [
+            {"key": "preset", "label": "Preset", "type": "select",
+             "options": ["identity", "rotation-45", "rotation-90", "scale-2x",
+                         "scale-aniso", "shear", "reflection-x", "projection", "custom"]},
+            {"key": "a", "label": "M[0,0]", "type": "range",
+             "min": -2.0, "max": 2.0, "step": 0.05, "default": 1.0},
+            {"key": "b", "label": "M[0,1]", "type": "range",
+             "min": -2.0, "max": 2.0, "step": 0.05, "default": 0.0},
+            {"key": "c", "label": "M[1,0]", "type": "range",
+             "min": -2.0, "max": 2.0, "step": 0.05, "default": 0.0},
+            {"key": "d", "label": "M[1,1]", "type": "range",
+             "min": -2.0, "max": 2.0, "step": 0.05, "default": 1.0},
+        ],
+    },
+    {
+        "id": "distributions",
+        "title": "Distributions",
+        "subtitle": "PDFs, PMFs and sampled histograms",
+        "icon": "bar_chart",
+        "category": "Probability",
+        "blurb": (
+            "Explore Gaussian, uniform, exponential, Laplace, binomial and "
+            "Poisson distributions. Every curve is sampled and plotted live."
+        ),
+        "controls": [
+            {"key": "distribution", "label": "Distribution", "type": "select",
+             "options": ["gaussian", "uniform", "exponential", "laplace", "binomial", "poisson"]},
+            {"key": "mu", "label": "Mean (mu)", "type": "range",
+             "min": -3.0, "max": 3.0, "step": 0.1, "default": 0.0},
+            {"key": "sigma", "label": "Std (sigma)", "type": "range",
+             "min": 0.1, "max": 3.0, "step": 0.05, "default": 1.0},
+            {"key": "rate", "label": "Rate / lambda", "type": "range",
+             "min": 0.1, "max": 5.0, "step": 0.1, "default": 1.0},
+            {"key": "n", "label": "Trials (n)", "type": "range",
+             "min": 1, "max": 40, "step": 1, "default": 20},
+            {"key": "p", "label": "Prob (p)", "type": "range",
+             "min": 0.01, "max": 0.99, "step": 0.01, "default": 0.5},
+            {"key": "seed", "label": "Seed", "type": "range",
+             "min": 0, "max": 99, "step": 1, "default": 0},
+        ],
+    },
+    {
+        "id": "entropy",
+        "title": "Entropy & KL Divergence",
+        "subtitle": "H(P), H(P,Q) and KL(P||Q)",
+        "icon": "waves",
+        "category": "Information Theory",
+        "blurb": (
+            "See how entropy, cross-entropy and KL divergence behave as two "
+            "Bernoulli distributions approach or diverge from each other."
+        ),
+        "controls": [
+            {"key": "mode", "label": "Mode", "type": "select",
+             "options": ["bernoulli", "categorical"]},
+            {"key": "p", "label": "P (true)", "type": "range",
+             "min": 0.01, "max": 0.99, "step": 0.01, "default": 0.7},
+            {"key": "k", "label": "Categories k", "type": "range",
+             "min": 2, "max": 10, "step": 1, "default": 5},
+            {"key": "temperature", "label": "Q temperature", "type": "range",
+             "min": 0.1, "max": 3.0, "step": 0.05, "default": 1.0},
+            {"key": "seed", "label": "Seed", "type": "range",
+             "min": 0, "max": 99, "step": 1, "default": 1},
+        ],
+    },
+    {
+        "id": "neural-net",
+        "title": "Neural Network Playground",
+        "subtitle": "Train a 2-layer MLP on 2D data",
+        "icon": "bubble_chart",
+        "category": "Neural Networks",
+        "blurb": (
+            "Train a small numpy neural network on moons, circles, spirals or "
+            "XOR data. Watch the decision surface and loss curve update as you "
+            "change the hidden size, learning rate and dataset."
+        ),
+        "controls": [
+            {"key": "dataset", "label": "Dataset", "type": "select",
+             "options": ["moons", "circles", "spiral", "xor", "blobs"]},
+            {"key": "hidden", "label": "Hidden units", "type": "range",
+             "min": 2, "max": 32, "step": 1, "default": 8},
+            {"key": "lr", "label": "Learning rate", "type": "range",
+             "min": 0.05, "max": 2.0, "step": 0.05, "default": 0.5},
+            {"key": "epochs", "label": "Epochs", "type": "range",
+             "min": 20, "max": 500, "step": 10, "default": 200},
+            {"key": "samples", "label": "Samples", "type": "range",
+             "min": 40, "max": 300, "step": 10, "default": 120},
+            {"key": "noise", "label": "Noise", "type": "range",
+             "min": 0.0, "max": 0.5, "step": 0.02, "default": 0.0},
+            {"key": "seed", "label": "Seed", "type": "range",
+             "min": 0, "max": 99, "step": 1, "default": 1},
+        ],
+    },
+    {
         "id": "attention",
         "title": "Self-Attention",
-        "subtitle": "Q·Kᵀ / √d and the attention heatmap",
+        "subtitle": "Q*K^T / sqrt(d) and the attention heatmap",
         "icon": "grid_on",
         "category": "Architectures",
         "blurb": (
-            "Build an attention weight matrix step by step. Tweak the temperature "
-            "√d scale, toggle causal masking and see how softmax sharpens or "
-            "smooths the distribution each query attends over."
+            "Build an attention weight matrix step by step. Tweak temperature, "
+            "toggle causal masking and see how softmax sharpens the distribution."
         ),
         "controls": [
             {"key": "tokens", "label": "Tokens", "type": "range",
              "min": 3, "max": 10, "step": 1, "default": 6},
-            {"key": "temperature", "label": "Temperature (1/√d)", "type": "range",
+            {"key": "temperature", "label": "Temperature (1/sqrt d)", "type": "range",
              "min": 0.1, "max": 4.0, "step": 0.05, "default": 1.0},
             {"key": "causal", "label": "Causal mask", "type": "toggle", "default": True},
             {"key": "seed", "label": "Random seed", "type": "range",
@@ -58,8 +218,7 @@ MODULES: list[dict[str, Any]] = [
         "category": "Linear Algebra",
         "blurb": (
             "Generate correlated 2D data, then project it onto its principal "
-            "components. See the eigenvectors of the covariance matrix rotate "
-            "with the data and reconstruction error shrink as you add components."
+            "components. See eigenvectors rotate with the data."
         ),
         "controls": [
             {"key": "samples", "label": "Samples", "type": "range",
@@ -82,8 +241,7 @@ MODULES: list[dict[str, Any]] = [
         "category": "Optimization",
         "blurb": (
             "Visualize why L1 (Lasso) produces sparse weights and L2 (Ridge) "
-            "shrinks them smoothly. Drag the unconstrained optimum and watch "
-            "where each constraint ball touches the loss contours."
+            "shrinks them smoothly."
         ),
         "controls": [
             {"key": "penalty", "label": "Penalty", "type": "select",
@@ -106,19 +264,18 @@ MODULES: list[dict[str, Any]] = [
         "category": "Classification",
         "blurb": (
             "Click to place two classes, then fit a support vector machine. "
-            "Toggle linear / RBF / polynomial kernels and slide the soft-margin "
-            "C to see the margin, support vectors and decision surface change."
+            "Toggle linear / RBF / polynomial kernels and slide soft-margin C."
         ),
         "controls": [
             {"key": "kernel", "label": "Kernel", "type": "select",
              "options": ["linear", "rbf", "poly"]},
             {"key": "c", "label": "Soft-margin C", "type": "range",
              "min": 0.05, "max": 50.0, "step": 0.05, "default": 1.0},
-            {"key": "gamma", "label": "RBF γ", "type": "range",
+            {"key": "gamma", "label": "RBF gamma", "type": "range",
              "min": 0.05, "max": 5.0, "step": 0.05, "default": 0.8},
             {"key": "degree", "label": "Poly degree", "type": "range",
              "min": 2, "max": 5, "step": 1, "default": 3},
-            {"key": "reset", "label": "reset", "type": "action"},
+            {"key": "reset", "label": "Reset points", "type": "action"},
         ],
     },
 ]

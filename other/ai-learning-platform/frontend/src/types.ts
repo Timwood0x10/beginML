@@ -1,4 +1,4 @@
-// Shared API types for the AI Learning Platform backend.
+// Shared API types for the AIScope backend.
 
 export interface Category {
   id: string

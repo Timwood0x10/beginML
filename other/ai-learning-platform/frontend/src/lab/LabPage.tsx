@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import type { LabModule, LabParams, LabResult } from './types'
@@ -8,14 +8,34 @@ import AttentionLab from './modules/AttentionLab'
 import PcaLab from './modules/PcaLab'
 import RegularizationLab from './modules/RegularizationLab'
 import SvmLab from './modules/SvmLab'
+import ActivationLab from './modules/ActivationLab'
+import ConvolutionLab from './modules/ConvolutionLab'
+import LossLab from './modules/LossLab'
+import MatrixTransformLab from './modules/MatrixTransformLab'
+import DistributionLab from './modules/DistributionLab'
+import EntropyLab from './modules/EntropyLab'
 
-// Renders the right visualization for each module id.
-const LAB_COMPONENTS: Record<string, React.ComponentType<{ result: LabResult | null; loading: boolean; error: string | null; onAction: (key: string) => void; params: LabParams; setParams: (p: LabParams) => void }>> = {
+interface LabComponentProps {
+  result: LabResult | null
+  loading: boolean
+  error: string | null
+  onAction: (key: string) => void
+  params: LabParams
+  setParams: (p: LabParams) => void
+}
+
+const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'gradient-descent': GradientDescentLab,
   attention: AttentionLab,
   pca: PcaLab,
   regularization: RegularizationLab,
   svm: SvmLab,
+  activations: ActivationLab,
+  convolution: ConvolutionLab,
+  losses: LossLab,
+  'matrix-transform': MatrixTransformLab,
+  distributions: DistributionLab,
+  entropy: EntropyLab,
 }
 
 export default function LabPage() {
@@ -26,6 +46,7 @@ export default function LabPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [params, setParams] = useState<LabParams>({})
+  const reqToken = useRef(0)
 
   useEffect(() => {
     let alive = true
@@ -38,26 +59,30 @@ export default function LabPage() {
     [modules, moduleId],
   )
 
-  // Reset params when switching modules
+  // Reset state when switching modules — prevents stale-result crashes.
   useEffect(() => {
+    setResult(null)
+    setError(null)
     if (active) setParams(defaultParams(active.controls))
   }, [active])
 
   const compute = useCallback(async (nextParams: LabParams) => {
     if (!active) return
+    const token = ++reqToken.current
     setLoading(true)
     setError(null)
     try {
       const r = await api.lab.compute(active.id, nextParams)
-      setResult(r)
+      if (token === reqToken.current) setResult(r)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      if (token === reqToken.current) {
+        setError(e instanceof Error ? e.message : String(e))
+      }
     } finally {
-      setLoading(false)
+      if (token === reqToken.current) setLoading(false)
     }
   }, [active])
 
-  // (Re)compute whenever the active module or its params change
   useEffect(() => {
     if (active && Object.keys(params).length > 0) compute(params)
   }, [active, params, compute])
@@ -66,19 +91,17 @@ export default function LabPage() {
     setParams((p) => ({ ...p, [key]: value }))
   }
   const onAction = (key: string) => {
-    // Modules can intercept action keys (e.g. SVM reset). Default: no-op.
-    if (active?.id === 'svm' && key === 'reset') setParams((p) => ({ ...p }))
+    if (key === 'reset') setParams((p) => ({ ...p }))
   }
 
   if (modules.length === 0) {
-    return <div className="p-8 text-on-surface-variant dark:text-outline">Loading modules…</div>
+    return <div className="p-8 text-on-surface-variant dark:text-outline">Loading modules...</div>
   }
 
   const Lab = active ? LAB_COMPONENTS[active.id] : null
 
   return (
     <div className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
-      {/* Sidebar — template-style floating island */}
       <aside className="hidden md:flex flex-col w-72 shrink-0 bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
         <div className="px-2 mb-5">
           <div className="flex items-center gap-3 mb-2">
@@ -115,33 +138,26 @@ export default function LabPage() {
           })}
         </nav>
 
-        {active && (
+        {active && active.controls.length > 0 && (
           <div className="border-t border-outline-variant/50 dark:border-white/5 pt-4 flex flex-col gap-4">
             <div className="px-2">
               <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">Controls</h4>
               <div className="flex flex-col gap-4">
                 {active.controls.map((c) => (
-                  <ControlRow
-                    key={c.key}
-                    control={c}
-                    value={params[c.key]}
-                    onChange={onControlChange}
-                    onAction={onAction}
-                  />
+                  <ControlRow key={c.key} control={c} value={params[c.key]} onChange={onControlChange} onAction={onAction} />
                 ))}
               </div>
             </div>
             {loading && (
               <div className="px-2 text-caption text-outline inline-flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full border-2 border-outline-variant border-t-primary animate-spin" />
-                computing…
+                computing...
               </div>
             )}
           </div>
         )}
       </aside>
 
-      {/* Mobile module picker */}
       <div className="md:hidden flex gap-2 overflow-x-auto pb-1 -mx-margin-mobile px-margin-mobile">
         {modules.map((m) => {
           const isActive = active?.id === m.id
@@ -162,7 +178,6 @@ export default function LabPage() {
         })}
       </div>
 
-      {/* Main visualization area */}
       <main className="flex-1 min-w-0 flex flex-col gap-5">
         {active && (
           <header className="bg-surface-container-low dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
@@ -172,8 +187,7 @@ export default function LabPage() {
           </header>
         )}
 
-        {/* Mobile controls in a collapsible card */}
-        {active && (
+        {active && active.controls.length > 0 && (
           <details className="md:hidden bg-surface-container dark:bg-dark-surface-elevated rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5">
             <summary className="font-label-md text-label-md font-semibold cursor-pointer inline-flex items-center gap-2">
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>tune</span>

@@ -113,6 +113,35 @@ export function warmColor(t: number): [number, number, number] {
   return stops[stops.length - 1][1]
 }
 
+// A diverging red-to-blue colormap (white at center). Useful for signed values
+// such as attention scores, decision boundaries, correlation matrices.
+export function divergingColor(t: number): [number, number, number] {
+  t = Math.max(0, Math.min(1, t))
+  // 0 = clay red, 0.5 = near-white, 1 = slate blue
+  if (t < 0.5) {
+    const k = t / 0.5
+    return [
+      Math.round(200 + (247 - 200) * k),
+      Math.round(96 + (244 - 96) * k),
+      Math.round(74 + (240 - 74) * k),
+    ]
+  }
+  const k = (t - 0.5) / 0.5
+  return [
+    Math.round(247 + (91 - 247) * k),
+    Math.round(244 + (107 - 244) * k),
+    Math.round(240 + (176 - 240) * k),
+  ]
+}
+
+/** Fill the plot area with a solid background (respects DPR transform). */
+export function fillBackground(ctx: CanvasRenderingContext2D, color: string) {
+  ctx.save()
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight)
+  ctx.restore()
+}
+
 /** Set up a canvas for HiDPI rendering and return its 2D context. */
 export function setupCanvas(canvas: HTMLCanvasElement, cssW: number, cssH: number): CanvasRenderingContext2D {
   const dpr = window.devicePixelRatio || 1
