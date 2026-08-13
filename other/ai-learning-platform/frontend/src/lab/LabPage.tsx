@@ -114,7 +114,7 @@ export default function LabPage() {
 
   return (
     <div className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
-      <aside className="hidden md:flex flex-col w-72 shrink-0 bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
+      <aside className="hidden md:flex flex-col w-72 shrink-0 bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
         <div className="px-2 mb-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface flex items-center justify-center">
@@ -151,7 +151,7 @@ export default function LabPage() {
         </nav>
 
         {active && active.controls.length > 0 && (
-          <div className="border-t border-outline-variant/50 dark:border-white/5 pt-4 flex flex-col gap-4">
+          <div className="border-t border-outline-variant/50 dark:border-white/10 pt-4 flex flex-col gap-4">
             <div className="px-2">
               <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">Controls</h4>
               <div className="flex flex-col gap-4">
@@ -192,7 +192,7 @@ export default function LabPage() {
 
       <main className="flex-1 min-w-0 flex flex-col gap-5">
         {active && (
-          <header className="bg-surface-container-low dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+          <header className="bg-surface-container-low dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
             <span className="text-caption uppercase tracking-wider font-semibold text-primary dark:text-inverse-primary">{active.category}</span>
             <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface mt-1">{active.title}</h1>
             <p className="text-body-md text-on-surface-variant dark:text-outline mt-2 max-w-3xl leading-relaxed">{active.blurb}</p>
@@ -200,7 +200,7 @@ export default function LabPage() {
         )}
 
         {active && active.controls.length > 0 && (
-          <details className="md:hidden bg-surface-container dark:bg-dark-surface-elevated rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5">
+          <details className="md:hidden bg-surface-container dark:bg-dark-surface-elevated rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10">
             <summary className="font-label-md text-label-md font-semibold cursor-pointer inline-flex items-center gap-2">
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>tune</span>
               Controls

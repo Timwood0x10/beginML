@@ -69,7 +69,7 @@ export default function SvmLab({
     const ctx = setupCanvas(canvas, W, H)
     const s = makeScale(ctx, domain, { l: 44, r: 20, t: 20, b: 36 })
     const dark = document.documentElement.classList.contains('dark')
-    const bg = dark ? '#1A1917' : '#fef9ef'
+    const bg = dark ? '#1E1913' : '#F7F0E3'
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
 
     // decision background: color regions by sign
@@ -95,7 +95,7 @@ export default function SvmLab({
       }
 
       // decision boundary (z≈0) and margins (z≈±1) via marching-ish contour
-      drawContour(ctx, s, data.grid, 0, dark ? '#f5f0e6' : '#1d1c16', 2.2)
+      drawContour(ctx, s, data.grid, 0, dark ? '#f5f0e6' : '#3B3023', 2.2)
       drawContour(ctx, s, data.grid, 1, dark ? 'rgba(245,240,230,0.4)' : 'rgba(29,28,22,0.35)', 1)
       drawContour(ctx, s, data.grid, -1, dark ? 'rgba(245,240,230,0.4)' : 'rgba(29,28,22,0.35)', 1)
     }
@@ -150,7 +150,7 @@ export default function SvmLab({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>linear_scale</span>
@@ -206,7 +206,7 @@ export default function SvmLab({
 
 function Stat({ label, value, capitalize }: { label: string; value: string | number; capitalize?: boolean }) {
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5 text-center">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10 text-center">
       <div className={`font-headline text-2xl font-bold text-primary dark:text-inverse-primary ${capitalize ? 'capitalize' : ''}`}>{value}</div>
       <div className="text-caption text-outline mt-1 uppercase tracking-wider">{label}</div>
     </div>

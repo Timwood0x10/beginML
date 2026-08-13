@@ -6,7 +6,7 @@ export default function NoteCard({ note }: { note: Note }) {
   return (
     <Link
       to={`/note/${note.id}`}
-      className="group block bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/5 hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300"
+      className="group block bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300"
     >
       <div className="flex items-center justify-between gap-3 mb-4">
         <CategoryBadge category={note.category} />
@@ -23,7 +23,7 @@ export default function NoteCard({ note }: { note: Note }) {
         {note.description || 'A curated note in this collection.'}
       </p>
 
-      <div className="flex items-center justify-between pt-3 border-t border-outline-variant/50 dark:border-white/5">
+      <div className="flex items-center justify-between pt-3 border-t border-outline-variant/50 dark:border-white/10">
         <span className="text-caption text-on-surface-variant dark:text-outline">
           {note.wordCount.toLocaleString()} words
         </span>

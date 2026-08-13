@@ -25,8 +25,8 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
     const ctx = setupCanvas(canvasRef.current, W, H)
     const s = makeScale(ctx, r.domain, { l: 44, r: 20, t: 20, b: 36 })
     const dark = document.documentElement.classList.contains('dark')
-    const bg = dark ? '#1A1917' : '#fef9ef'
-    const axisColor = dark ? '#a8a19a' : '#7d766d'
+    const bg = dark ? '#1E1913' : '#F7F0E3'
+    const axisColor = dark ? '#A99B82' : '#8A7A61'
 
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
     drawAxes(ctx, s, r.domain, { color: axisColor, gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
@@ -55,7 +55,7 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
 
     // eigenvectors (principal axes) through the mean
     const [mx, my] = r.mean
-    const colors = ['#635b4f', '#C8604A']
+    const colors = ['#7A5C36', '#C8604A']
     r.eigenvectors.forEach((ev, i) => {
       const [, tip] = ev.segment
       ctx.strokeStyle = colors[i]
@@ -87,14 +87,14 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>center_focus_strong</span>
             Data &amp; principal axes
           </h3>
           <div className="flex flex-wrap gap-3 text-caption">
-            <Legend color="#635b4f" label="original data" />
+            <Legend color="#7A5C36" label="original data" />
             <Legend color="#C8604A" label="reconstruction" />
             <Legend color="#2f6b3e" label="mean" />
           </div>
@@ -110,7 +110,7 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
 
       {/* Variance explained */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
           <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-4">Explained variance</h4>
           <div className="flex flex-col gap-3">
             {r.eigenvectors.map((ev, i) => (
@@ -120,18 +120,18 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
                   <span className="font-mono text-primary dark:text-inverse-primary">{(ev.variance * 100).toFixed(1)}%</span>
                 </div>
                 <div className="h-2.5 bg-surface-variant dark:bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${ev.variance * 100}%`, background: i === 0 ? '#635b4f' : '#C8604A' }} />
+                  <div className="h-full rounded-full" style={{ width: `${ev.variance * 100}%`, background: i === 0 ? '#7A5C36' : '#C8604A' }} />
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 pt-4 border-t border-outline-variant/50 dark:border-white/5 flex justify-between text-body-md">
+          <div className="mt-4 pt-4 border-t border-outline-variant/50 dark:border-white/10 flex justify-between text-body-md">
             <span className="text-on-surface-variant dark:text-outline">Kept with {r.components} component{r.components === 1 ? '' : 's'}</span>
             <span className="font-headline font-bold text-primary dark:text-inverse-primary">{(r.keptVariance * 100).toFixed(1)}%</span>
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
           <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">Eigenvalues</h4>
           <p className="text-body-md text-on-surface-variant dark:text-outline mb-4 leading-relaxed">
             The eigenvalues measure how much variance lives along each principal

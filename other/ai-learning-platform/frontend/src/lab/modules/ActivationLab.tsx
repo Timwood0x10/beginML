@@ -32,12 +32,12 @@ function drawActivation(canvas: HTMLCanvasElement, r: ActResult, hoverX: number 
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
     { l: 48, r: 20, t: 20, b: 36 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
+  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
   ctx.fillRect(0, 0, W, H)
   drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
-    { color: dark ? '#a8a19a' : '#7d766d', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
+    { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
 
-  drawCurve(ctx, s, r.x, r.y, '#635b4f', 2.5)
+  drawCurve(ctx, s, r.x, r.y, '#7A5C36', 2.5)
   drawCurve(ctx, s, r.x, r.dy, '#C8604A', 1.8)
   ctx.setLineDash([5, 4])
   drawCurve(ctx, s, r.tangent.x, r.tangent.y, '#5B6BB0', 1.5)
@@ -55,13 +55,13 @@ function drawActivation(canvas: HTMLCanvasElement, r: ActResult, hoverX: number 
   const px = s.px(r.point.x), py = s.py(r.point.y)
   ctx.fillStyle = '#2f6b3e'
   ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = dark ? '#1A1917' : '#fef9ef'; ctx.lineWidth = 2.5; ctx.stroke()
-  ctx.fillStyle = dark ? '#d6d0c4' : '#4b463e'
+  ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2.5; ctx.stroke()
+  ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText(`(${r.point.x.toFixed(2)}, ${r.point.y.toFixed(2)})`, px + 10, py - 8)
 
   ctx.font = '600 13px Manrope'
-  ctx.fillStyle = '#635b4f'; ctx.fillText('f(x)', s.px(r.x[r.x.length - 2]) + 4, s.py(r.y[r.y.length - 2]))
+  ctx.fillStyle = '#7A5C36'; ctx.fillText('f(x)', s.px(r.x[r.x.length - 2]) + 4, s.py(r.y[r.y.length - 2]))
   ctx.fillStyle = '#C8604A'; ctx.fillText("f'(x)", s.px(r.x[r.x.length - 2]) + 4, s.py(r.dy[r.dy.length - 2]))
 }
 
@@ -101,7 +101,7 @@ export default function ActivationLab({ result, params, setParams }: {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2 capitalize">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>show_chart</span>
@@ -126,7 +126,7 @@ export default function ActivationLab({ result, params, setParams }: {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5 text-center">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10 text-center">
       <div className="font-mono text-xl font-bold text-primary dark:text-inverse-primary">{value}</div>
       <div className="text-caption text-outline mt-1 uppercase tracking-wider">{label}</div>
     </div>

@@ -133,7 +133,7 @@ export default function HomePage() {
                 className={`md:col-span-3 bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border ${
                   accent
                     ? 'border-primary/40 dark:border-inverse-primary/30 ring-1 ring-primary/10'
-                    : 'border-outline-variant/50 dark:border-white/5'
+                    : 'border-outline-variant/50 dark:border-white/10'
                 } flex flex-col gap-4 group hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300 relative overflow-hidden`}
               >
                 {accent && (
@@ -203,7 +203,7 @@ export default function HomePage() {
             <Link
               key={note.id}
               to={`/note/${note.id}`}
-              className="group bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/5 hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300 flex flex-col"
+              className="group bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300 flex flex-col"
             >
               <div className="flex items-center justify-between mb-4">
                 <CategoryBadge category={note.category} />
@@ -218,7 +218,7 @@ export default function HomePage() {
               <p className="text-body-md text-on-surface-variant dark:text-outline line-clamp-3 leading-relaxed flex-1">
                 {note.description}
               </p>
-              <div className="mt-5 pt-4 border-t border-outline-variant/40 dark:border-white/5 flex items-center justify-between">
+              <div className="mt-5 pt-4 border-t border-outline-variant/40 dark:border-white/10 flex items-center justify-between">
                 <span className="text-caption text-outline">{note.wordCount.toLocaleString()} words</span>
                 <span className="inline-flex items-center gap-1 text-label-md font-semibold text-primary dark:text-inverse-primary">
                   Read
@@ -262,7 +262,7 @@ export default function HomePage() {
 
 function StatCard({ icon, value, label }: { icon: string; value: string; label: string }) {
   return (
-    <div className="bg-surface-container-low dark:bg-dark-surface-elevated rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+    <div className="bg-surface-container-low dark:bg-dark-surface-elevated rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
       <span className="material-symbols-outlined text-primary dark:text-inverse-primary mb-3" style={{ fontSize: 24 }}>
         {icon}
       </span>
@@ -286,7 +286,7 @@ function BentoCard({
   return (
     <Link
       to={to}
-      className="group bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-7 flex flex-col items-start gap-4 border border-outline-variant/40 dark:border-white/5 hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300"
+      className="group bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-7 flex flex-col items-start gap-4 border border-outline-variant/40 dark:border-white/10 hover:-translate-y-1 hover:shadow-ambient-lg transition-all duration-300"
     >
       <div className="w-14 h-14 rounded-full bg-secondary-container dark:bg-secondary flex items-center justify-center text-on-secondary-container dark:text-on-secondary">
         <span className="material-symbols-outlined" style={{ fontSize: 28 }}>{icon}</span>

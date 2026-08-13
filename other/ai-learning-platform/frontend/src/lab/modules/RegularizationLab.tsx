@@ -17,7 +17,7 @@ function drawReg(canvas: HTMLCanvasElement, r: RegResult, hover: { x: number; y:
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, r.domain, { l: 44, r: 20, t: 20, b: 36 })
   const dark = document.documentElement.classList.contains('dark')
-  const bg = dark ? '#1A1917' : '#fef9ef'
+  const bg = dark ? '#1E1913' : '#F7F0E3'
 
   // contour heatmap
   const { x, y, z, zmax } = r.contour
@@ -29,7 +29,7 @@ function drawReg(canvas: HTMLCanvasElement, r: RegResult, hover: { x: number; y:
       ctx.fillRect(s.px(x[i]), s.py(y[j + 1]), s.px(x[i + 1]) - s.px(x[i]) + 0.5, s.py(y[j]) - s.py(y[j + 1]) + 0.5)
     }
   }
-  drawAxes(ctx, s, r.domain, { color: dark ? '#a8a19a' : '#7d766d', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
+  drawAxes(ctx, s, r.domain, { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
 
   // hover guide lines
   if (hover) {
@@ -69,7 +69,7 @@ function drawReg(canvas: HTMLCanvasElement, r: RegResult, hover: { x: number; y:
   ctx.fillStyle = '#2f6b3e'
   ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill()
   ctx.strokeStyle = bg; ctx.lineWidth = 2.5; ctx.stroke()
-  ctx.fillStyle = dark ? '#d6d0c4' : '#4b463e'
+  ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText(`(${ox.toFixed(2)}, ${oy.toFixed(2)})`, px + 10, py - 10)
 }
@@ -112,7 +112,7 @@ export default function RegularizationLab({ result, params, setParams }: {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>circle</span>
@@ -138,7 +138,7 @@ export default function RegularizationLab({ result, params, setParams }: {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {r.contacts.map((c) => (
-          <div key={c.penalty} className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+          <div key={c.penalty} className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-label-md text-label-md uppercase tracking-wider inline-flex items-center gap-2"
                   style={{ color: c.penalty === 'l1' ? '#C8604A' : '#5B6BB0' }}>

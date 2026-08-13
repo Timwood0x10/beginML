@@ -51,8 +51,8 @@ export function drawAxes(
   domain: Domain,
   opts: { color?: string; gridColor?: string } = {},
 ) {
-  const color = opts.color ?? '#7d766d'
-  const grid = opts.gridColor ?? 'rgba(125,118,109,0.18)'
+  const color = opts.color ?? '#8A7A61'
+  const grid = opts.gridColor ?? 'rgba(138,122,97,0.18)'
   ctx.save()
   ctx.font = '11px Manrope, sans-serif'
   ctx.fillStyle = color
@@ -79,7 +79,7 @@ export function drawAxes(
     ctx.fillText(yv.toFixed(1), s.px(x0) - 36, cy + 4)
   }
   // zero lines
-  ctx.strokeStyle = 'rgba(125,118,109,0.4)'
+  ctx.strokeStyle = 'rgba(138,122,97,0.4)'
   if (x0 <= 0 && 0 <= x1) {
     ctx.beginPath(); ctx.moveTo(s.px(0), s.py(y0)); ctx.lineTo(s.px(0), s.py(y1)); ctx.stroke()
   }
@@ -89,14 +89,14 @@ export function drawAxes(
   ctx.restore()
 }
 
-// A warm "paper" colormap: low = cream, high = clay/brown.
+// A warm "parchment" colormap: low = aged cream, high = leather brown.
 export function warmColor(t: number): [number, number, number] {
   t = Math.max(0, Math.min(1, t))
-  // cream #f2ede3 -> terracotta #b86a4a -> dark brown #4d3a2e
+  // parchment #F3EBD9 -> amber #C9A96A -> deep leather #5C4423
   const stops: [number, [number, number, number]][] = [
-    [0.0, [242, 237, 227]],
-    [0.55, [200, 150, 110]],
-    [1.0, [77, 58, 46]],
+    [0.0, [243, 235, 217]],
+    [0.55, [201, 169, 106]],
+    [1.0, [92, 68, 35]],
   ]
   for (let i = 1; i < stops.length; i++) {
     if (t <= stops[i][0]) {
@@ -113,24 +113,24 @@ export function warmColor(t: number): [number, number, number] {
   return stops[stops.length - 1][1]
 }
 
-// A diverging red-to-blue colormap (white at center). Useful for signed values
-// such as attention scores, decision boundaries, correlation matrices.
+// A diverging colormap for signed values: warm amber -> parchment center ->
+// cool slate blue. The cool tail is kept subtle so charts stay warm overall.
 export function divergingColor(t: number): [number, number, number] {
   t = Math.max(0, Math.min(1, t))
-  // 0 = clay red, 0.5 = near-white, 1 = slate blue
+  // 0 = amber #C98A4B, 0.5 = parchment #F3EBD9, 1 = slate #6E7F8B
   if (t < 0.5) {
     const k = t / 0.5
     return [
-      Math.round(200 + (247 - 200) * k),
-      Math.round(96 + (244 - 96) * k),
-      Math.round(74 + (240 - 74) * k),
+      Math.round(201 + (243 - 201) * k),
+      Math.round(138 + (235 - 138) * k),
+      Math.round(75 + (217 - 75) * k),
     ]
   }
   const k = (t - 0.5) / 0.5
   return [
-    Math.round(247 + (91 - 247) * k),
-    Math.round(244 + (107 - 244) * k),
-    Math.round(240 + (176 - 240) * k),
+    Math.round(243 + (110 - 243) * k),
+    Math.round(235 + (127 - 235) * k),
+    Math.round(217 + (139 - 217) * k),
   ]
 }
 

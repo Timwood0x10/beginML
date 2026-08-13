@@ -24,10 +24,10 @@ function drawLoss(canvas: HTMLCanvasElement, r: LossResult, hoverX: number | nul
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
     { l: 52, r: 20, t: 20, b: 40 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
+  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
   ctx.fillRect(0, 0, W, H)
   drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
-    { color: dark ? '#a8a19a' : '#7d766d', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
+    { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
 
   if (hoverX !== null) {
     ctx.strokeStyle = 'rgba(99,91,79,0.4)'
@@ -37,7 +37,7 @@ function drawLoss(canvas: HTMLCanvasElement, r: LossResult, hoverX: number | nul
   }
 
   // loss curve
-  ctx.strokeStyle = '#635b4f'
+  ctx.strokeStyle = '#7A5C36'
   ctx.lineWidth = 2.5
   ctx.beginPath()
   r.x.forEach((xv, i) => {
@@ -61,18 +61,18 @@ function drawLoss(canvas: HTMLCanvasElement, r: LossResult, hoverX: number | nul
   // minimum
   ctx.fillStyle = '#2f6b3e'
   ctx.beginPath(); ctx.arc(s.px(r.minimum.x), s.py(r.minimum.y), 6, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = dark ? '#1A1917' : '#fef9ef'; ctx.lineWidth = 2; ctx.stroke()
+  ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2; ctx.stroke()
 
   // probe
   const px = s.px(r.probe.x), py = s.py(r.probe.y)
   ctx.fillStyle = '#C8604A'
   ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = dark ? '#1A1917' : '#fef9ef'; ctx.lineWidth = 2.5; ctx.stroke()
-  ctx.fillStyle = dark ? '#d6d0c4' : '#4b463e'
+  ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2.5; ctx.stroke()
+  ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText(`(${r.probe.x.toFixed(2)}, ${r.probe.y.toFixed(2)})`, px + 10, py - 8)
 
-  ctx.fillStyle = dark ? '#a8a19a' : '#7d766d'
+  ctx.fillStyle = dark ? '#A99B82' : '#8A7A61'
   ctx.font = '12px Manrope'
   ctx.fillText(r.xLabel, W - 80, H - 8)
   ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2)
@@ -114,7 +114,7 @@ export default function LossLab({ result, params, setParams }: {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>trending_down</span>
@@ -139,7 +139,7 @@ export default function LossLab({ result, params, setParams }: {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5 text-center">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10 text-center">
       <div className="font-mono text-xl font-bold text-primary dark:text-inverse-primary">{value}</div>
       <div className="text-caption text-outline mt-1 uppercase tracking-wider">{label}</div>
     </div>

@@ -57,7 +57,7 @@ export default function AttentionLab({ result }: { result: LabResult | null }) {
   return (
     <div className="flex flex-col gap-5">
       {/* Pipeline explanation */}
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>grid_on</span>
@@ -111,7 +111,7 @@ export default function AttentionLab({ result }: { result: LabResult | null }) {
                         background: masked
                           ? 'repeating-linear-gradient(45deg, rgba(125,118,109,0.12), rgba(125,118,109,0.12) 4px, transparent 4px, transparent 8px)'
                           : cellColor(v),
-                        color: view === 'weights' ? (v > 0.55 ? '#fff' : '#1d1c16') : '#1d1c16',
+                        color: view === 'weights' ? (v > 0.55 ? '#fff' : '#3B3023') : '#3B3023',
                       }}
                       title={`${r.tokens[i]} → ${r.tokens[j]}: ${v.toFixed(3)}${masked ? ' (masked)' : ''}`}
                     >
@@ -164,7 +164,7 @@ function VectorCard({
   const vec = vectors[idx] ?? []
   const vmax = Math.max(...vec.map(Math.abs), 0.01)
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
       <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">
         {title} <span className="font-mono text-primary dark:text-inverse-primary normal-case">{name}{idx}</span>
         <span className="float-right text-caption normal-case text-outline">{tokens[idx]}</span>
@@ -179,7 +179,7 @@ function VectorCard({
                 className="rounded-t"
                 style={{
                   height: `${h}%`,
-                  background: v >= 0 ? '#635b4f' : '#C8604A',
+                  background: v >= 0 ? '#7A5C36' : '#C8604A',
                   opacity: 0.5 + Math.abs(v) / vmax * 0.5,
                 }}
               />

@@ -16,7 +16,7 @@ function drawContour(canvas: HTMLCanvasElement, r: GdResult, hover: { x: number;
   const W = 560, H = 440
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, r.domain)
-  const bg = document.documentElement.classList.contains('dark') ? '#1A1917' : '#fef9ef'
+  const bg = document.documentElement.classList.contains('dark') ? '#1E1913' : '#F7F0E3'
 
   // filled contour heatmap
   const { x, y, z, zmin, zmax } = r.contour
@@ -29,7 +29,7 @@ function drawContour(canvas: HTMLCanvasElement, r: GdResult, hover: { x: number;
       ctx.fillRect(s.px(x[i]), s.py(y[j + 1]), s.px(x[i + 1]) - s.px(x[i]) + 0.5, s.py(y[j]) - s.py(y[j + 1]) + 0.5)
     }
   }
-  drawAxes(ctx, s, r.domain, { color: '#7d766d', gridColor: 'rgba(125,118,109,0.15)' })
+  drawAxes(ctx, s, r.domain, { color: '#8A7A61', gridColor: 'rgba(125,118,109,0.15)' })
 
   // hover crosshair + z value
   if (hover) {
@@ -74,7 +74,7 @@ function drawContour(canvas: HTMLCanvasElement, r: GdResult, hover: { x: number;
   ctx.fillStyle = '#C8604A'
   ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill()
   ctx.strokeStyle = bg; ctx.lineWidth = 2.5; ctx.stroke()
-  ctx.fillStyle = '#4b463e'
+  ctx.fillStyle = '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText('start', px + 10, py - 8)
 }
@@ -88,10 +88,10 @@ function drawLossCurve(canvas: HTMLCanvasElement, r: GdResult) {
   const maxSteps = Math.max(...r.trajectories.map((t) => t.points.length))
   const domain: Domain = { x: [0, maxSteps - 1], y: [0, maxLoss * 1.05] }
   const s = makeScale(ctx, domain, pad)
-  const bg = document.documentElement.classList.contains('dark') ? '#1A1917' : '#fef9ef'
+  const bg = document.documentElement.classList.contains('dark') ? '#1E1913' : '#F7F0E3'
 
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
-  drawAxes(ctx, s, domain, { color: '#7d766d', gridColor: 'rgba(125,118,109,0.15)' })
+  drawAxes(ctx, s, domain, { color: '#8A7A61', gridColor: 'rgba(125,118,109,0.15)' })
 
   for (const traj of r.trajectories) {
     ctx.strokeStyle = traj.color
@@ -103,7 +103,7 @@ function drawLossCurve(canvas: HTMLCanvasElement, r: GdResult) {
     })
     ctx.stroke()
   }
-  ctx.fillStyle = '#7d766d'
+  ctx.fillStyle = '#8A7A61'
   ctx.font = '11px Manrope'
   ctx.fillText('step', W - 40, H - 8)
   ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2)
@@ -159,7 +159,7 @@ export default function GradientDescentLab({ result, loading, params, setParams 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>terrain</span>
@@ -182,7 +182,7 @@ export default function GradientDescentLab({ result, loading, params, setParams 
         )}
       </div>
 
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-3 inline-flex items-center gap-2">
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>show_chart</span>
           Convergence

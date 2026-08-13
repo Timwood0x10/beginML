@@ -139,8 +139,8 @@ export default function NotePage() {
 
       <div className="flex flex-col lg:flex-row gap-10">
         {/* Article */}
-        <article className="flex-1 min-w-0 bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/5 p-6 md:p-12">
-          <header className="mb-8 pb-6 border-b border-outline-variant/50 dark:border-white/5">
+        <article className="flex-1 min-w-0 bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 p-6 md:p-12">
+          <header className="mb-8 pb-6 border-b border-outline-variant/50 dark:border-white/10">
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <CategoryBadge category={note.category} size="md" />
               <span className="inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline">
@@ -172,7 +172,7 @@ export default function NotePage() {
         {/* Right rail: TOC + related */}
         <aside className="lg:w-72 shrink-0 flex flex-col gap-6">
           {toc.length > 0 && (
-            <div className="lg:sticky lg:top-28 bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+            <div className="lg:sticky lg:top-28 bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
               <div className="flex items-center gap-2 mb-3 text-on-surface dark:text-dark-on-surface">
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>list</span>
                 <h4 className="font-label-md text-label-md uppercase tracking-wider">Contents</h4>
@@ -194,7 +194,7 @@ export default function NotePage() {
           )}
 
           {note.related.length > 0 && (
-            <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/5">
+            <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-5 border border-outline-variant/40 dark:border-white/10">
               <div className="flex items-center gap-2 mb-4 text-on-surface dark:text-dark-on-surface">
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>hub</span>
                 <h4 className="font-label-md text-label-md uppercase tracking-wider">Related notes</h4>

@@ -148,7 +148,7 @@ export default function MapPage() {
           Reset view
         </button>
         <span className="w-px h-6 bg-outline-variant/60 mx-1" />
-        <LegendPill active={!activeCat} color="#7d766d" label="All" onClick={() => setActiveCat(null)} count={data.points.length} />
+        <LegendPill active={!activeCat} color="#8A7A61" label="All" onClick={() => setActiveCat(null)} count={data.points.length} />
         {data.categories.map((c) => (
           <LegendPill
             key={c.id}
@@ -162,7 +162,7 @@ export default function MapPage() {
       </div>
 
       {/* Map canvas */}
-      <div className="relative bg-surface-container-lowest dark:bg-dark-surface rounded-3xl border border-outline-variant/50 dark:border-white/5 shadow-ambient dark:shadow-dark-ambient overflow-hidden" style={{ height: 'min(70vh, 680px)' }}>
+      <div className="relative bg-surface-container-lowest dark:bg-dark-surface rounded-3xl border border-outline-variant/50 dark:border-white/10 shadow-ambient dark:shadow-dark-ambient overflow-hidden" style={{ height: 'min(70vh, 680px)' }}>
         <svg
           ref={svgRef}
           className="w-full h-full touch-none cursor-grab active:cursor-grabbing"

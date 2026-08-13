@@ -74,7 +74,7 @@ function drawScene(canvas: HTMLCanvasElement, r: NnResult, hover: { x: number; y
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 20, r: 20, t: 20, b: 20 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
+  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
   ctx.fillRect(0, 0, W, H)
   drawBoundary(ctx, s, r.grid)
   drawContourLine(ctx, s, r.grid, 0.5)
@@ -90,7 +90,7 @@ function drawScene(canvas: HTMLCanvasElement, r: NnResult, hover: { x: number; y
   r.points.forEach((p) => {
     ctx.fillStyle = COLORS[p.cls] ?? '#8a8376'
     ctx.beginPath(); ctx.arc(s.px(p.x), s.py(p.y), 5, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = dark ? '#1A1917' : '#fef9ef'
+    ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'
     ctx.lineWidth = 1.5
     ctx.stroke()
   })
@@ -103,7 +103,7 @@ function drawLoss(canvas: HTMLCanvasElement, r: NnResult) {
   const maxLoss = Math.max(...r.losses, 0.01)
   const s = makeScale(ctx, { x: [0, r.losses.length - 1], y: [0, maxLoss * 1.1] }, pad)
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
+  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
   ctx.fillRect(0, 0, W, H)
 
   ctx.strokeStyle = dark ? 'rgba(255,255,255,0.08)' : 'rgba(125,118,109,0.12)'
@@ -113,7 +113,7 @@ function drawLoss(canvas: HTMLCanvasElement, r: NnResult) {
     ctx.beginPath(); ctx.moveTo(pad.l, cy); ctx.lineTo(W - pad.r, cy); ctx.stroke()
   }
 
-  ctx.strokeStyle = '#635b4f'
+  ctx.strokeStyle = '#7A5C36'
   ctx.lineWidth = 2
   ctx.beginPath()
   r.losses.forEach((v, i) => {
@@ -122,7 +122,7 @@ function drawLoss(canvas: HTMLCanvasElement, r: NnResult) {
   })
   ctx.stroke()
 
-  ctx.fillStyle = dark ? '#a8a19a' : '#7d766d'
+  ctx.fillStyle = dark ? '#A99B82' : '#8A7A61'
   ctx.font = '11px Manrope'
   ctx.fillText('epoch', W - 50, H - 8)
   ctx.save(); ctx.translate(12, H / 2); ctx.rotate(-Math.PI / 2)
@@ -197,7 +197,7 @@ export default function NeuralNetLab({ params }: {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2 capitalize">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>bubble_chart</span>
@@ -227,7 +227,7 @@ export default function NeuralNetLab({ params }: {
         </p>
       </div>
 
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <h4 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">Training loss</h4>
         <div className="w-full overflow-x-auto flex justify-center">
           <canvas ref={lossRef} className="rounded-2xl" />
@@ -248,7 +248,7 @@ export default function NeuralNetLab({ params }: {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5 text-center">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10 text-center">
       <div className="font-mono text-xl font-bold text-primary dark:text-inverse-primary">{value}</div>
       <div className="text-caption text-outline mt-1 uppercase tracking-wider">{label}</div>
     </div>

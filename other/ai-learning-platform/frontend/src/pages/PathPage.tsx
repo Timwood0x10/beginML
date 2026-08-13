@@ -161,7 +161,7 @@ export default function PathPage() {
                     className={`group relative flex items-start gap-4 rounded-2xl p-4 md:p-5 border transition-all duration-200 ${
                       isCurrent
                         ? 'bg-surface-container-lowest dark:bg-dark-surface-elevated border-primary/30 dark:border-inverse-primary/30 shadow-ambient dark:shadow-dark-ambient'
-                        : 'bg-surface-container-lowest/60 dark:bg-dark-surface-elevated/60 border-outline-variant/40 dark:border-white/5 hover:bg-surface-container-lowest dark:hover:bg-dark-surface-elevated hover:border-outline-variant dark:hover:border-white/15 hover:-translate-y-0.5'
+                        : 'bg-surface-container-lowest/60 dark:bg-dark-surface-elevated/60 border-outline-variant/40 dark:border-white/10 hover:bg-surface-container-lowest dark:hover:bg-dark-surface-elevated hover:border-outline-variant dark:hover:border-white/15 hover:-translate-y-0.5'
                     }`}
                   >
                     <div

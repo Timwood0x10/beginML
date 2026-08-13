@@ -68,13 +68,13 @@ function BernoulliView({ r, params, setParams }: {
     const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 52, r: 20, t: 20, b: 40 })
     scaleRef.current = s
     const dark = document.documentElement.classList.contains('dark')
-    ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
+    ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
     ctx.fillRect(0, 0, W, H)
     drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
-      { color: dark ? '#a8a19a' : '#7d766d', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
+      { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
 
     const curves: [number[], string][] = [
-      [r.entropy, '#635b4f'], [r.kl, '#C8604A'], [r.crossEntropy, '#5B6BB0'],
+      [r.entropy, '#7A5C36'], [r.kl, '#C8604A'], [r.crossEntropy, '#5B6BB0'],
     ]
     curves.forEach(([data, color]) => {
       ctx.strokeStyle = color
@@ -111,7 +111,7 @@ function BernoulliView({ r, params, setParams }: {
       ctx.strokeStyle = '#2f6b3e'
       ctx.lineWidth = 2
       ctx.beginPath(); ctx.moveTo(ix, s.py(r.domain.y[0])); ctx.lineTo(ix, s.py(r.domain.y[1])); ctx.stroke()
-      const pts: [number, string][] = [[inspect.h, '#635b4f'], [inspect.kl, '#C8604A'], [inspect.ce, '#5B6BB0']]
+      const pts: [number, string][] = [[inspect.h, '#7A5C36'], [inspect.kl, '#C8604A'], [inspect.ce, '#5B6BB0']]
       pts.forEach(([v, color]) => {
         ctx.fillStyle = color
         ctx.beginPath(); ctx.arc(ix, s.py(v), 5, 0, Math.PI * 2); ctx.fill()
@@ -120,7 +120,7 @@ function BernoulliView({ r, params, setParams }: {
 
     // legend
     const items: [string, string, string][] = [
-      ['#635b4f', 'H(Q)', 'entropy'],
+      ['#7A5C36', 'H(Q)', 'entropy'],
       ['#C8604A', 'KL(P||Q)', 'divergence'],
       ['#5B6BB0', 'H(P,Q)', 'cross-entropy'],
     ]
@@ -128,7 +128,7 @@ function BernoulliView({ r, params, setParams }: {
     items.forEach(([color, sym, label], i) => {
       ctx.fillStyle = color
       ctx.fillRect(W - 140, 18 + i * 18, 14, 3)
-      ctx.fillStyle = dark ? '#d6d0c4' : '#4b463e'
+      ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
       ctx.fillText(`${sym} ${label}`, W - 120, 24 + i * 18)
     })
     ctx.fillStyle = '#2f6b3e'
@@ -146,7 +146,7 @@ function BernoulliView({ r, params, setParams }: {
   return (
     <div className="flex flex-col gap-4">
       <FormulaCard formula={r.formula} title="Bernoulli P vs Q" />
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="w-full overflow-x-auto flex justify-center">
           <canvas ref={ref} className="rounded-2xl cursor-crosshair touch-none" {...handlers} />
         </div>
@@ -158,7 +158,7 @@ function BernoulliView({ r, params, setParams }: {
         <Stat label="H(P,P)" value={r.ceAtP.toFixed(3)} />
       </div>
       {inspect && (
-        <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5 grid grid-cols-3 gap-3">
+        <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10 grid grid-cols-3 gap-3">
           <Stat label={`H(Q=${inspect.x.toFixed(2)})`} value={inspect.h.toFixed(3)} />
           <Stat label={`KL(P||Q)`} value={inspect.kl.toFixed(3)} />
           <Stat label={`H(P,Q)`} value={inspect.ce.toFixed(3)} />
@@ -173,7 +173,7 @@ function CategoricalView({ r }: { r: CategoricalResult }) {
   return (
     <div className="flex flex-col gap-4">
       <FormulaCard formula={r.formula} title={`Categorical (k=${r.categories.length}, T=${r.temperature})`} />
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-6 border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-6 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-end gap-3 h-48">
           {r.categories.map((cat, i) => {
             const hp = (r.p[i] / maxVal) * 100
@@ -181,7 +181,7 @@ function CategoricalView({ r }: { r: CategoricalResult }) {
             return (
               <div key={cat} className="flex-1 flex flex-col items-center gap-1">
                 <div className="flex items-end gap-1 h-full w-full">
-                  <div className="flex-1 rounded-t-md transition-all" style={{ height: `${hp}%`, background: '#635b4f' }} title={`P=${r.p[i].toFixed(3)}`} />
+                  <div className="flex-1 rounded-t-md transition-all" style={{ height: `${hp}%`, background: '#7A5C36' }} title={`P=${r.p[i].toFixed(3)}`} />
                   <div className="flex-1 rounded-t-md transition-all" style={{ height: `${hq}%`, background: '#C8604A' }} title={`Q=${r.q[i].toFixed(3)}`} />
                 </div>
                 <span className="text-caption text-outline font-mono">{cat}</span>
@@ -190,7 +190,7 @@ function CategoricalView({ r }: { r: CategoricalResult }) {
           })}
         </div>
         <div className="flex gap-4 mt-4 text-caption">
-          <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline"><span className="w-3 h-3 rounded-sm bg-[#635b4f]" /> P (true)</span>
+          <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline"><span className="w-3 h-3 rounded-sm bg-[#7A5C36]" /> P (true)</span>
           <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline"><span className="w-3 h-3 rounded-sm bg-[#C8604A]" /> Q (model, T={r.temperature})</span>
         </div>
       </div>
@@ -206,7 +206,7 @@ function CategoricalView({ r }: { r: CategoricalResult }) {
 
 function FormulaCard({ formula, title }: { formula: string; title: string }) {
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/5 flex items-center justify-between gap-4 flex-wrap">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10 flex items-center justify-between gap-4 flex-wrap">
       <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
         <span className="material-symbols-outlined" style={{ fontSize: 20 }}>water_drop</span>
         {title}
@@ -221,7 +221,7 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
     <div className={`rounded-2xl p-4 border text-center ${
       highlight
         ? 'bg-primary/10 dark:bg-inverse-primary/15 border-primary/30 dark:border-inverse-primary/30'
-        : 'bg-surface-container-lowest dark:bg-dark-surface border-outline-variant/40 dark:border-white/5'
+        : 'bg-surface-container-lowest dark:bg-dark-surface border-outline-variant/40 dark:border-white/10'
     }`}>
       <div className={`font-mono text-xl font-bold ${highlight ? 'text-primary dark:text-inverse-primary' : 'text-primary dark:text-inverse-primary'}`}>{value}</div>
       <div className="text-caption text-outline mt-1 uppercase tracking-wider">{label}</div>

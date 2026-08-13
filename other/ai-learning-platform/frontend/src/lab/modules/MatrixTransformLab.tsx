@@ -66,7 +66,7 @@ function drawScene(canvas: HTMLCanvasElement, r: MatrixResult, pt: { x: number; 
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 20, r: 20, t: 20, b: 20 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
+  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
   ctx.fillRect(0, 0, W, H)
 
   drawGrid(ctx, s, r.gridOriginal, dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.1)', 1)
@@ -81,7 +81,7 @@ function drawScene(canvas: HTMLCanvasElement, r: MatrixResult, pt: { x: number; 
   r.circleTransformed.forEach((p, i) => i === 0 ? ctx.moveTo(s.px(p[0]), s.py(p[1])) : ctx.lineTo(s.px(p[0]), s.py(p[1])))
   ctx.closePath(); ctx.stroke()
 
-  drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { color: dark ? '#a8a19a' : '#7d766d', gridColor: 'transparent' })
+  drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { color: dark ? '#A99B82' : '#8A7A61', gridColor: 'transparent' })
 
   drawArrow(ctx, s, r.basis.ex, '#2f6b3e')
   drawArrow(ctx, s, r.basis.ey, '#8B5CF6')
@@ -104,15 +104,15 @@ function drawScene(canvas: HTMLCanvasElement, r: MatrixResult, pt: { x: number; 
     // original point
     ctx.fillStyle = '#2f6b3e'
     ctx.beginPath(); ctx.arc(s.px(pt.x), s.py(pt.y), 7, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = dark ? '#1A1917' : '#fef9ef'; ctx.lineWidth = 2; ctx.stroke()
-    ctx.fillStyle = dark ? '#d6d0c4' : '#4b463e'
+    ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2; ctx.stroke()
+    ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
     ctx.font = '600 12px Manrope'
     ctx.fillText(`p (${pt.x.toFixed(2)}, ${pt.y.toFixed(2)})`, s.px(pt.x) + 10, s.py(pt.y) - 10)
 
     // transformed point
     ctx.fillStyle = '#C8604A'
     ctx.beginPath(); ctx.arc(s.px(tx), s.py(ty), 7, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = dark ? '#1A1917' : '#fef9ef'; ctx.lineWidth = 2; ctx.stroke()
+    ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2; ctx.stroke()
     ctx.fillStyle = '#C8604A'
     ctx.fillText(`M·p (${tx.toFixed(2)}, ${ty.toFixed(2)})`, s.px(tx) + 10, s.py(ty) - 10)
   }
@@ -161,7 +161,7 @@ export default function MatrixTransformLab({ result }: {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
-      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-3 inline-flex items-center gap-2">
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>grid_view</span>
           Linear transform
@@ -182,7 +182,7 @@ export default function MatrixTransformLab({ result }: {
       </div>
 
       <div className="lg:w-72 flex flex-col gap-3">
-        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5">
+        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10">
           <h4 className="text-caption uppercase tracking-wider text-outline mb-3">Matrix</h4>
           <div className="grid grid-cols-2 gap-2 font-mono text-lg text-center">
             {r.matrix.flat().map((v, i) => (
@@ -197,7 +197,7 @@ export default function MatrixTransformLab({ result }: {
           <Stat label="rank" value={String(r.rank)} />
         </div>
 
-        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5">
+        <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/10">
           <h4 className="text-caption uppercase tracking-wider text-outline mb-2">Eigenvalues</h4>
           {r.eigen.length > 0 ? r.eigen.map((e, i) => (
             <div key={i} className="flex items-center gap-2 mb-2 last:mb-0">
@@ -219,7 +219,7 @@ export default function MatrixTransformLab({ result }: {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-3 border border-outline-variant/40 dark:border-white/5 text-center">
+    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-2xl p-3 border border-outline-variant/40 dark:border-white/10 text-center">
       <div className="font-mono text-base font-bold text-primary dark:text-inverse-primary">{value}</div>
       <div className="text-caption text-outline mt-0.5 uppercase tracking-wider">{label}</div>
     </div>
