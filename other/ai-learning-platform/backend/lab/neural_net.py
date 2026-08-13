@@ -99,10 +99,18 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     seed = int(params.get("seed", 1))
     noise = float(params.get("noise", 0.0))
 
-    X, y = _make_dataset(dataset, n, seed)
-    if noise > 0:
-        rng = np.random.default_rng(seed + 7)
-        X = X + rng.normal(0, noise, size=X.shape)
+    # Custom user-placed points take priority over the generated dataset.
+    raw = params.get("points")
+    if isinstance(raw, list) and len(raw) >= 4:
+        X = np.array([[float(p["x"]), float(p["y"])] for p in raw])
+        y = np.array([int(p["cls"]) for p in raw], dtype=float)
+        if len(set(y.tolist())) < 2:
+            X, y = _make_dataset(dataset, n, seed)
+    else:
+        X, y = _make_dataset(dataset, n, seed)
+        if noise > 0:
+            rng = np.random.default_rng(seed + 7)
+            X = X + rng.normal(0, noise, size=X.shape)
 
     trained, losses = _train(X, y, hidden, lr, epochs, seed)
     acc = float(((_predict(trained, X) > 0.5) == y).mean())
@@ -125,7 +133,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
             "cls": int(y[i]),
             "prob": round(float(_predict(trained, X[i:i+1])[0]), 3),
         }
-        for i in range(n)
+        for i in range(len(X))
     ]
 
     return {

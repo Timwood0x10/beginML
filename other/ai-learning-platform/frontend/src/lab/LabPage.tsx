@@ -14,6 +14,7 @@ import LossLab from './modules/LossLab'
 import MatrixTransformLab from './modules/MatrixTransformLab'
 import DistributionLab from './modules/DistributionLab'
 import EntropyLab from './modules/EntropyLab'
+import NeuralNetLab from './modules/NeuralNetLab'
 
 interface LabComponentProps {
   result: LabResult | null
@@ -36,6 +37,7 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'matrix-transform': MatrixTransformLab,
   distributions: DistributionLab,
   entropy: EntropyLab,
+  'neural-net': NeuralNetLab,
 }
 
 export default function LabPage() {

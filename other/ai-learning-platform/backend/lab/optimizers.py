@@ -151,6 +151,17 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     obj = OBJECTIVES[objective]
     fn, grad, lim = obj["fn"], obj["grad"], obj["lim"]
 
+    # A custom start point can be supplied directly (e.g. user clicked the
+    # canvas); otherwise pick from the preset strategies.
+    start_x = params.get("startX")
+    start_y = params.get("startY")
+    if isinstance(start_x, (int, float)) and isinstance(start_y, (int, float)):
+        sx = float(np.clip(start_x, lim[0], lim[1]))
+        sy = float(np.clip(start_y, lim[0], lim[1]))
+        start_pt = np.array([sx, sy])
+    else:
+        start_pt = _start_point(rng, start, lim)
+
     # Contour grid (log-scaled levels so non-convex functions stay readable)
     grid_n = 60
     xs = np.linspace(lim[0], lim[1], grid_n)
@@ -163,7 +174,6 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     zmax = float(np.percentile(Z, 92))
     zmin = float(np.min(Z))
 
-    start_pt = _start_point(rng, start, lim)
     trajectory = _run(fn, grad, start_pt, optimizer, lr, momentum, steps)
 
     # A reference SGD path at a known-stable lr for comparison

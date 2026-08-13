@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
-import type { LabResult } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain } from '../canvas'
+import { useEffect, useRef, useState } from 'react'
+import type { LabResult, LabParams } from '../types'
+import { setupCanvas, makeScale, drawAxes, type Domain, type Scale } from '../canvas'
+import { useCanvasDrag } from '../useCanvasDrag'
 
 interface BernoulliResult extends LabResult {
   mode: 'bernoulli'
@@ -29,22 +30,43 @@ interface CategoricalResult extends LabResult {
   formula: string
 }
 
-export default function EntropyLab({ result }: { result: LabResult | null }) {
+export default function EntropyLab({ result, params, setParams }: {
+  result: LabResult | null; loading: boolean; error: string | null
+  onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+}) {
   if (!result) return null
   return result.mode === 'categorical'
     ? <CategoricalView r={result as CategoricalResult} />
-    : <BernoulliView r={result as BernoulliResult} />
+    : <BernoulliView r={result as BernoulliResult} params={params} setParams={setParams} />
 }
 
-function BernoulliView({ r }: { r: BernoulliResult }) {
+interface Inspect { x: number; h: number; kl: number; ce: number }
+
+function BernoulliView({ r, params, setParams }: {
+  r: BernoulliResult; params: LabParams; setParams: (p: LabParams) => void
+}) {
   const ref = useRef<HTMLCanvasElement>(null)
+  const scaleRef = useRef<Scale | null>(null)
+  const [inspect, setInspect] = useState<Inspect | null>(null)
+  const [hover, setHover] = useState<number | null>(null)
+
+  // Look up curve values at a given q by nearest sample (no formula here).
+  const sampleAt = (q: number): Inspect => {
+    let idx = 0
+    let best = Infinity
+    r.x.forEach((xv, i) => {
+      const d = Math.abs(xv - q)
+      if (d < best) { best = d; idx = i }
+    })
+    return { x: r.x[idx], h: r.entropy[idx], kl: r.kl[idx], ce: r.crossEntropy[idx] }
+  }
 
   useEffect(() => {
     if (!ref.current) return
     const W = 640, H = 420
     const ctx = setupCanvas(ref.current, W, H)
-    const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
-      { l: 52, r: 20, t: 20, b: 40 })
+    const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 52, r: 20, t: 20, b: 40 })
+    scaleRef.current = s
     const dark = document.documentElement.classList.contains('dark')
     ctx.fillStyle = dark ? '#1A1917' : '#fef9ef'
     ctx.fillRect(0, 0, W, H)
@@ -65,7 +87,15 @@ function BernoulliView({ r }: { r: BernoulliResult }) {
       ctx.stroke()
     })
 
-    // vertical line at P
+    // hover guide
+    if (hover !== null && !inspect) {
+      ctx.strokeStyle = 'rgba(99,91,79,0.4)'
+      ctx.setLineDash([3, 3])
+      ctx.beginPath(); ctx.moveTo(s.px(hover), s.py(r.domain.y[0])); ctx.lineTo(s.px(hover), s.py(r.domain.y[1])); ctx.stroke()
+      ctx.setLineDash([])
+    }
+
+    // P line
     ctx.strokeStyle = '#2f6b3e'
     ctx.lineWidth = 1.5
     ctx.setLineDash([4, 4])
@@ -74,6 +104,19 @@ function BernoulliView({ r }: { r: BernoulliResult }) {
     ctx.lineTo(s.px(r.p), s.py(r.domain.y[1]))
     ctx.stroke()
     ctx.setLineDash([])
+
+    // inspect marker
+    if (inspect) {
+      const ix = s.px(inspect.x)
+      ctx.strokeStyle = '#2f6b3e'
+      ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(ix, s.py(r.domain.y[0])); ctx.lineTo(ix, s.py(r.domain.y[1])); ctx.stroke()
+      const pts: [number, string][] = [[inspect.h, '#635b4f'], [inspect.kl, '#C8604A'], [inspect.ce, '#5B6BB0']]
+      pts.forEach(([v, color]) => {
+        ctx.fillStyle = color
+        ctx.beginPath(); ctx.arc(ix, s.py(v), 5, 0, Math.PI * 2); ctx.fill()
+      })
+    }
 
     // legend
     const items: [string, string, string][] = [
@@ -90,21 +133,37 @@ function BernoulliView({ r }: { r: BernoulliResult }) {
     })
     ctx.fillStyle = '#2f6b3e'
     ctx.fillText(`P = ${r.p.toFixed(2)}`, s.px(r.p) + 8, 36)
-  }, [r])
+  }, [r, inspect, hover])
+
+  const { handlers } = useCanvasDrag({
+    getScale: () => scaleRef.current,
+    onDown: (x) => { setInspect(sampleAt(x)); return true },
+    onDrag: (x) => { setInspect(sampleAt(x)) },
+    onHover: (x) => { if (!Number.isNaN(x)) setHover(x) },
+    onUp: () => {},
+  })
 
   return (
     <div className="flex flex-col gap-4">
       <FormulaCard formula={r.formula} title="Bernoulli P vs Q" />
-      <CanvasCard canvasRef={ref} />
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
+        <div className="w-full overflow-x-auto flex justify-center">
+          <canvas ref={ref} className="rounded-2xl cursor-crosshair touch-none" {...handlers} />
+        </div>
+        <p className="mt-3 text-caption text-on-surface-variant dark:text-outline">Click the chart to inspect H, KL and cross-entropy at any Q.</p>
+      </div>
       <div className="grid grid-cols-3 gap-3">
         <Stat label="H(P)" value={r.entropyP.toFixed(3)} />
         <Stat label="KL(P||P)" value={r.klAtP.toFixed(3)} />
         <Stat label="H(P,P)" value={r.ceAtP.toFixed(3)} />
       </div>
-      <p className="text-caption text-on-surface-variant dark:text-outline">
-        Move Q across the x-axis. The KL divergence is zero only when Q equals P
-        (the green line), while cross-entropy equals entropy there.
-      </p>
+      {inspect && (
+        <div className="bg-surface-container-low dark:bg-dark-surface rounded-2xl p-4 border border-outline-variant/40 dark:border-white/5 grid grid-cols-3 gap-3">
+          <Stat label={`H(Q=${inspect.x.toFixed(2)})`} value={inspect.h.toFixed(3)} />
+          <Stat label={`KL(P||Q)`} value={inspect.kl.toFixed(3)} />
+          <Stat label={`H(P,Q)`} value={inspect.ce.toFixed(3)} />
+        </div>
+      )}
     </div>
   )
 }
@@ -122,8 +181,8 @@ function CategoricalView({ r }: { r: CategoricalResult }) {
             return (
               <div key={cat} className="flex-1 flex flex-col items-center gap-1">
                 <div className="flex items-end gap-1 h-full w-full">
-                  <div className="flex-1 rounded-t-md" style={{ height: `${hp}%`, background: '#635b4f' }} title={`P=${r.p[i].toFixed(3)}`} />
-                  <div className="flex-1 rounded-t-md" style={{ height: `${hq}%`, background: '#C8604A' }} title={`Q=${r.q[i].toFixed(3)}`} />
+                  <div className="flex-1 rounded-t-md transition-all" style={{ height: `${hp}%`, background: '#635b4f' }} title={`P=${r.p[i].toFixed(3)}`} />
+                  <div className="flex-1 rounded-t-md transition-all" style={{ height: `${hq}%`, background: '#C8604A' }} title={`Q=${r.q[i].toFixed(3)}`} />
                 </div>
                 <span className="text-caption text-outline font-mono">{cat}</span>
               </div>
@@ -131,12 +190,8 @@ function CategoricalView({ r }: { r: CategoricalResult }) {
           })}
         </div>
         <div className="flex gap-4 mt-4 text-caption">
-          <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline">
-            <span className="w-3 h-3 rounded-sm bg-[#635b4f]" /> P (true)
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline">
-            <span className="w-3 h-3 rounded-sm bg-[#C8604A]" /> Q (model, T={r.temperature})
-          </span>
+          <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline"><span className="w-3 h-3 rounded-sm bg-[#635b4f]" /> P (true)</span>
+          <span className="inline-flex items-center gap-1.5 text-on-surface-variant dark:text-outline"><span className="w-3 h-3 rounded-sm bg-[#C8604A]" /> Q (model, T={r.temperature})</span>
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -156,19 +211,7 @@ function FormulaCard({ formula, title }: { formula: string; title: string }) {
         <span className="material-symbols-outlined" style={{ fontSize: 20 }}>water_drop</span>
         {title}
       </h3>
-      <code className="font-mono text-sm text-primary dark:text-inverse-primary bg-primary-fixed/40 dark:bg-white/5 px-3 py-1.5 rounded-lg">
-        {formula}
-      </code>
-    </div>
-  )
-}
-
-function CanvasCard({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElement> }) {
-  return (
-    <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/5">
-      <div className="w-full overflow-x-auto flex justify-center">
-        <canvas ref={canvasRef} className="rounded-2xl" />
-      </div>
+      <code className="font-mono text-sm text-primary dark:text-inverse-primary bg-primary-fixed/40 dark:bg-white/5 px-3 py-1.5 rounded-lg">{formula}</code>
     </div>
   )
 }
