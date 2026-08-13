@@ -16,7 +16,7 @@ export default function Layout() {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface dark:bg-dark-surface text-on-surface dark:text-dark-on-surface relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-surface dark:bg-dark-surface text-on-surface dark:text-dark-on-surface relative overflow-x-clip">
       {/* subtle paper texture */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-[0.025] dark:opacity-[0.04]"

@@ -652,6 +652,9 @@ def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
         output_format="html5",
     )
     html = render_math_to_mathml(html)
+    # The frontend renders the note title in its own header; drop the first
+    # <h1> from the body so titles never appear twice.
+    html = re.sub(r"<h1[^>]*>.*?</h1>", "", html, count=1, flags=re.DOTALL)
     html = rewrite_image_paths(html, note["path"])
 
     # Prefer the translated file's own title/description when present.

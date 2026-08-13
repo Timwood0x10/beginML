@@ -5,9 +5,19 @@ import type { NoteDetail, Heading } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import CategoryBadge from '../components/CategoryBadge'
 import { useI18n } from '../i18n/context'
+import { useBookPagination } from '../hooks/useBookPagination'
 
 // Math is rendered server-side as MathML by the backend (latex2mathml) and
 // rendered natively by the browser — no frontend math library needed.
+
+// Book page geometry — a comfortable codex leaf with a book-ish ratio.
+// Width adapts to the container via ResizeObserver; height follows ratio.
+const MAX_PAGE_WIDTH = 720
+const PAGE_RATIO = 1.12 // height = width * ratio (a slightly tall page)
+// .book-base/.sheet-face padding — the measure container must mirror it so
+// measured heights match the rendered content area exactly.
+const BOOK_PAD = { top: 48, right: 56, bottom: 40, left: 56 }
+const BOOK_PAD_Y = BOOK_PAD.top + BOOK_PAD.bottom
 
 function slugify(text: string): string {
   return text
@@ -15,6 +25,24 @@ function slugify(text: string): string {
     .replace(/[^\w\- ]/g, '')
     .trim()
     .replace(/\s+/g, '-')
+}
+
+function toRoman(n: number): string {
+  if (n <= 0 || n >= 4000) return String(n)
+  const table: [number, string][] = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ]
+  let out = ''
+  let v = n
+  for (const [num, sym] of table) {
+    while (v >= num) {
+      out += sym
+      v -= num
+    }
+  }
+  return out
 }
 
 export default function NotePage() {
@@ -25,7 +53,29 @@ export default function NotePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeSlug, setActiveSlug] = useState<string>('')
+  const [pageIndex, setPageIndex] = useState(0)
+  const [flip, setFlip] = useState<{ dir: 'next' | 'prev'; from: number; to: number } | null>(null)
+  const [pendingScroll, setPendingScroll] = useState<string | null>(null)
+  const [pageWidth, setPageWidth] = useState(660)
   const contentRef = useRef<HTMLDivElement | null>(null)
+  const articleRef = useRef<HTMLElement | null>(null)
+
+  const pageHeight = Math.round(pageWidth * PAGE_RATIO)
+
+  // Adapt the book leaf to the available container width. Runs once the note
+  // has loaded (the article is only rendered then), and on every resize.
+  useEffect(() => {
+    const el = articleRef.current
+    if (!el) return
+    const measure = () => {
+      const avail = el.clientWidth - 48 // book sits inside the padded article
+      setPageWidth(Math.max(320, Math.min(MAX_PAGE_WIDTH, avail)))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [note])
 
   const load = useCallback(async () => {
     if (!id) return
@@ -34,6 +84,7 @@ export default function NotePage() {
     try {
       const detail = await api.note(id, lang)
       setNote(detail)
+      setPageIndex(0)
       window.scrollTo({ top: 0 })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -46,22 +97,39 @@ export default function NotePage() {
     load()
   }, [load])
 
-  // Typeset math + add heading ids after content renders
-  useEffect(() => {
-    if (!note || !contentRef.current) return
-    const root = contentRef.current
-    root.querySelectorAll('h1, h2, h3').forEach((h) => {
-      const el = h as HTMLElement
-      if (!el.id) el.id = slugify(el.textContent ?? '')
-    })
-    // Open external links in new tab
-    root.querySelectorAll('a[href^="http"]').forEach((a) => {
-      a.setAttribute('target', '_blank')
-      a.setAttribute('rel', 'noopener noreferrer')
-    })
-  }, [note])
+  const { measureRef, pages } = useBookPagination(note?.html ?? '', pageHeight - BOOK_PAD_Y)
 
-  // Scroll-spy for the TOC
+  // Find which paginated leaf contains a heading slug (id="<slug>").
+  const findPageForSlug = useCallback(
+    (slug: string): number => {
+      for (let i = 0; i < pages.length; i++) {
+        if (pages[i].includes(`id="${slug}"`)) return i
+      }
+      return -1
+    },
+    [pages],
+  )
+
+  const handleTocClick = useCallback(
+    (e: React.MouseEvent, h: Heading) => {
+      e.preventDefault()
+      // Use the frontend slugify (same function that generates in-page ids),
+      // NOT the backend slug — the two differ for CJK text.
+      const slug = slugify(h.text)
+      const target = findPageForSlug(slug)
+      if (target < 0) return
+      if (target === pageIndex) {
+        contentRef.current?.querySelector(`#${CSS.escape(slug)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setActiveSlug(slug)
+        return
+      }
+      setPendingScroll(slug)
+      setFlip({ dir: target > pageIndex ? 'next' : 'prev', from: pageIndex, to: target })
+    },
+    [findPageForSlug, pageIndex],
+  )
+
+  // Scroll-spy for the TOC (only observes the currently visible page)
   useEffect(() => {
     if (!note || !contentRef.current) return
     const headings = contentRef.current.querySelectorAll<HTMLElement>('h2, h3')
@@ -77,7 +145,7 @@ export default function NotePage() {
     )
     headings.forEach((h) => observer.observe(h))
     return () => observer.disconnect()
-  }, [note])
+  }, [note, pageIndex])
 
   // Keyboard: ← back
   useEffect(() => {
@@ -114,7 +182,10 @@ export default function NotePage() {
 
       <div className="flex flex-col lg:flex-row gap-10">
         {/* Article */}
-        <article className="flex-1 min-w-0 bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 p-6 md:p-12">
+        <article
+          ref={articleRef}
+          className="flex-1 min-w-0 bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 p-6 md:p-12"
+        >
           <header className="mb-8 pb-6 border-b border-outline-variant/50 dark:border-white/10">
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <CategoryBadge category={note.category} size="md" />
@@ -137,11 +208,108 @@ export default function NotePage() {
             )}
           </header>
 
+          {/* Hidden measure container — drives pagination layout. React owns
+              its content via dangerouslySetInnerHTML; it sits off-screen but
+              keeps layout so offsetHeight stays meaningful. It mirrors the
+              book page padding so measured heights match the rendered page. */}
           <div
-            ref={contentRef}
+            ref={measureRef}
             className="prose-ailearn"
+            style={{
+              width: pageWidth,
+              padding: `${BOOK_PAD.top}px ${BOOK_PAD.right}px ${BOOK_PAD.bottom}px ${BOOK_PAD.left}px`,
+              boxSizing: 'border-box',
+              position: 'absolute',
+              left: '-9999px',
+              top: 0,
+              visibility: 'hidden',
+              pointerEvents: 'none',
+            }}
+            aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: note.html }}
           />
+
+          {/* Book body: base page + turning sheet */}
+          <div className="book mt-4" style={{ width: pageWidth, height: pageHeight }}>
+            {/* Base page — the leaf revealed underneath the turning sheet */}
+            <div
+              ref={contentRef}
+              className="book-base prose-ailearn"
+              style={{ width: pageWidth, height: pageHeight }}
+            >
+              <div dangerouslySetInnerHTML={{ __html: pages[flip ? flip.to : pageIndex] ?? '' }} />
+            </div>
+
+            {/* Turning sheet — front holds the outgoing page, back is paper */}
+            {flip && (
+              <div
+                className={`book-sheet is-turning ${flip.dir === 'next' ? 'flip-next' : 'flip-prev'}`}
+                onAnimationEnd={() => {
+                  setPageIndex(flip.to)
+                  setFlip(null)
+                  if (pendingScroll) {
+                    // After the leaf settles, reveal the requested heading.
+                    requestAnimationFrame(() => {
+                      contentRef.current?.querySelector(`#${CSS.escape(pendingScroll)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      setActiveSlug(pendingScroll)
+                      setPendingScroll(null)
+                    })
+                  }
+                }}
+              >
+                <div className="sheet-face front prose-ailearn">
+                  <div dangerouslySetInnerHTML={{ __html: pages[flip.from] ?? '' }} />
+                </div>
+                <div className="sheet-face back" />
+              </div>
+            )}
+          </div>
+
+          {/* Page navigation */}
+          {pages.length > 1 && (
+            <div className="flex flex-col items-center gap-3 mt-6">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    if (flip || pageIndex === 0) return
+                    setFlip({ dir: 'prev', from: pageIndex, to: pageIndex - 1 })
+                  }}
+                  disabled={flip !== null || pageIndex === 0}
+                  aria-label="Previous page"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/10 disabled:opacity-30 transition"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_left</span>
+                </button>
+                <span className="font-codex text-caption text-on-surface-variant dark:text-outline">
+                  {toRoman(pageIndex + 1)} / {toRoman(pages.length)}
+                </span>
+                <button
+                  onClick={() => {
+                    if (flip || pageIndex >= pages.length - 1) return
+                    setFlip({ dir: 'next', from: pageIndex, to: pageIndex + 1 })
+                  }}
+                  disabled={flip !== null || pageIndex >= pages.length - 1}
+                  aria-label="Next page"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/10 disabled:opacity-30 transition"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_right</span>
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {pages.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (flip || i === pageIndex) return
+                      setFlip({ dir: i > pageIndex ? 'next' : 'prev', from: pageIndex, to: i })
+                    }}
+                    aria-label={`Page ${i + 1}`}
+                    className={`page-dot ${i === pageIndex ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </article>
 
         {/* Right rail: TOC + related */}
@@ -153,17 +321,21 @@ export default function NotePage() {
                 <h4 className="font-label-md text-label-md uppercase tracking-wider">{t.note.contents}</h4>
               </div>
               <nav className="flex flex-col">
-                {toc.map((h) => (
-                  <a
-                    key={h.slug + h.text}
-                    href={`#${h.slug || slugify(h.text)}`}
-                    className={`toc-link ${h.level === 3 ? 'ml-3' : ''} ${
-                      activeSlug === (h.slug || slugify(h.text)) ? 'active' : ''
-                    }`}
-                  >
-                    {h.text}
-                  </a>
-                ))}
+                {toc.map((h) => {
+                  const slug = slugify(h.text)
+                  return (
+                    <a
+                      key={h.slug + h.text}
+                      href={`#${slug}`}
+                      onClick={(e) => handleTocClick(e, h)}
+                      className={`toc-link ${h.level === 3 ? 'ml-3' : ''} ${
+                        activeSlug === slug ? 'active' : ''
+                      }`}
+                    >
+                      {h.text}
+                    </a>
+                  )
+                })}
               </nav>
             </div>
           )}

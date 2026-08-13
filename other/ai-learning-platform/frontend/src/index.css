@@ -256,6 +256,178 @@ html.dark .map-tooltip {
   transition: opacity 0.3s ease;
 }
 
+/* ------------------------------------------------------------------ */
+/* Codex (book) reader — real page-flip                               */
+/* ------------------------------------------------------------------ */
+.book {
+  position: relative;
+  margin: 0 auto;
+  perspective: 2000px;
+}
+
+/* The turning leaf: a double-sided sheet rotating around the spine.
+   `transform-origin: left center` makes it swing like real paper.
+   Keyframe animations let the flip start the moment the sheet mounts. */
+.book-sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  will-change: transform;
+}
+.book-sheet.flip-next { animation: sheet-flip-next 0.95s cubic-bezier(0.4, 0.08, 0.22, 1) forwards; }
+.book-sheet.flip-prev { animation: sheet-flip-prev 0.95s cubic-bezier(0.4, 0.08, 0.22, 1) forwards; }
+@keyframes sheet-flip-next {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+@keyframes sheet-flip-prev {
+  from { transform: rotateY(-180deg); }
+  to   { transform: rotateY(0deg); }
+}
+
+/* One side of the sheet. The back is the blank paper underside. */
+.sheet-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
+    linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
+  color: #3D322C;
+  box-shadow:
+    0 8px 28px rgba(61,50,44,0.18),
+    0 2px 8px rgba(61,50,44,0.10),
+    inset 0 0 60px rgba(140,122,107,0.12);
+  border-radius: 2px;
+}
+html.dark .sheet-face {
+  background:
+    radial-gradient(120% 100% at 0% 50%, rgba(0,0,0,0.3) 0%, transparent 22%),
+    linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
+  color: #D9CDB8;
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.5),
+    0 2px 8px rgba(0,0,0,0.35),
+    inset 0 0 60px rgba(0,0,0,0.25);
+}
+.sheet-face.back {
+  transform: rotateY(180deg);
+}
+
+/* Paper edge — a thin bright sliver along the spine of the turning sheet. */
+.book-sheet::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(244,234,225,0.95) 0%, rgba(232,216,200,0.4) 60%, transparent 100%);
+}
+html.dark .book-sheet::before {
+  background: linear-gradient(90deg, rgba(42,35,25,0.95) 0%, rgba(32,27,19,0.4) 60%, transparent 100%);
+}
+
+/* Shading that sweeps the sheet while it turns (feels like paper lifting). */
+.book-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  background: linear-gradient(90deg,
+    rgba(61,50,44,0.0) 0%,
+    rgba(61,50,44,0.12) 38%,
+    rgba(61,50,44,0.0) 62%);
+}
+html.dark .book-sheet::after {
+  background: linear-gradient(90deg,
+    rgba(0,0,0,0.0) 0%,
+    rgba(0,0,0,0.4) 38%,
+    rgba(0,0,0,0.0) 62%);
+}
+.book-sheet.is-turning::after {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+/* Base page (the one revealed underneath the turning sheet). */
+.book-base {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
+    linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
+  color: #3D322C;
+  padding: 48px 56px 40px;
+  box-shadow:
+    0 8px 28px rgba(61,50,44,0.18),
+    0 2px 8px rgba(61,50,44,0.10),
+    inset 0 0 60px rgba(140,122,107,0.12);
+  border-radius: 2px;
+}
+html.dark .book-base {
+  background:
+    radial-gradient(120% 100% at 0% 50%, rgba(0,0,0,0.3) 0%, transparent 22%),
+    linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
+  color: #D9CDB8;
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.5),
+    0 2px 8px rgba(0,0,0,0.35),
+    inset 0 0 60px rgba(0,0,0,0.25);
+}
+
+/* Spine crease — shadow along the binding edge */
+.book-base::before,
+.sheet-face::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(61,50,44,0.16) 0%, rgba(61,50,44,0.05) 55%, transparent 100%);
+}
+html.dark .book-base::before,
+html.dark .sheet-face::before {
+  background: linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 55%, transparent 100%);
+}
+
+/* A block too tall for one leaf (huge table/code/image) scrolls inside its
+   own page instead of being clipped by the fixed page height. */
+.book-oversize {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.book-oversize::-webkit-scrollbar { width: 6px; height: 6px; }
+.book-oversize::-webkit-scrollbar-thumb { background: #8C7A6B; border-radius: 6px; }
+
+.page-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  border: 1px solid #8C7A6B;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+html.dark .page-dot { border-color: #8C7A6B; }
+.page-dot.active {
+  background: #3D322C;
+  border-color: #3D322C;
+  transform: scale(1.25);
+}
+html.dark .page-dot.active { background: #E7CC9F; border-color: #E7CC9F; }
+
 /* TOC sidebar links */
 .toc-link {
   display: block;
