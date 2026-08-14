@@ -18,6 +18,7 @@ from typing import Any, Optional
 
 import latex2mathml.converter as latex_converter
 import numpy as np
+import pymdownx.superfences
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -76,6 +77,17 @@ MARKDOWN_EXTENSIONS = [
 MARKDOWN_EXTENSION_CONFIGS = {
     "pymdownx.arithmatex": {"generic": True},
     "pymdownx.highlight": {"linenums": False, "anchor_linenums": False},
+    # Render fenced ```mermaid blocks as <div class="mermaid">…</div> so the
+    # frontend can hand them to the mermaid.js renderer (graphs, flowcharts).
+    "pymdownx.superfences": {
+        "custom_fences": [
+            {
+                "name": "mermaid",
+                "class": "mermaid",
+                "format": pymdownx.superfences.fence_div_format,
+            }
+        ]
+    },
 }
 
 # Category metadata, ordered for display.

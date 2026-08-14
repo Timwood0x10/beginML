@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "katex": "^0.16.11",
+    "mermaid": "^11.16.1",
     "page-flip": "^2.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

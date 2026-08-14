@@ -8,6 +8,8 @@ import { labModulesZh, labModulesEn, controlLabelsZh, controlLabelsEn } from '..
 import GradientDescentLab from './modules/GradientDescentLab'
 import AttentionLab from './modules/AttentionLab'
 import TransformerLab from './modules/TransformerLab'
+import AgentBuilderLab from './modules/AgentBuilderLab'
+import AgentForgeLab from './modules/AgentForgeLab'
 import PcaLab from './modules/PcaLab'
 import RegularizationLab from './modules/RegularizationLab'
 import SvmLab from './modules/SvmLab'
@@ -32,6 +34,8 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'gradient-descent': GradientDescentLab,
   attention: AttentionLab,
   'transformer-training': TransformerLab,
+  'agent-builder': AgentBuilderLab,
+  'agent-forge': AgentForgeLab,
   pca: PcaLab,
   regularization: RegularizationLab,
   svm: SvmLab,

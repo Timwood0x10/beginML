@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { PageFlip } from 'page-flip'
+import mermaid from 'mermaid'
 import { api } from '../api'
 import type { NoteDetail, Heading } from '../types'
 import { Spinner, ErrorState } from '../components/States'
@@ -10,6 +11,9 @@ import { useBookPagination } from '../hooks/useBookPagination'
 
 // Math is rendered server-side as MathML by the backend (latex2mathml) and
 // rendered natively by the browser — no frontend math library needed.
+// Fenced ```mermaid blocks are emitted by the backend as <div class="mermaid">
+// and rendered to SVG here once each book leaf is mounted.
+mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' })
 
 // Book page geometry — a comfortable codex leaf.
 // Width adapts to the container via ResizeObserver; height follows ratio.
@@ -130,6 +134,14 @@ export default function NotePage() {
       return div
     })
     el.append(...pageEls)
+
+    // Render any fenced mermaid diagrams (emitted by the backend as
+    // <div class="mermaid">) inside the freshly built leaves. Rendering is
+    // async; ignore failures so a bad diagram never breaks the reader.
+    const mermaidNodes = el.querySelectorAll<HTMLElement>('.mermaid')
+    if (mermaidNodes.length > 0) {
+      mermaid.run({ nodes: Array.from(mermaidNodes) }).catch(() => {})
+    }
 
     const flip = new PageFlip(el, {
       width: pageWidth,

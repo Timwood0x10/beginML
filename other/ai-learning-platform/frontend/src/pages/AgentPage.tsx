@@ -1,18 +1,53 @@
 import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n/context'
 
-// Placeholder landing page for the Agent Engineering column. The full
-// curriculum (tools, memory, planning, multi-agent) is still being written;
-// this page keeps a visible home for the section and links into the lab.
+// Landing page for the Agent Engineering column. Points to the interactive
+// Agent Builder lab, the Transformer training lab, and the note library
+// filtered to this category.
 
-const PLAN_ITEMS = [
-  'tool', 'memory', 'planning', 'multi-agent',
-]
+const INTERACTIVES = [
+  {
+    to: '/lab/agent-builder',
+    icon: 'widgets',
+    titleKey: 'builderTitle',
+    descKey: 'builderDesc',
+  },
+  {
+    to: '/lab/transformer-training',
+    icon: 'model_training',
+    titleKey: 'trainTitle',
+    descKey: 'trainDesc',
+  },
+  {
+    to: '/lab/attention',
+    icon: 'grid_on',
+    titleKey: 'attnTitle',
+    descKey: 'attnDesc',
+  },
+] as const
 
 export default function AgentPage() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const name = t.home.categoryNames.agent ?? 'Agent Engineering'
   const blurb = t.home.categoryBlurbs.agent ?? ''
+
+  const copy: Record<string, { title: string; desc: string }> = {
+    builderTitle: { title: 'Agent 构建器', desc: '积木式搭建 Agent：选记忆、工具、规划与多智能体协作，实时生成架构图与 YAML 配置。' },
+    builderDesc: { title: '', desc: '' },
+    trainTitle: { title: 'Transformer 训练', desc: '从零训练迷你 Transformer，观察损失曲线与注意力热图逐步成形。' },
+    trainDesc: { title: '', desc: '' },
+    attnTitle: { title: '自注意力', desc: '一步步构建 Q·Kᵀ/√d 注意力权重矩阵，观察 softmax 的锐化。' },
+    attnDesc: { title: '', desc: '' },
+  }
+  const copyEn: Record<string, { title: string; desc: string }> = {
+    builderTitle: { title: 'Agent Builder', desc: 'Assemble an agent from blocks: pick memory, tools, planning & multi-agent, get a live diagram and YAML.' },
+    builderDesc: { title: '', desc: '' },
+    trainTitle: { title: 'Transformer Training', desc: 'Train a tiny transformer from scratch; watch loss and attention emerge.' },
+    trainDesc: { title: '', desc: '' },
+    attnTitle: { title: 'Self-Attention', desc: 'Build Q·Kᵀ/√d attention weights step by step and see softmax sharpen.' },
+    attnDesc: { title: '', desc: '' },
+  }
+  const cc = lang === 'zh' ? copy : copyEn
 
   return (
     <div className="flex flex-col gap-8 pt-2 max-w-3xl">
@@ -29,25 +64,50 @@ export default function AgentPage() {
         </p>
       </header>
 
-      <section className="bg-surface-container-low dark:bg-dark-surface-elevated rounded-3xl p-6 border border-outline-variant/40 dark:border-white/10">
-        <h2 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-4">
-          {t.common.loading}
+      {/* Interactive labs */}
+      <section>
+        <h2 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-4 inline-flex items-center gap-2">
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>science</span>
+          可交互实验室
         </h2>
-        <p className="text-body-md text-on-surface-variant dark:text-outline mb-6">
-          {t.nav.lab} — {'transformer training & self-attention'}{' '}
-          <Link to="/lab/attention" className="text-primary dark:text-inverse-primary font-semibold hover:underline">
-            {t.lab.title}
-          </Link>
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {PLAN_ITEMS.map((k) => (
-            <div
-              key={k}
-              className="rounded-2xl bg-surface-container dark:bg-dark-surface p-4 border border-outline-variant/40 dark:border-white/10 text-caption text-on-surface-variant dark:text-outline"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {INTERACTIVES.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="group rounded-2xl bg-surface-container-low dark:bg-dark-surface-elevated border border-outline-variant/40 dark:border-white/10 p-5 hover:border-primary/60 dark:hover:border-inverse-primary/60 transition-colors"
             >
-              {k}
-            </div>
+              <span className="material-symbols-outlined text-primary dark:text-inverse-primary" style={{ fontSize: 26 }}>
+                {item.icon}
+              </span>
+              <div className="mt-3 font-semibold text-body-md text-on-surface dark:text-dark-on-surface group-hover:text-primary dark:group-hover:text-inverse-primary transition-colors">
+                {cc[item.titleKey].title}
+              </div>
+              <div className="mt-1 text-caption text-on-surface-variant dark:text-outline leading-relaxed">
+                {cc[item.descKey].desc}
+              </div>
+            </Link>
           ))}
+        </div>
+      </section>
+
+      {/* Notes in this category */}
+      <section>
+        <h2 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-4 inline-flex items-center gap-2">
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>menu_book</span>
+          笔记
+        </h2>
+        <div className="rounded-2xl bg-surface-container-low dark:bg-dark-surface-elevated border border-outline-variant/40 dark:border-white/10 p-5">
+          <p className="text-body-md text-on-surface-variant dark:text-outline leading-relaxed mb-4">
+            goagent（ares 框架）架构拆解系列与融合改写笔记，从零到一构建 Agent 的完整工程脉络。
+          </p>
+          <Link
+            to="/browse?category=agent"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-on-primary dark:bg-inverse-primary dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_forward</span>
+            进入 Agent 笔记库
+          </Link>
         </div>
       </section>
     </div>

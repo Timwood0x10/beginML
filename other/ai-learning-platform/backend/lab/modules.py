@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from . import agent_builder
+
 MODULES: list[dict[str, Any]] = [
     {
         "id": "gradient-descent",
@@ -589,6 +591,58 @@ MODULES: list[dict[str, Any]] = [
                 "step": 1,
                 "default": 3,
             },
+        ],
+    },
+    {
+        "id": "agent-builder",
+        "title": "Agent Builder",
+        "subtitle": "Assemble an agent from building blocks",
+        "icon": "widgets",
+        "category": "Architectures",
+        "blurb": (
+            "Pick one option from memory, tools, planning and multi-agent "
+            "coordination, and watch the pieces snap into a full agent: a "
+            "layered diagram, a plain-English architecture summary and a "
+            "ready-to-edit YAML config."
+        ),
+        "controls": [
+            {"key": cat, "label": agent_builder.COMPONENTS[cat]["label"],
+             "type": "select",
+             "options": agent_builder.option_labels(cat),
+             "default": agent_builder.option_labels(cat)[0]}
+            for cat in agent_builder.CATEGORY_ORDER
+        ],
+    },
+    {
+        "id": "agent-forge",
+        "title": "Agent Forge",
+        "subtitle": "Wire cognitive primitives into a running agent",
+        "icon": "construction",
+        "category": "Architectures",
+        "blurb": (
+            "Treat the agent as an executable graph of cognitive primitives. "
+            "Choose a preset architecture, wire semantic ports, then BUILD → "
+            "RUN → CHAOS: watch the trace, inject failures, compile the graph "
+            "to YAML, or compare two architectures side by side."
+        ),
+        "controls": [
+            {"key": "preset", "label": "Preset architecture", "type": "select",
+             "options": ["simple", "rag", "tiered", "multi-agent", "empty"],
+             "default": "simple"},
+            {"key": "task", "label": "Task prompt", "type": "select",
+             "options": [
+                 "分析这个项目的 FFI 安全问题",
+                 "审查这段代码的并发缺陷",
+                 "调研多模态 Agent 的最新进展",
+                 "为一款产品设计评测方案",
+             ],
+             "default": "分析这个项目的 FFI 安全问题"},
+            {"key": "chaos_memory", "label": "Memory unavailable", "type": "toggle", "default": False},
+            {"key": "chaos_tool", "label": "Tool timeout", "type": "toggle", "default": False},
+            {"key": "chaos_mcp", "label": "MCP failure", "type": "toggle", "default": False},
+            {"key": "chaos_llm", "label": "LLM retry", "type": "toggle", "default": False},
+            {"key": "chaos_context", "label": "Context overflow", "type": "toggle", "default": False},
+            {"key": "compare", "label": "Compare with baseline", "type": "toggle", "default": False},
         ],
     },
     {

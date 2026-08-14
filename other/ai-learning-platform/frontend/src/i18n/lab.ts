@@ -58,6 +58,16 @@ export const labModulesZh: Record<string, LabMeta> = {
     subtitle: '训练迷你 Transformer：损失曲线与注意力',
     blurb: '从零训练一个小型 decoder-only Transformer（预测前一个 token）。观察损失收敛、各头注意力热图逐步锐化成可解释的"回看一步"对角线模式。',
   },
+  'agent-builder': {
+    title: 'Agent 构建器',
+    subtitle: '用积木搭建一个 Agent',
+    blurb: '在记忆、工具、规划与多智能体协作中各选一个组件，看它们拼成一个完整 Agent：分层架构图、通俗的架构说明与可直接编辑的 YAML 配置。',
+  },
+  'agent-forge': {
+    title: 'Agent Forge',
+    subtitle: '把认知原语接成一台运行的 Agent',
+    blurb: '把 Agent 当作可执行的认知系统图：选择预设架构、接线语义端口，然后 BUILD → RUN → CHAOS——观察运行轨迹、注入故障、把图编译成 YAML，或并排对比两种架构。',
+  },
   pca: {
     title: 'PCA 与特征向量',
     subtitle: '主成分的几何',
@@ -126,6 +136,16 @@ export const labModulesEn: Record<string, LabMeta> = {
     subtitle: 'Train a tiny transformer: loss curve & attention',
     blurb: 'Train a small decoder-only transformer from scratch on a predict-the-previous-token task. Watch the loss converge and the per-head attention heatmaps sharpen into an interpretable one-step-back diagonal pattern.',
   },
+  'agent-builder': {
+    title: 'Agent Builder',
+    subtitle: 'Assemble an agent from building blocks',
+    blurb: 'Pick one option from memory, tools, planning and multi-agent coordination, and watch the pieces snap into a full agent: a layered diagram, a plain-English architecture summary and a ready-to-edit YAML config.',
+  },
+  'agent-forge': {
+    title: 'Agent Forge',
+    subtitle: 'Wire cognitive primitives into a running agent',
+    blurb: 'Treat the agent as an executable graph of cognitive primitives. Choose a preset, wire semantic ports, then BUILD → RUN → CHAOS: watch the trace, inject failures, compile the graph to YAML, or compare two architectures side by side.',
+  },
   pca: {
     title: 'PCA & Eigenvectors',
     subtitle: 'The geometry of principal components',
@@ -157,6 +177,10 @@ export const controlLabelsZh: Record<string, string> = {
   optY: '最优点 y', gamma: 'RBF γ', degree: '多项式次数', reset: '重置数据点',
   causal: '因果掩码', components: '保留成分', correlation: '相关性', spread: '扩展比',
   tokens: '序列长度', layers: '层数', heads: '注意力头数',
+  memory: '记忆', tools: '工具', planning: '规划', multi: '多智能体协作',
+  task: '任务提示词',
+  chaos_memory: '记忆不可用', chaos_tool: '工具超时', chaos_mcp: 'MCP 故障',
+  chaos_llm: 'LLM 重试', chaos_context: '上下文溢出', compare: '与基线对比',
 }
 
 export const controlLabelsEn: Record<string, string> = {
@@ -172,4 +196,8 @@ export const controlLabelsEn: Record<string, string> = {
   optY: 'Optimum y', gamma: 'RBF gamma', degree: 'Poly degree', reset: 'Reset points',
   causal: 'Causal mask', components: 'Components kept', correlation: 'Correlation', spread: 'Spread ratio',
   tokens: 'Sequence length', layers: 'Layers', heads: 'Attention heads',
+  memory: 'Memory', tools: 'Tools', planning: 'Planning', multi: 'Multi-agent',
+  task: 'Task prompt',
+  chaos_memory: 'Memory unavailable', chaos_tool: 'Tool timeout', chaos_mcp: 'MCP failure',
+  chaos_llm: 'LLM retry', chaos_context: 'Context overflow', compare: 'Compare with baseline',
 }

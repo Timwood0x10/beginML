@@ -16,10 +16,12 @@ from pydantic import BaseModel
 
 from . import (
     activations,
+    agent_builder,
     attention,
     convolution,
     distributions,
     entropy,
+    forge,
     losses,
     matrix_transform,
     neural_net,
@@ -45,6 +47,8 @@ _COMPUTERS = {
     "neural-net": neural_net.compute,
     "attention": attention.compute,
     "transformer-training": transformer.compute,
+    "agent-builder": agent_builder.compute,
+    "agent-forge": forge.compute,
     "pca": pca.compute,
     "regularization": regularization.compute,
     "svm": svm.compute,
