@@ -131,7 +131,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
             "x": round(float(X[i, 0]), 4),
             "y": round(float(X[i, 1]), 4),
             "cls": int(y[i]),
-            "prob": round(float(_predict(trained, X[i:i+1])[0]), 3),
+            "prob": round(float(_predict(trained, X[i : i + 1])[0]), 3),
         }
         for i in range(len(X))
     ]

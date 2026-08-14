@@ -12,6 +12,7 @@ export default function Layout() {
     { to: '/browse', label: t.nav.library, icon: 'menu_book' },
     { to: '/path', label: t.nav.path, icon: 'route' },
     { to: '/map', label: t.nav.map, icon: 'hub' },
+    { to: '/agent', label: t.nav.agent, icon: 'smart_toy' },
     { to: '/lab', label: t.nav.lab, icon: 'science' },
   ]
 

@@ -54,10 +54,14 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     support_idx = set(getattr(clf, "support_", []).tolist())
     points_out = []
     for i, (px, py) in enumerate(X):
-        points_out.append({
-            "x": round(float(px), 4), "y": round(float(py), 4),
-            "cls": int(y[i]), "support": i in support_idx,
-        })
+        points_out.append(
+            {
+                "x": round(float(px), 4),
+                "y": round(float(py), 4),
+                "cls": int(y[i]),
+                "support": i in support_idx,
+            }
+        )
 
     # Coefficient vector for linear kernel (draws the margin lines explicitly)
     coef = None
@@ -67,7 +71,10 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         coef = [round(float(c[0]), 4), round(float(c[1]), 4)]
 
     return {
-        "domain": {"x": [round(xmin, 3), round(xmax, 3)], "y": [round(ymin, 3), round(ymax, 3)]},
+        "domain": {
+            "x": [round(xmin, 3), round(xmax, 3)],
+            "y": [round(ymin, 3), round(ymax, 3)],
+        },
         "points": points_out,
         "grid": {
             "x": xs.round(4).tolist(),

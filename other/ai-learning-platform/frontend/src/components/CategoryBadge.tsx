@@ -5,6 +5,7 @@ const CATEGORY_BADGE_STYLES: Record<string, string> = {
   attention: 'bg-[#e1e4f3] text-[#3a3f85] dark:bg-[#262b45] dark:text-[#b6bce8]',
   hybrid: 'bg-[#e9e1f3] text-[#5a3d85] dark:bg-[#2c2640] dark:text-[#c4b5e6]',
   paper: 'bg-[#dcecef] text-[#2f6068] dark:bg-[#20333a] dark:text-[#a8d3dc]',
+  agent: 'bg-[#ece1f3] text-[#6a3d85] dark:bg-[#352640] dark:text-[#cdb5e6]',
   general: 'bg-surface-variant text-on-surface-variant dark:bg-white/10 dark:text-dark-on-surface',
 }
 

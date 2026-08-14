@@ -12,7 +12,7 @@ def _sigmoid(x: np.ndarray) -> np.ndarray:
 
 
 def _gelu(x: np.ndarray) -> np.ndarray:
-    return 0.5 * x * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x ** 3)))
+    return 0.5 * x * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x**3)))
 
 
 def _swish(x: np.ndarray) -> np.ndarray:
@@ -51,12 +51,12 @@ FUNCTIONS: dict[str, tuple] = {
     ),
     "gelu": (
         _gelu,
-        lambda x: 0.5 * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x ** 3)))
+        lambda x: 0.5 * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x**3)))
         + 0.5
         * x
-        * (1.0 - np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x ** 3)) ** 2)
+        * (1.0 - np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x**3)) ** 2)
         * np.sqrt(2.0 / np.pi)
-        * (1.0 + 3.0 * 0.044715 * x ** 2),
+        * (1.0 + 3.0 * 0.044715 * x**2),
         "GELU(x) = x * Phi(x)",
         (-0.5, 6.0),
     ),

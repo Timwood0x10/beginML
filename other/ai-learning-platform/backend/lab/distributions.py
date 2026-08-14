@@ -26,13 +26,15 @@ def _laplace(x: np.ndarray, mu: float, b: float) -> np.ndarray:
 def _binomial(k: np.ndarray, n: int, p: float) -> np.ndarray:
     from math import comb
 
-    return np.array([comb(n, int(ki)) * p ** ki * (1 - p) ** (n - ki) for ki in k])
+    return np.array([comb(n, int(ki)) * p**ki * (1 - p) ** (n - ki) for ki in k])
 
 
 def _poisson(k: np.ndarray, rate: float) -> np.ndarray:
     from math import exp, lgamma
 
-    return np.array([float(np.exp(-rate + ki * np.log(rate) - lgamma(ki + 1))) for ki in k])
+    return np.array(
+        [float(np.exp(-rate + ki * np.log(rate) - lgamma(ki + 1))) for ki in k]
+    )
 
 
 DISTRIBUTIONS: dict[str, dict[str, Any]] = {
@@ -105,7 +107,10 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         else:
             samples = rng.poisson(pvals["rate"], size=500)
         counts, edges = np.histogram(samples, bins=range(x_max + 2), density=True)
-        domain = {"x": [-0.5, x_max + 0.5], "y": [0.0, float(max(y.max(), counts.max()) * 1.15)]}
+        domain = {
+            "x": [-0.5, x_max + 0.5],
+            "y": [0.0, float(max(y.max(), counts.max()) * 1.15)],
+        }
         return {
             "discrete": True,
             "distribution": dist_id,

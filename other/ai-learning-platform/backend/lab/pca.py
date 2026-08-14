@@ -21,10 +21,12 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     # Build a covariance matrix with the requested correlation and spread ratio
     # between the two axes.
     var1, var2 = spread, 1.0 / spread
-    cov = np.array([
-        [var1, corr * np.sqrt(var1 * var2)],
-        [corr * np.sqrt(var1 * var2), var2],
-    ])
+    cov = np.array(
+        [
+            [var1, corr * np.sqrt(var1 * var2)],
+            [corr * np.sqrt(var1 * var2), var2],
+        ]
+    )
     mean = np.array([0.0, 0.0])
     X = rng.multivariate_normal(mean, cov, size=n)
 
@@ -53,10 +55,12 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     # Residuals as line segments original -> reconstructed
     residuals = []
     for a, b in zip(X, reconstructed):
-        residuals.append([
-            [round(float(a[0]), 4), round(float(a[1]), 4)],
-            [round(float(b[0]), 4), round(float(b[1]), 4)],
-        ])
+        residuals.append(
+            [
+                [round(float(a[0]), 4), round(float(a[1]), 4)],
+                [round(float(b[0]), 4), round(float(b[1]), 4)],
+            ]
+        )
 
     total_var = float(np.sum(explained))
     kept_var = float(np.sum(explained[:components])) if components > 0 else 0.0
@@ -75,11 +79,17 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         "points": np.round(X, 4).tolist(),
         "reconstructed": np.round(reconstructed, 4).tolist(),
         "residuals": residuals[:200],
-        "mean": [round(float(X.mean(axis=0)[0]), 4), round(float(X.mean(axis=0)[1]), 4)],
+        "mean": [
+            round(float(X.mean(axis=0)[0]), 4),
+            round(float(X.mean(axis=0)[1]), 4),
+        ],
         "eigenvalues": [round(float(e), 4) for e in eigvals],
         "eigenvectors": [
-            {"name": f"PC{i+1}", "segment": vec(eigvecs[:, i], float(np.sqrt(eigvals[i])) * 2.0),
-             "variance": round(float(explained[i]), 4)}
+            {
+                "name": f"PC{i+1}",
+                "segment": vec(eigvecs[:, i], float(np.sqrt(eigvals[i])) * 2.0),
+                "variance": round(float(explained[i]), 4),
+            }
             for i in range(2)
         ],
         "components": components,

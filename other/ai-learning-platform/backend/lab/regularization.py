@@ -48,8 +48,10 @@ def _l1_contact(center: np.ndarray, C: float, A: np.ndarray) -> tuple[np.ndarray
     vertices and the midpoint of each edge and pick the minimum. Returns the
     point and whether it landed on a vertex (sparsity)."""
     candidates = [
-        np.array([C, 0.0]), np.array([-C, 0.0]),
-        np.array([0.0, C]), np.array([0.0, -C]),
+        np.array([C, 0.0]),
+        np.array([-C, 0.0]),
+        np.array([0.0, C]),
+        np.array([0.0, -C]),
     ]
     # edge midpoints (projection of center onto each edge, clipped to the edge)
     edges = [
@@ -80,7 +82,13 @@ def _circle(C: float, n: int = 120) -> list[list[float]]:
 
 
 def _diamond(C: float) -> list[list[float]]:
-    return [[float(C), 0.0], [0.0, float(C)], [-float(C), 0.0], [0.0, -float(C)], [float(C), 0.0]]
+    return [
+        [float(C), 0.0],
+        [0.0, float(C)],
+        [-float(C), 0.0],
+        [0.0, -float(C)],
+        [float(C), 0.0],
+    ]
 
 
 def compute(params: dict[str, Any]) -> dict[str, Any]:
@@ -98,13 +106,23 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     if penalty in ("l2", "both"):
         p2 = _l2_contact(opt, C, A)
         shapes.append({"type": "l2", "points": _circle(C)})
-        contacts.append({"penalty": "l2", "point": [round(float(p2[0]), 4), round(float(p2[1]), 4)],
-                         "sparse": bool(abs(p2[0]) < 1e-6 or abs(p2[1]) < 1e-6)})
+        contacts.append(
+            {
+                "penalty": "l2",
+                "point": [round(float(p2[0]), 4), round(float(p2[1]), 4)],
+                "sparse": bool(abs(p2[0]) < 1e-6 or abs(p2[1]) < 1e-6),
+            }
+        )
     if penalty in ("l1", "both"):
         p1, sparse = _l1_contact(opt, C, A)
         shapes.append({"type": "l1", "points": _diamond(C)})
-        contacts.append({"penalty": "l1", "point": [round(float(p1[0]), 4), round(float(p1[1]), 4)],
-                         "sparse": sparse})
+        contacts.append(
+            {
+                "penalty": "l1",
+                "point": [round(float(p1[0]), 4), round(float(p1[1]), 4)],
+                "sparse": sparse,
+            }
+        )
 
     zmax = float(np.percentile(Z, 95))
     return {

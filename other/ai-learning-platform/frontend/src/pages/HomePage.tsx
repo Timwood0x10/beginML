@@ -11,6 +11,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   attention: 'psychology',
   hybrid: 'bolt',
   paper: 'description',
+  agent: 'smart_toy',
   general: 'article',
 }
 

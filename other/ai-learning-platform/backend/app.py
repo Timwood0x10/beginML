@@ -43,10 +43,12 @@ SCAN_DIRS = [
     NOTES_ROOT / "zh" / "Self-Attention",
     NOTES_ROOT / "zh" / "Hybrid-models",
     NOTES_ROOT / "zh" / "paper",
+    NOTES_ROOT / "zh" / "agent",
     NOTES_ROOT / "en" / "math",
     NOTES_ROOT / "en" / "Self-Attention",
     NOTES_ROOT / "en" / "Hybrid-models",
     NOTES_ROOT / "en" / "paper",
+    NOTES_ROOT / "en" / "agent",
 ]
 
 # Image / asset roots — served under /assets/<mount>/...
@@ -82,6 +84,7 @@ CATEGORY_DEFS: dict[str, dict[str, str]] = {
     "attention": {"id": "attention", "en": "Self-Attention", "icon": "psychology"},
     "hybrid": {"id": "hybrid", "en": "Hybrid Models", "icon": "bolt"},
     "paper": {"id": "paper", "en": "Research Papers", "icon": "description"},
+    "agent": {"id": "agent", "en": "Agent Engineering", "icon": "smart_toy"},
     "general": {"id": "general", "en": "General", "icon": "article"},
 }
 
@@ -91,6 +94,7 @@ _PATH_SEGMENT_TO_CATEGORY = {
     "self-attention": "attention",
     "hybrid-models": "hybrid",
     "paper": "paper",
+    "agent": "agent",
 }
 
 
@@ -173,10 +177,10 @@ def extract_description(content: str) -> str:
         in_paragraph = True
         buffer.append(stripped)
     text = " ".join(buffer)
-    text = re.sub(r"\$\$[\s\S]*?\$\$", "", text)        # $$...$$ display math
-    text = re.sub(r"\\\([\s\S]*?\\\)", "", text)         # \(...\) inline math
-    text = re.sub(r"\\\[[\s\S]*?\\\]", "", text)         # \[...\] display math
-    text = re.sub(r"\$[^$\n]*?\$", "", text)             # $...$ inline math
+    text = re.sub(r"\$\$[\s\S]*?\$\$", "", text)  # $$...$$ display math
+    text = re.sub(r"\\\([\s\S]*?\\\)", "", text)  # \(...\) inline math
+    text = re.sub(r"\\\[[\s\S]*?\\\]", "", text)  # \[...\] display math
+    text = re.sub(r"\$[^$\n]*?\$", "", text)  # $...$ inline math
     text = re.sub(r"[#*`_>\[\]]", "", text).strip()
     text = re.sub(r"\s{2,}", " ", text).strip()
     if len(text) > 220:
@@ -235,8 +239,8 @@ def normalize_math(content: str) -> str:
     # (`$ x $` / `$x $` / `$ x$`) is not recognized by arithmatex, which
     # requires the content to hug the dollar signs. Rewrite such pairs to
     # the `\(x\)` form (content trimmed). Done pair-by-pair on every line
-    # outside fenced code blocks so well-formed `$...$` (like
-    # `$(\lambda_i>0)$ 时 ... $(\lambda_i<0)$`) is never touched.
+    # outside fenced code blocks so well-formed `$...$` (like a pair of
+    # `$(\lambda_i>0)$` and `$(\lambda_i<0)$` on one line) is never touched.
     lines = content.split("\n")
     in_code = False
     for li, line in enumerate(lines):
@@ -292,7 +296,12 @@ def render_math_to_mathml(html: str) -> str:
     """Replace arithmatex wrappers with server-rendered MathML."""
 
     def repl(match: re.Match) -> str:
-        tag, left, tex, right = match.group(1), match.group(2), match.group(3), match.group(4)
+        tag, left, tex, right = (
+            match.group(1),
+            match.group(2),
+            match.group(3),
+            match.group(4),
+        )
         display = left == "["
         mml = mathml_from_tex(tex.strip(), display)
         if mml.startswith("<math") and not mml.startswith("<" + tag):
@@ -332,9 +341,9 @@ def rewrite_image_paths(html: str, relative_note_path: str) -> str:
             root_parts = [p.lower() for p in root.relative_to(NOTES_ROOT).parts]
             if lower_parts[: len(root_parts)] == root_parts:
                 rest = "/".join(parts[len(root_parts) :])
-                return f'{prefix}/assets/{mount}/{rest}{suffix}'
+                return f"{prefix}/assets/{mount}/{rest}{suffix}"
         # Fallback: serve via generic raw file route
-        return f'{prefix}/raw/{rel.as_posix()}{suffix}'
+        return f"{prefix}/raw/{rel.as_posix()}{suffix}"
 
     return re.sub(r'(<img[^>]*\ssrc=")([^"]+)(")', repl, html)
 
@@ -377,8 +386,18 @@ class NoteIndex:
                 continue
             seen.add(file_path)
             # Skip files inside code/ directories and platform/template dirs
-            if any(part in {"code", "node_modules", ".venv", "ai-learning-platform",
-                            "templates", ".codescope"} for part in file_path.parts):
+            if any(
+                part
+                in {
+                    "code",
+                    "node_modules",
+                    ".venv",
+                    "ai-learning-platform",
+                    "templates",
+                    ".codescope",
+                }
+                for part in file_path.parts
+            ):
                 continue
             try:
                 content = file_path.read_text(encoding="utf-8", errors="replace")
@@ -481,7 +500,9 @@ class NoteIndex:
 
         # Reduce sparsity first for a stable MDS — SVD to <=50 dims, then
         # cosine distance in that dense space.
-        n_components = min(50, self.tfidf_matrix.shape[0] - 1, self.tfidf_matrix.shape[1])
+        n_components = min(
+            50, self.tfidf_matrix.shape[0] - 1, self.tfidf_matrix.shape[1]
+        )
         if n_components >= 2:
             svd = TruncatedSVD(n_components=n_components, random_state=42)
             dense = svd.fit_transform(self.tfidf_matrix)
@@ -523,7 +544,7 @@ class NoteIndex:
         # Normalize to a [-1, 1] canvas with a little padding.
         mins = coords.min(axis=0)
         maxs = coords.max(axis=0)
-        span = (maxs - mins)
+        span = maxs - mins
         span[span == 0] = 1.0
         normalized = (coords - mins) / span * 2.0 - 1.0
 
@@ -548,7 +569,9 @@ class NoteIndex:
         n_word_features = len(feature_names)
         topics: list[dict[str, Any]] = []
         for cat_id in {n["category"]["id"] for n in self.notes}:
-            indices = [i for i, n in enumerate(self.notes) if n["category"]["id"] == cat_id]
+            indices = [
+                i for i, n in enumerate(self.notes) if n["category"]["id"] == cat_id
+            ]
             if not indices:
                 continue
             # Only score over the word-feature columns (feature_names maps 1:1);
@@ -572,7 +595,11 @@ class NoteIndex:
 
         wv = self.vectorizer.transform([query])
         cjk_text = " ".join(re.findall(r"[一-鿿]+", query))
-        cv = self._cjk_vectorizer.transform([cjk_text]) if hasattr(self, "_cjk_vectorizer") else None
+        cv = (
+            self._cjk_vectorizer.transform([cjk_text])
+            if hasattr(self, "_cjk_vectorizer")
+            else None
+        )
         return hstack([wv, cv]).tocsr() if cv is not None else wv
 
     def search(self, query: str, top_k: int = 30) -> list[dict[str, Any]]:
@@ -640,7 +667,9 @@ def stats(lang: str = Query("zh")) -> dict[str, Any]:
     total_words = sum(n["wordCount"] for n in notes)
     cat_list = []
     for cid, count in categories.items():
-        cat_list.append({**CATEGORY_DEFS.get(cid, CATEGORY_DEFS["general"]), "count": count})
+        cat_list.append(
+            {**CATEGORY_DEFS.get(cid, CATEGORY_DEFS["general"]), "count": count}
+        )
     cat_list.sort(key=lambda c: -c["count"])
     return {
         "totalNotes": len(notes),
@@ -766,7 +795,9 @@ def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
 
 
 @app.get("/api/map")
-def knowledge_map(category: Optional[str] = Query(None), lang: str = Query("zh")) -> dict[str, Any]:
+def knowledge_map(
+    category: Optional[str] = Query(None), lang: str = Query("zh")
+) -> dict[str, Any]:
     prefix = f"{lang}/"
     # map_points carry ids but not paths; resolve each point's owning note.
     points = [

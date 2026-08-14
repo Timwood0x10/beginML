@@ -18,7 +18,7 @@ def _mae(y_true: float, y_pred: np.ndarray) -> np.ndarray:
 def _huber(y_true: float, y_pred: np.ndarray, delta: float = 1.0) -> np.ndarray:
     err = y_pred - y_true
     abs_err = np.abs(err)
-    quad = np.where(abs_err <= delta, 0.5 * err ** 2, delta * (abs_err - 0.5 * delta))
+    quad = np.where(abs_err <= delta, 0.5 * err**2, delta * (abs_err - 0.5 * delta))
     return quad
 
 
@@ -93,7 +93,9 @@ LOSS_REGISTRY: dict[str, dict[str, Any]] = {
 }
 
 
-def _curve(loss_id: str, target: float, n: int = 300) -> tuple[np.ndarray, np.ndarray, list[float]]:
+def _curve(
+    loss_id: str, target: float, n: int = 300
+) -> tuple[np.ndarray, np.ndarray, list[float]]:
     spec = LOSS_REGISTRY[loss_id]
     if loss_id == "cross-entropy":
         x = np.linspace(-4, 4, n)
@@ -139,7 +141,10 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     if loss_id == "cross-entropy":
         logits_lo = np.array([[probe - dx], [0], [0]])
         logits_hi = np.array([[probe + dx], [0], [0]])
-        g = (float(spec["fn"](int(target), logits_hi)[0]) - float(spec["fn"](int(target), logits_lo)[0])) / (2 * dx)
+        g = (
+            float(spec["fn"](int(target), logits_hi)[0])
+            - float(spec["fn"](int(target), logits_lo)[0])
+        ) / (2 * dx)
         fp = float(spec["fn"](int(target), np.array([[probe], [0], [0]]))[0])
     else:
         fp = float(spec["fn"](target, probe))

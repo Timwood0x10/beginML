@@ -5,12 +5,13 @@ import type { NotesResponse, Note } from '../types'
 import { Spinner, ErrorState } from '../components/States'
 import { useI18n } from '../i18n/context'
 
-const CATEGORY_ORDER = ['math', 'attention', 'hybrid', 'paper', 'general']
+const CATEGORY_ORDER = ['math', 'attention', 'hybrid', 'paper', 'agent', 'general']
 const CATEGORY_ICONS: Record<string, string> = {
   math: 'functions',
   attention: 'psychology',
   hybrid: 'bolt',
   paper: 'description',
+  agent: 'smart_toy',
   general: 'article',
 }
 

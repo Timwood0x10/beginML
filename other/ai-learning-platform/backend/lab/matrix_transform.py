@@ -47,11 +47,13 @@ def _transform_grid(M: np.ndarray, lo: float = -2, hi: float = 2, step: float = 
     vals = np.arange(lo, hi + 1e-9, step)
     for v in vals:
         # horizontal line (x varies, y=v)
-        a = np.array([lo, v]); b = np.array([hi, v])
+        a = np.array([lo, v])
+        b = np.array([hi, v])
         lines_orig.append([a.tolist(), b.tolist()])
         lines_tx.append([(M @ a).tolist(), (M @ b).tolist()])
         # vertical line (x=v, y varies)
-        a = np.array([v, lo]); b = np.array([v, hi])
+        a = np.array([v, lo])
+        b = np.array([v, hi])
         lines_orig.append([a.tolist(), b.tolist()])
         lines_tx.append([(M @ a).tolist(), (M @ b).tolist()])
     return lines_orig, lines_tx
@@ -92,7 +94,10 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
             eigen.append(
                 {
                     "value": round(float(np.real(v)), 4),
-                    "vector": [round(float(eigvecs[0, i].real), 4), round(float(eigvecs[1, i].real), 4)],
+                    "vector": [
+                        round(float(eigvecs[0, i].real), 4),
+                        round(float(eigvecs[1, i].real), 4),
+                    ],
                 }
             )
 

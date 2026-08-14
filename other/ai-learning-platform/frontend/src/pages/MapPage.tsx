@@ -12,6 +12,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   attention: '#A8382A',  // vermilion / cinnabar red
   hybrid: '#C88A35',     // orpiment / amber yellow
   paper: '#3A6B58',      // malachite / dark turquoise
+  agent: '#7A5C8E',      // amethyst / violet ink
   general: '#3D322C',    // concentrated ink / dark tea
 }
 

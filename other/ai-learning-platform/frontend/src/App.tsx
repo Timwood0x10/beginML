@@ -6,6 +6,7 @@ import MapPage from './pages/MapPage'
 import PathPage from './pages/PathPage'
 import NotePage from './pages/NotePage'
 import LabPage from './lab/LabPage'
+import AgentPage from './pages/AgentPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/browse" element={<BrowsePage />} />
         <Route path="/map" element={<MapPage />} />
         <Route path="/path" element={<PathPage />} />
+        <Route path="/agent" element={<AgentPage />} />
         <Route path="/lab" element={<LabPage />} />
         <Route path="/lab/:moduleId" element={<LabPage />} />
         <Route path="/note/:id" element={<NotePage />} />

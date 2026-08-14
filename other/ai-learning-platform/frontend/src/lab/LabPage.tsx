@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/context'
 import { labModulesZh, labModulesEn, controlLabelsZh, controlLabelsEn } from '../i18n/lab'
 import GradientDescentLab from './modules/GradientDescentLab'
 import AttentionLab from './modules/AttentionLab'
+import TransformerLab from './modules/TransformerLab'
 import PcaLab from './modules/PcaLab'
 import RegularizationLab from './modules/RegularizationLab'
 import SvmLab from './modules/SvmLab'
@@ -30,6 +31,7 @@ interface LabComponentProps {
 const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'gradient-descent': GradientDescentLab,
   attention: AttentionLab,
+  'transformer-training': TransformerLab,
   pca: PcaLab,
   regularization: RegularizationLab,
   svm: SvmLab,

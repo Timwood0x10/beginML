@@ -6,7 +6,6 @@ resulting output. The frontend animates the kernel across the input.
 from typing import Any
 import numpy as np
 
-
 KERNELS: dict[str, list[float]] = {
     "identity": [0, 1, 0],
     "edge-detect": [-1, 0, 1],
@@ -65,7 +64,9 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         "windows": windows,
         "kernelName": kernel_id,
         "kernelSize": k,
-        "available": [{"id": kid, "name": kid.replace("-", " ").title()} for kid in KERNELS],
+        "available": [
+            {"id": kid, "name": kid.replace("-", " ").title()} for kid in KERNELS
+        ],
         "domain": {
             "x": [0, max(len(signal), out_len) - 1],
             "y": [

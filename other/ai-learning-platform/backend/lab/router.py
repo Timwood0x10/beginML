@@ -27,6 +27,7 @@ from . import (
     pca,
     regularization,
     svm,
+    transformer,
 )
 from .modules import MODULES, get_module
 
@@ -43,6 +44,7 @@ _COMPUTERS = {
     "entropy": entropy.compute,
     "neural-net": neural_net.compute,
     "attention": attention.compute,
+    "transformer-training": transformer.compute,
     "pca": pca.compute,
     "regularization": regularization.compute,
     "svm": svm.compute,

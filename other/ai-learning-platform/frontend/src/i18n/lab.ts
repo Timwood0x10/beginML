@@ -53,6 +53,11 @@ export const labModulesZh: Record<string, LabMeta> = {
     subtitle: 'Q·Kᵀ/√d 与注意力热力图',
     blurb: '一步步构建注意力权重矩阵。调整温度、切换因果掩码，观察 softmax 如何锐化或平滑每个查询的注意力分布。',
   },
+  'transformer-training': {
+    title: 'Transformer 训练',
+    subtitle: '训练迷你 Transformer：损失曲线与注意力',
+    blurb: '从零训练一个小型 decoder-only Transformer（预测前一个 token）。观察损失收敛、各头注意力热图逐步锐化成可解释的"回看一步"对角线模式。',
+  },
   pca: {
     title: 'PCA 与特征向量',
     subtitle: '主成分的几何',
@@ -116,6 +121,11 @@ export const labModulesEn: Record<string, LabMeta> = {
     subtitle: 'Q*K^T / sqrt(d) and the attention heatmap',
     blurb: 'Build an attention weight matrix step by step. Tweak temperature, toggle causal masking and see how softmax sharpens the distribution.',
   },
+  'transformer-training': {
+    title: 'Transformer Training',
+    subtitle: 'Train a tiny transformer: loss curve & attention',
+    blurb: 'Train a small decoder-only transformer from scratch on a predict-the-previous-token task. Watch the loss converge and the per-head attention heatmaps sharpen into an interpretable one-step-back diagonal pattern.',
+  },
   pca: {
     title: 'PCA & Eigenvectors',
     subtitle: 'The geometry of principal components',
@@ -146,6 +156,7 @@ export const controlLabelsZh: Record<string, string> = {
   noise: '噪声', penalty: '惩罚', angle: '损失倾斜', optX: '最优点 x',
   optY: '最优点 y', gamma: 'RBF γ', degree: '多项式次数', reset: '重置数据点',
   causal: '因果掩码', components: '保留成分', correlation: '相关性', spread: '扩展比',
+  tokens: '序列长度', layers: '层数', heads: '注意力头数',
 }
 
 export const controlLabelsEn: Record<string, string> = {
@@ -160,4 +171,5 @@ export const controlLabelsEn: Record<string, string> = {
   noise: 'Noise', penalty: 'Penalty', angle: 'Loss tilt', optX: 'Optimum x',
   optY: 'Optimum y', gamma: 'RBF gamma', degree: 'Poly degree', reset: 'Reset points',
   causal: 'Causal mask', components: 'Components kept', correlation: 'Correlation', spread: 'Spread ratio',
+  tokens: 'Sequence length', layers: 'Layers', heads: 'Attention heads',
 }

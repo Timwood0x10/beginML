@@ -12,15 +12,19 @@ import numpy as np
 
 # Objectives --------------------------------------------------------------
 
+
 def _sphere(x: np.ndarray) -> float:
     return float(np.sum(x * x))
+
 
 def _sphere_grad(x: np.ndarray) -> np.ndarray:
     return 2.0 * x
 
+
 def _rosenbrock(x: np.ndarray) -> float:
     a, b = 1.0, 100.0
     return float((a - x[0]) ** 2 + b * (x[1] - x[0] ** 2) ** 2)
+
 
 def _rosenbrock_grad(x: np.ndarray) -> np.ndarray:
     a, b = 1.0, 100.0
@@ -28,52 +32,65 @@ def _rosenbrock_grad(x: np.ndarray) -> np.ndarray:
     dy = 2 * b * (x[1] - x[0] ** 2)
     return np.array([dx, dy], dtype=float)
 
+
 def _rastrigin(x: np.ndarray) -> float:
     A = 10.0
     return float(A * len(x) + np.sum(x * x - A * np.cos(2 * np.pi * x)))
+
 
 def _rastrigin_grad(x: np.ndarray) -> np.ndarray:
     A = 10.0
     return 2 * x + 2 * np.pi * A * np.sin(2 * np.pi * x)
 
+
 def _beale(x: np.ndarray) -> float:
     xx, yy = x[0], x[1]
     return float(
         (1.5 - xx + xx * yy) ** 2
-        + (2.25 - xx + xx * yy ** 2) ** 2
-        + (2.625 - xx + xx * yy ** 3) ** 2
+        + (2.25 - xx + xx * yy**2) ** 2
+        + (2.625 - xx + xx * yy**3) ** 2
     )
+
 
 def _beale_grad(x: np.ndarray) -> np.ndarray:
     xx, yy = x[0], x[1]
     f1 = 1.5 - xx + xx * yy
-    f2 = 2.25 - xx + xx * yy ** 2
-    f3 = 2.625 - xx + xx * yy ** 3
-    dxx = f1 * (-1 + yy) + f2 * (-1 + yy ** 2) + f3 * (-1 + yy ** 3)
-    dyy = f1 * xx + f2 * 2 * xx * yy + f3 * 3 * xx * yy ** 2
+    f2 = 2.25 - xx + xx * yy**2
+    f3 = 2.625 - xx + xx * yy**3
+    dxx = f1 * (-1 + yy) + f2 * (-1 + yy**2) + f3 * (-1 + yy**3)
+    dyy = f1 * xx + f2 * 2 * xx * yy + f3 * 3 * xx * yy**2
     return 2 * np.array([dxx, dyy], dtype=float)
 
 
 OBJECTIVES = {
     "sphere": {
-        "fn": _sphere, "grad": _sphere_grad, "lim": (-3.0, 3.0),
+        "fn": _sphere,
+        "grad": _sphere_grad,
+        "lim": (-3.0, 3.0),
         "minimum": (0.0, 0.0),
     },
     "rosenbrock": {
-        "fn": _rosenbrock, "grad": _rosenbrock_grad, "lim": (-2.0, 2.0),
+        "fn": _rosenbrock,
+        "grad": _rosenbrock_grad,
+        "lim": (-2.0, 2.0),
         "minimum": (1.0, 1.0),
     },
     "rastrigin": {
-        "fn": _rastrigin, "grad": _rastrigin_grad, "lim": (-4.5, 4.5),
+        "fn": _rastrigin,
+        "grad": _rastrigin_grad,
+        "lim": (-4.5, 4.5),
         "minimum": (0.0, 0.0),
     },
     "beale": {
-        "fn": _beale, "grad": _beale_grad, "lim": (-4.0, 4.0),
+        "fn": _beale,
+        "grad": _beale_grad,
+        "lim": (-4.0, 4.0),
         "minimum": (3.0, 0.5),
     },
 }
 
 # Optimizers --------------------------------------------------------------
+
 
 def _start_point(rng: np.random.Generator, name: str, lim: tuple[float, float]):
     if name == "corner":
@@ -89,14 +106,19 @@ def _start_point(rng: np.random.Generator, name: str, lim: tuple[float, float]):
 
 
 def _run(
-    fn, grad, start: np.ndarray, optimizer: str,
-    lr: float, momentum: float, steps: int,
+    fn,
+    grad,
+    start: np.ndarray,
+    optimizer: str,
+    lr: float,
+    momentum: float,
+    steps: int,
 ):
     x = start.astype(float).copy()
     vel = np.zeros_like(x)
-    sq = np.zeros_like(x)         # adagrad/rmsprop accumulator
-    m = np.zeros_like(x)          # adam first moment
-    v = np.zeros_like(x)          # adam second moment
+    sq = np.zeros_like(x)  # adagrad/rmsprop accumulator
+    m = np.zeros_like(x)  # adam first moment
+    v = np.zeros_like(x)  # adam second moment
     eps = 1e-8
     path = [{"x": float(x[0]), "y": float(x[1]), "loss": float(fn(x))}]
 
@@ -123,8 +145,8 @@ def _run(
         elif optimizer == "adam":
             m = 0.9 * m + 0.1 * g
             v = 0.999 * v + 0.001 * g * g
-            mhat = m / (1 - 0.9 ** t)
-            vhat = v / (1 - 0.999 ** t)
+            mhat = m / (1 - 0.9**t)
+            vhat = v / (1 - 0.999**t)
             x = x - lr * mhat / (np.sqrt(vhat) + eps)
         else:
             raise ValueError(f"unknown optimizer {optimizer}")
@@ -137,6 +159,7 @@ def _run(
 
 
 # Public API --------------------------------------------------------------
+
 
 def compute(params: dict[str, Any]) -> dict[str, Any]:
     objective = params.get("objective", "sphere")
