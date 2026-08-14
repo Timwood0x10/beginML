@@ -82,22 +82,12 @@ export default {
         'container-max': '1280px',
       },
       fontFamily: {
-        // Latin/numbers first (mono), then CJK clerical script (隶书).
-        // Per-glyph fallback: Latin uses mono, CJK falls through to lisu/STLiti.
-        headline: ['"JetBrains Mono"', '"Cascadia Code"', '"Fira Code"', 'Consolas',
-          '"STLiti"', '"华文隶书"', '"LiSu"', '"隶书"', '"STXingkai"', '"华文行楷"',
-          '"Ma Shan Zheng"', '"ZCOOL XiaoWei"',
-          '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'serif'],
-        body: ['"JetBrains Mono"', '"Cascadia Code"', '"Fira Code"', 'Consolas',
-          '"STLiti"', '"华文隶书"', '"LiSu"', '"隶书"', '"STXingkai"', '"华文行楷"',
-          '"Ma Shan Zheng"', '"ZCOOL XiaoWei"',
-          '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"Cascadia Code"', '"Fira Code"', 'Consolas',
-          'ui-monospace', 'monospace'],
-        codex: ['"JetBrains Mono"', '"Cascadia Code"', '"Fira Code"', 'Consolas',
-          '"STLiti"', '"华文隶书"', '"LiSu"', '"隶书"',
-          '"Ma Shan Zheng"', '"ZCOOL XiaoWei"',
-          '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'serif'],
+        // All stacks are defined once in src/fonts.css — these classes only
+        // reference the CSS variables, so swapping fonts = editing one file.
+        headline: ['var(--stack-headline)'],
+        body: ['var(--stack-body)'],
+        mono: ['var(--font-mono)'],
+        codex: ['var(--stack-codex)'],
       },
       fontSize: {
         'headline-xl': ['48px', { lineHeight: '56px', letterSpacing: '-0.02em', fontWeight: '700' }],

@@ -35,22 +35,27 @@ from sklearn.metrics.pairwise import cosine_similarity
 # backend/ lives at <notes>/ai-learning-platform/backend  → notes root is parents[2]
 NOTES_ROOT = Path(__file__).resolve().parents[2]
 
-# Directories that contain notes (relative to NOTES_ROOT). We do NOT scan
-# the frontend / backend / templates folders.
+# Directories that contain notes (relative to NOTES_ROOT). Notes are split by
+# language: Chinese originals live under zh/, English versions under en/. We do
+# NOT scan the frontend / backend / templates folders.
 SCAN_DIRS = [
-    NOTES_ROOT / "math",
-    NOTES_ROOT / "Self-Attention",
-    NOTES_ROOT / "Hybrid-models",
-    NOTES_ROOT / "paper",
+    NOTES_ROOT / "zh" / "math",
+    NOTES_ROOT / "zh" / "Self-Attention",
+    NOTES_ROOT / "zh" / "Hybrid-models",
+    NOTES_ROOT / "zh" / "paper",
+    NOTES_ROOT / "en" / "math",
+    NOTES_ROOT / "en" / "Self-Attention",
+    NOTES_ROOT / "en" / "Hybrid-models",
+    NOTES_ROOT / "en" / "paper",
 ]
 
 # Image / asset roots — served under /assets/<mount>/...
 ASSET_ROOTS: dict[str, Path] = {
     "images": NOTES_ROOT / "images",
-    "math-images": NOTES_ROOT / "math" / "images",
-    "self-attention-images": NOTES_ROOT / "Self-Attention" / "images",
-    "hybrid-images": NOTES_ROOT / "Hybrid-models" / "image",
-    "paper-images": NOTES_ROOT / "paper" / "images",
+    "math-images": NOTES_ROOT / "zh" / "math" / "images",
+    "self-attention-images": NOTES_ROOT / "zh" / "Self-Attention" / "images",
+    "hybrid-images": NOTES_ROOT / "zh" / "Hybrid-models" / "image",
+    "paper-images": NOTES_ROOT / "zh" / "paper" / "images",
 }
 
 MARKDOWN_EXTENSIONS = [
@@ -260,6 +265,11 @@ def rewrite_image_paths(html: str, relative_note_path: str) -> str:
         if src.startswith(("http://", "https://", "data:", "/")):
             return match.group(0)
         target = (note_dir / src).resolve()
+        # English notes live under en/, but their images are co-located with
+        # the Chinese originals under zh/ — fall back to the zh/ sibling.
+        if not target.exists() and relative_note_path.startswith("en/"):
+            zh_path = NOTES_ROOT / "zh" / relative_note_path[len("en/") :]
+            target = (zh_path.parent / src).resolve()
         try:
             rel = target.relative_to(NOTES_ROOT.resolve())
         except ValueError:
@@ -305,9 +315,10 @@ class NoteIndex:
             if scan_dir.is_dir():
                 md_files.extend(sorted(scan_dir.rglob("*.md")))
 
-        # Root-level loose notes
-        for md in sorted(NOTES_ROOT.glob("*.md")):
-            md_files.append(md)
+        # Loose notes at the language roots (not inside a category dir)
+        for lang in ("zh", "en"):
+            for md in sorted((NOTES_ROOT / lang).glob("*.md")):
+                md_files.append(md)
 
         seen: set[Path] = set()
         for file_path in md_files:
@@ -623,8 +634,11 @@ def localized_note(note: dict[str, Any], lang: str) -> dict[str, Any]:
     sibling exists and lang == 'en'."""
     if lang != "en":
         return note
-    file_path = NOTES_ROOT / note["path"]
-    en_path = file_path.with_name(file_path.stem + ".en.md")
+    # English counterpart lives under en/ mirroring the zh/ relative path.
+    note_rel = Path(note["path"])
+    if not (note_rel.parts and note_rel.parts[0] == "zh"):
+        return note  # already an en/ (or unpaired) note
+    en_path = NOTES_ROOT / "en" / Path(*note_rel.parts[1:])
     if not en_path.exists():
         return note
     try:
@@ -647,10 +661,15 @@ def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Note file missing on disk")
 
-    # English translations live next to the original as `<stem>.en.md`.
-    en_path = file_path.with_name(file_path.stem + ".en.md")
-    use_en = lang == "en" and en_path.exists()
-    source_path = en_path if use_en else file_path
+    # English translations live under en/ mirroring the zh/ relative path.
+    use_en = False
+    source_path = file_path
+    note_rel = Path(note["path"])
+    if lang == "en" and note_rel.parts and note_rel.parts[0] == "zh":
+        en_path = NOTES_ROOT / "en" / Path(*note_rel.parts[1:])
+        if en_path.exists():
+            use_en = True
+            source_path = en_path
 
     content = source_path.read_text(encoding="utf-8", errors="replace")
     content = normalize_math(content)

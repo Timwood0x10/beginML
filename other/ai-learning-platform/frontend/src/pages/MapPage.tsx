@@ -185,7 +185,7 @@ export default function MapPage() {
             background: '#EAE0D3',
             border: '1px solid #7A6858',
             borderRadius: '2px',
-            fontFamily: "'STLiti', 'LiSu', '隶书', '华文隶书', 'Ma Shan Zheng', 'Playfair Display', Garamond, Georgia, serif",
+            fontFamily: 'var(--font-map-label)',
           }}
         >
           <span className="material-symbols-outlined" style={{ fontSize: 17 }}>center_focus_strong</span>
@@ -483,7 +483,7 @@ function LegendPill({
         boxShadow: active
           ? '0 1px 2px rgba(61,50,44,0.25), inset 0 0 0 1px #7A6858'
           : '1px 1px 3px rgba(0,0,0,0.05), inset 0 0 0 1px #C9B79F',
-        fontFamily: "'STLiti', 'LiSu', '隶书', '华文隶书', 'Ma Shan Zheng', 'Playfair Display', Garamond, Georgia, serif",
+        fontFamily: 'var(--font-map-label)',
       }}
     >
       <span
@@ -492,7 +492,7 @@ function LegendPill({
       />
       {label}
       <span className={`px-1.5 py-0.5 text-caption ${active ? 'bg-white/30' : 'bg-[#D8C8B0] dark:bg-white/10'}`}
-        style={{ borderRadius: '1px', fontFamily: "'STLiti', 'LiSu', '隶书', serif" }}>
+        style={{ borderRadius: '1px', fontFamily: 'var(--font-map-label)' }}>
         {count}
       </span>
     </button>

@@ -38,7 +38,7 @@ function wrapTable(table: HTMLElement): HTMLElement {
   wrapper.style.overflowX = 'auto'
   wrapper.style.overflowY = 'hidden'
   wrapper.style.margin = '1.2em 0'
-  wrapper.style.webkitOverflowScrolling = 'touch'
+  wrapper.style.setProperty('-webkit-overflow-scrolling', 'touch')
   table.parentNode?.insertBefore(wrapper, table)
   wrapper.appendChild(table)
   return wrapper
@@ -60,7 +60,7 @@ function wrapOversizedElement(el: HTMLElement, maxHeight: number): HTMLElement {
   wrapper.style.overflowY = 'auto'
   wrapper.style.overflowX = 'auto'
   wrapper.style.margin = '0.8em 0'
-  wrapper.style.webkitOverflowScrolling = 'touch'
+  wrapper.style.setProperty('-webkit-overflow-scrolling', 'touch')
   if (el.tagName === 'IMG') {
     wrapper.style.textAlign = 'center'
     wrapper.style.display = 'flex'

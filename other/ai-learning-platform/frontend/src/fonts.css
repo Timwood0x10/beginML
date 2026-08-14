@@ -1,0 +1,40 @@
+/* ==================================================================
+   FONT MODULE — single source of truth for all font stacks.
+
+   To change fonts, edit ONLY this file:
+   1. swap/adjust the web-font @import below (or replace it with
+      self-hosted @font-face rules — keep the OFL license file alongside
+      the font files if you self-host);
+   2. adjust the font-stack variables in :root.
+
+   Rendering strategy (the browser does per-glyph fallback per script):
+   - Latin / numbers / code → --font-mono   (English/code, unchanged)
+   - CJK (Chinese)          → --font-cjk    (soft sans-serif 黑体, comfortable
+                                             for long-form screen reading)
+   - Math formulas          → --stack-math
+   ================================================================== */
+
+/* Web font loading: JetBrains Mono for English/code (kept as-is).
+   CJK relies on system fonts (PingFang SC / Microsoft YaHei / Noto Sans CJK SC),
+   so no CJK webfont download is needed. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* Latin / numbers / symbols — English & code fonts, unchanged */
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', ui-monospace, monospace;
+
+  /* CJK (Chinese) — soft sans-serif (黑体), easy on the eyes */
+  --font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans CJK SC', 'HarmonyOS Sans SC', 'MiSans', sans-serif;
+
+  /* Combined stacks (per-glyph fallback) */
+  --stack-body: var(--font-mono), var(--font-cjk);      /* reading text */
+  --stack-headline: var(--font-mono), var(--font-cjk);  /* headings — hierarchy comes from size/weight */
+  --stack-codex: var(--font-mono), var(--font-cjk);     /* code / mixed text */
+  --stack-math: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'KaTeX_Main', 'KaTeX_Math',
+    'Cambria Math', 'Latin Modern Math', 'STIX Two Math', serif;
+
+  /* Knowledge-map node labels: keep the decorative serif for Latin (unchanged),
+     use the soft sans for CJK */
+  --font-map-label: 'Playfair Display', Garamond, Georgia, var(--font-cjk);
+}

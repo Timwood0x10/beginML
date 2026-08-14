@@ -1,26 +1,15 @@
+@import './fonts.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ==================================================================
-   Font Strategy:
-   - Latin/numbers/symbols → JetBrains Mono → Cascadia Code → Fira Code → Consolas → monospace
-   - CJK (Chinese) → STLiti (华文隶书) → LiSu (隶书) → 隶书 → Ma Shan Zheng → ZCOOL XiaoWei → system CJK
-   - Math formulas → Cascadia Code → JetBrains Mono → KaTeX math fonts → Cambria Math
-   Per-glyph fallback ensures each script uses its ideal font.
-   Fonts are preloaded via <link> in index.html for performance.
-   ================================================================== */
+/* Font stacks are defined once in ./fonts.css (single source of truth).
+   To change fonts, edit only that file — nothing else in the app needs touching. */
 
 /* Define font stacks as CSS custom properties for consistency */
 :root {
   color-scheme: light;
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', ui-monospace, monospace;
-  --font-cjk: 'STLiti', '华文隶书', 'LiSu', '隶书', 'STXingkai', '华文行楷',
-    'Ma Shan Zheng', 'ZCOOL XiaoWei', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', sans-serif;
-  --stack-body: var(--font-mono), var(--font-cjk);
-  --stack-math: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'KaTeX_Main', 'KaTeX_Math',
-    'Cambria Math', 'Latin Modern Math', 'STIX Two Math', serif;
 }
 html.dark {
   color-scheme: dark;
@@ -31,7 +20,7 @@ html, body, #root {
 }
 
 /* Set font-family on HTML to override Tailwind preflight's ui-sans-serif default.
-   This ensures all inherited text uses our mono + clerical-script stack. */
+   Stacks come from ./fonts.css: mono for Latin, soft sans-serif (黑体) for CJK. */
 html {
   font-family: var(--stack-body);
   font-weight: 400;
@@ -90,9 +79,7 @@ html.dark ::-webkit-scrollbar-thumb { background: #54483A; }
 }
 html.dark .prose-ailearn { color: #C9BCA6; }
 
-/* Headings — clerical script for CJK, mono for Latin numbers.
-   Using font-weight: 500 instead of 700 because STLiti/Ma Shan Zheng
-   only come in one weight; heavy bold causes browser font fallback. */
+/* Headings — mono for Latin, soft sans (黑体) for CJK (stacks from ./fonts.css). */
 .prose-ailearn h1,
 .prose-ailearn h2,
 .prose-ailearn h3,
