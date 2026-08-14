@@ -99,7 +99,7 @@ export default function NotePage() {
     load()
   }, [load])
 
-  const { measureRef, pages } = useBookPagination(note?.html ?? '', pageHeight - BOOK_PAD_Y)
+  const { measureRef, pages } = useBookPagination(note?.html ?? '', pageHeight)
 
   // Find which paginated leaf contains a heading slug (id="<slug>").
   const findPageForSlug = useCallback(
@@ -270,19 +270,25 @@ export default function NotePage() {
           {/* Hidden measure container — drives pagination layout. React owns
               its content via dangerouslySetInnerHTML; it sits off-screen but
               keeps layout so offsetHeight stays meaningful. It mirrors the
-              book page padding so measured heights match the rendered page. */}
+              book page padding/border/box-sizing exactly so measured heights
+              match the rendered page pixel-for-pixel. */}
           <div
             ref={measureRef}
-            className="prose-ailearn"
+            className="prose-ailearn page-measure"
             style={{
               width: pageWidth,
               padding: `${BOOK_PAD.top}px ${BOOK_PAD.right}px ${BOOK_PAD.bottom}px ${BOOK_PAD.left}px`,
               boxSizing: 'border-box',
+              border: '1px solid transparent',
+              overflow: 'visible',
               position: 'absolute',
               left: '-9999px',
               top: 0,
               visibility: 'hidden',
               pointerEvents: 'none',
+              height: 'auto',
+              minHeight: 'unset',
+              maxHeight: 'none',
             }}
             aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: note.html }}
@@ -297,7 +303,7 @@ export default function NotePage() {
             <div className="book-peel-hint" aria-hidden="true" />
           </div>
 
-          {/* Page navigation */}
+          {/* Page navigation — Cinnabar Seal (朱砂印) style */}
           {pages.length > 1 && (
             <div className="flex flex-col items-center gap-3 mt-6">
               <div className="flex items-center gap-3">
@@ -305,20 +311,20 @@ export default function NotePage() {
                   onClick={() => pageFlipRef.current?.flipPrev()}
                   disabled={pageIndex === 0}
                   aria-label="Previous page"
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/10 disabled:opacity-30 transition"
+                  className="page-nav-btn"
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_left</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>chevron_left</span>
                 </button>
-                <span className="font-codex text-caption text-on-surface-variant dark:text-outline">
-                  {toRoman(pageIndex + 1)} / {toRoman(pages.length)}
+                <span className="page-number-seal">
+                  {pageIndex + 1} / {pages.length}
                 </span>
                 <button
                   onClick={() => pageFlipRef.current?.flipNext()}
                   disabled={pageIndex >= pages.length - 1}
                   aria-label="Next page"
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/10 disabled:opacity-30 transition"
+                  className="page-nav-btn"
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_right</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>chevron_right</span>
                 </button>
               </div>
               <div className="flex items-center gap-2">

@@ -180,7 +180,13 @@ export default function MapPage() {
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={resetView}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container dark:bg-dark-surface-elevated border border-outline-variant/60 dark:border-white/10 text-label-md font-semibold text-on-surface dark:text-dark-on-surface hover:border-primary/40 transition"
+          className="inline-flex items-center gap-2 px-4 py-2 text-label-md font-semibold text-on-surface dark:text-dark-on-surface hover:bg-[#EAE0D3] dark:hover:bg-[#332B20] transition"
+          style={{
+            background: '#EAE0D3',
+            border: '1px solid #7A6858',
+            borderRadius: '2px',
+            fontFamily: "'STLiti', 'LiSu', '隶书', '华文隶书', 'Ma Shan Zheng', 'Playfair Display', Garamond, Georgia, serif",
+          }}
         >
           <span className="material-symbols-outlined" style={{ fontSize: 17 }}>center_focus_strong</span>
           {t.map.reset}
@@ -465,16 +471,18 @@ function LegendPill({
   return (
     <button
       onClick={onClick}
-      className={`font-codex inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-label-md font-semibold transition-all ${
+      className={`font-codex inline-flex items-center gap-2 px-3.5 py-1.5 text-label-md font-semibold transition-all ${
         active
           ? 'bg-[#C9B79F] text-[#3D322C] shadow-[0_1px_2px_rgba(61,50,44,0.25)]'
           : 'bg-[#EAE0D3] dark:bg-[#2A2319] text-[#6E5D4F] dark:text-[#C9BCA6] hover:bg-[#E0D3C0] dark:hover:bg-[#332B20]'
       }`}
       style={{
         border: '1px solid #7A6858',
+        borderRadius: '2px',
         boxShadow: active
           ? '0 1px 2px rgba(61,50,44,0.25), inset 0 0 0 1px #7A6858'
           : '1px 1px 3px rgba(0,0,0,0.05), inset 0 0 0 1px #C9B79F',
+        fontFamily: "'STLiti', 'LiSu', '隶书', '华文隶书', 'Ma Shan Zheng', 'Playfair Display', Garamond, Georgia, serif",
       }}
     >
       <span
@@ -482,8 +490,9 @@ function LegendPill({
         style={{ background: active ? '#3D322C' : color, borderRadius: '1px' }}
       />
       {label}
-      <span className={`px-1.5 py-0.5 rounded-sm text-caption ${active ? 'bg-white/30' : 'bg-[#D8C8B0] dark:bg-white/10'}`}>
-        {toRoman(count)}
+      <span className={`px-1.5 py-0.5 text-caption ${active ? 'bg-white/30' : 'bg-[#D8C8B0] dark:bg-white/10'}`}
+        style={{ borderRadius: '1px', fontFamily: "'STLiti', 'LiSu', '隶书', serif" }}>
+        {count}
       </span>
     </button>
   )
