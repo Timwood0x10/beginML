@@ -126,9 +126,25 @@ def infer_category(relative_path: str) -> dict[str, str]:
     return CATEGORY_DEFS["general"]
 
 
-def extract_title(content: str) -> str:
+def _iter_non_code_lines(content: str):
+    """Yield (line, stripped) for every line, skipping fenced code blocks.
+
+    Notes embed Python/other fenced blocks whose comment lines (`# ...`) must
+    not be mistaken for Markdown headings when extracting titles or headings.
+    """
+    in_code = False
     for line in content.split("\n"):
         stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        yield line, stripped
+
+
+def extract_title(content: str) -> str:
+    for _, stripped in _iter_non_code_lines(content):
         if stripped.startswith("# "):
             return stripped[2:].strip()
     return ""
@@ -215,7 +231,42 @@ def normalize_math(content: str) -> str:
     )
     # Collapse 3+ newlines created above back to a clean pair.
     content = re.sub(r"\n{3,}", "\n\n", content)
-    return content
+    # Inline math written with stray whitespace next to the delimiters
+    # (`$ x $` / `$x $` / `$ x$`) is not recognized by arithmatex, which
+    # requires the content to hug the dollar signs. Rewrite such pairs to
+    # the `\(x\)` form (content trimmed). Done pair-by-pair on every line
+    # outside fenced code blocks so well-formed `$...$` (like
+    # `$(\lambda_i>0)$ 时 ... $(\lambda_i<0)$`) is never touched.
+    lines = content.split("\n")
+    in_code = False
+    for li, line in enumerate(lines):
+        stripped_line = line.strip()
+        if stripped_line.startswith("```") or stripped_line.startswith("~~~"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        out: list[str] = []
+        i = 0
+        while True:
+            j = line.find("$", i)
+            if j < 0:
+                out.append(line[i:])
+                break
+            k = line.find("$", j + 1)
+            if k < 0:
+                out.append(line[i:])
+                break
+            body = line[j + 1 : k]
+            leading_space = bool(body) and body[0] in " \t"
+            trailing_space = bool(body) and body[-1] in " \t"
+            if leading_space or trailing_space:
+                out.append(line[i:j] + "\\(" + body.strip() + "\\)")
+            else:
+                out.append(line[i : k + 1])
+            i = k + 1
+        lines[li] = "".join(out)
+    return "\n".join(lines)
 
 
 # Matches pymdownx-arithmatex output: <span class="arithmatex">\(...\)</span>
@@ -362,8 +413,8 @@ class NoteIndex:
     def _extract_headings(content: str, max_depth: int = 3) -> list[dict[str, Any]]:
         headings: list[dict[str, Any]] = []
         slug_counts: dict[str, int] = {}
-        for line in content.split("\n"):
-            m = re.match(r"^(#{1,6})\s+(.*)$", line.strip())
+        for _, stripped in _iter_non_code_lines(content):
+            m = re.match(r"^(#{1,6})\s+(.*)$", stripped)
             if not m:
                 continue
             level = len(m.group(1))
@@ -579,18 +630,20 @@ def health() -> dict[str, Any]:
 
 
 @app.get("/api/stats")
-def stats() -> dict[str, Any]:
+def stats(lang: str = Query("zh")) -> dict[str, Any]:
+    prefix = f"{lang}/"
+    notes = [n for n in note_index.notes if n["path"].startswith(prefix)]
     categories: dict[str, int] = {}
-    for note in note_index.notes:
+    for note in notes:
         cid = note["category"]["id"]
         categories[cid] = categories.get(cid, 0) + 1
-    total_words = sum(n["wordCount"] for n in note_index.notes)
+    total_words = sum(n["wordCount"] for n in notes)
     cat_list = []
     for cid, count in categories.items():
         cat_list.append({**CATEGORY_DEFS.get(cid, CATEGORY_DEFS["general"]), "count": count})
     cat_list.sort(key=lambda c: -c["count"])
     return {
-        "totalNotes": len(note_index.notes),
+        "totalNotes": len(notes),
         "totalWords": total_words,
         "totalReadingMinutes": estimate_reading_time(total_words),
         "categories": cat_list,
@@ -602,18 +655,24 @@ def stats() -> dict[str, Any]:
 def list_notes(
     category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    lang: str = Query("zh"),
     limit: int = Query(200, ge=1, le=500),
 ) -> dict[str, Any]:
+    prefix = f"{lang}/"
     if search:
         results = note_index.search(search, top_k=limit)
     else:
         results = list(note_index.notes)
+
+    results = [n for n in results if n["path"].startswith(prefix)]
 
     if category:
         results = [n for n in results if n["category"]["id"] == category]
 
     cat_counts: dict[str, dict[str, Any]] = {}
     for note in note_index.notes:
+        if not note["path"].startswith(prefix):
+            continue
         cid = note["category"]["id"]
         if cid not in cat_counts:
             cat_counts[cid] = {
@@ -698,13 +757,23 @@ def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
         "content": content,
         "html": html,
         "translated": use_en,
-        "related": [localized_note(r, lang) for r in note_index.related(note_id)],
+        "related": [
+            localized_note(r, lang)
+            for r in note_index.related(note_id)
+            if r["path"].startswith(f"{lang}/")
+        ],
     }
 
 
 @app.get("/api/map")
-def knowledge_map(category: Optional[str] = Query(None)) -> dict[str, Any]:
-    points = note_index.map_points
+def knowledge_map(category: Optional[str] = Query(None), lang: str = Query("zh")) -> dict[str, Any]:
+    prefix = f"{lang}/"
+    # map_points carry ids but not paths; resolve each point's owning note.
+    points = [
+        p
+        for p in note_index.map_points
+        if (note := note_index.by_id.get(p["id"])) and note["path"].startswith(prefix)
+    ]
     if category:
         points = [p for p in points if p["category"] == category]
     categories = [

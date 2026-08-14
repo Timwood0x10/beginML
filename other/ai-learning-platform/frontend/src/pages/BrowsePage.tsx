@@ -16,7 +16,7 @@ function useDebounced<T>(value: T, delay: number): T {
 }
 
 export default function BrowsePage() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const [params, setParams] = useSearchParams()
   const categoryParam = params.get('category')
   const [search, setSearch] = useState(params.get('q') ?? '')
@@ -33,6 +33,7 @@ export default function BrowsePage() {
       const res = await api.notes({
         category: categoryParam,
         search: debounced || null,
+        lang,
       })
       setData(res)
     } catch (e) {
@@ -40,7 +41,7 @@ export default function BrowsePage() {
     } finally {
       setLoading(false)
     }
-  }, [categoryParam, debounced])
+  }, [categoryParam, debounced, lang])
 
   useEffect(() => {
     load()

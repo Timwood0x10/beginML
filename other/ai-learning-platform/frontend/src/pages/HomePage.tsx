@@ -15,7 +15,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 }
 
 export default function HomePage() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const [stats, setStats] = useState<StatsResponse | null>(null)
   const [recent, setRecent] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,7 +25,7 @@ export default function HomePage() {
     setLoading(true)
     setError(null)
     try {
-      const [s, n] = await Promise.all([api.stats(), api.notes()])
+      const [s, n] = await Promise.all([api.stats(lang), api.notes({ lang })])
       setStats(s)
       // "Journey" order: math → attention → hybrid → paper; otherwise stable.
       const order = ['math', 'attention', 'hybrid', 'paper', 'general']
@@ -44,7 +44,8 @@ export default function HomePage() {
 
   useEffect(() => {
     load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang])
 
   if (loading) return <Spinner label={t.common.loading} />
   if (error || !stats) return <ErrorState message={error ?? t.common.loading} onRetry={load} />

@@ -161,6 +161,27 @@ export default function NotePage() {
     if (pageIndex > 0) flip.turnToPage(pageIndex)
   }, [pages, pageWidth, pageHeight]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Text selection: the flip library calls preventDefault() on mousedown for
+  // nearly every element (to enable drag-to-flip), which also blocks selecting
+  // and copying note text. Intercept mousedown in the capture phase on text
+  // content and stop its propagation, so the library never sees it — text
+  // becomes selectable/copyable while page margins, links and buttons still
+  // drive the flip.
+  useEffect(() => {
+    const host = bookElRef.current
+    if (!host || pages.length === 0) return
+    const selectable =
+      'p, li, h1, h2, h3, h4, h5, h6, pre, code, td, th, blockquote, strong, em'
+    const onMouseDownCapture = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null
+      if (!t || typeof t.closest !== 'function') return
+      if (t.closest('a, button')) return // let the library forward clicks
+      if (t.closest(`.page ${selectable}`)) e.stopPropagation()
+    }
+    host.addEventListener('mousedown', onMouseDownCapture, true)
+    return () => host.removeEventListener('mousedown', onMouseDownCapture, true)
+  }, [pages])
+
   const handleTocClick = useCallback(
     (e: React.MouseEvent, h: Heading) => {
       e.preventDefault()

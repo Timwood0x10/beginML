@@ -18,9 +18,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  stats: () => request<StatsResponse>('/stats'),
-  notes: (params?: { category?: string | null; search?: string | null }) => {
+  stats: (lang?: string) => {
+    const qs = lang ? `?lang=${encodeURIComponent(lang)}` : ''
+    return request<StatsResponse>(`/stats${qs}`)
+  },
+  notes: (params?: { category?: string | null; search?: string | null; lang?: string | null }) => {
     const qs = new URLSearchParams()
+    if (params?.lang) qs.set('lang', params.lang)
     if (params?.category) qs.set('category', params.category)
     if (params?.search) qs.set('search', params.search)
     const suffix = qs.toString() ? `?${qs}` : ''
@@ -30,9 +34,12 @@ export const api = {
     const qs = lang ? `?lang=${encodeURIComponent(lang)}` : ''
     return request<NoteDetail>(`/notes/${id}${qs}`)
   },
-  map: (category?: string | null) => {
-    const qs = category ? `?category=${encodeURIComponent(category)}` : ''
-    return request<MapResponse>(`/map${qs}`)
+  map: (category?: string | null, lang?: string) => {
+    const qs = new URLSearchParams()
+    if (category) qs.set('category', category)
+    if (lang) qs.set('lang', lang)
+    const suffix = qs.toString() ? `?${qs}` : ''
+    return request<MapResponse>(`/map${suffix}`)
   },
   health: () => request<{ status: string; notes: number }>('/health'),
   lab: {

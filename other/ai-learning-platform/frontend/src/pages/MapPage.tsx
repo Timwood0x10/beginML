@@ -23,7 +23,7 @@ interface ViewBox {
 }
 
 export default function MapPage() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const { theme } = useTheme()
   const dark = theme === 'dark'
   const [data, setData] = useState<MapResponse | null>(null)
@@ -48,14 +48,14 @@ export default function MapPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await api.map(null)
+      const res = await api.map(null, lang)
       setData(res)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [lang])
 
   useEffect(() => {
     load()
