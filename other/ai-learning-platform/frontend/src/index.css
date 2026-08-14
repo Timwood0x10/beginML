@@ -153,19 +153,32 @@ html.dark .prose-ailearn code { background: #3B3023; color: #E7CC9F; }
 .prose-ailearn pre {
   background: #3B3023;
   color: #F3EADA;
-  padding: 1.1em 1.3em;
-  border-radius: 1rem;
+  padding: 1em 1.2em;
+  border-radius: 0.75rem;
   overflow-x: auto;
-  margin: 1.4em 0;
-  font-size: 0.88em;
-  line-height: 1.6;
+  overflow-y: hidden;
+  margin: 1.2em 0;
+  font-size: 0.82em;
+  line-height: 1.55;
   box-shadow: 0 4px 24px rgba(59, 48, 35, 0.14);
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  white-space: pre;
+  word-wrap: normal;
+  word-break: normal;
+}
+html.dark .prose-ailearn pre {
+  background: #1A1611;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 .prose-ailearn pre code {
   background: transparent;
   padding: 0;
   color: inherit;
   font-size: inherit;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 /* Pygments token colors (dark) */
 .prose-ailearn .k, .prose-ailearn .kd, .prose-ailearn .kn { color: #c4a7e7; }
@@ -176,20 +189,41 @@ html.dark .prose-ailearn code { background: #3B3023; color: #E7CC9F; }
 .prose-ailearn .mi, .prose-ailearn .mf { color: #d08770; }
 .prose-ailearn .o { color: #81a1c1; }
 
+/* Tables — wrapped in a horizontal scroll container (.table-wrap) by the
+   pagination hook so wide tables scroll horizontally within the page instead
+   of being clipped by the page-flip viewport. */
+.prose-ailearn .table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 1.2em 0;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.5rem;
+}
+.prose-ailearn .table-wrap::-webkit-scrollbar { height: 6px; }
+.prose-ailearn .table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(140,122,107,0.3);
+  border-radius: 6px;
+}
+html.dark .prose-ailearn .table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(138,122,97,0.3);
+}
 .prose-ailearn table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.4em 0;
-  font-size: 0.9em;
+  margin: 0;
+  font-size: 0.88em;
+  line-height: 1.5;
 }
 .prose-ailearn th, .prose-ailearn td {
   border: 1px solid #CBBBA0;
-  padding: 0.55em 0.9em;
+  padding: 0.5em 0.8em;
   text-align: left;
+  vertical-align: top;
 }
 .prose-ailearn th { background: #EDE2CB; font-weight: 600; color: #3B3023; }
 html.dark .prose-ailearn th, html.dark .prose-ailearn td { border-color: #54483A; }
 html.dark .prose-ailearn th { background: #2A2319; color: #F3EADA; }
+html.dark .prose-ailearn td { color: #D9CDB8; }
 
 .prose-ailearn img {
   max-width: 100%;
@@ -323,11 +357,21 @@ html.dark .map-tooltip {
 
 /* Each note leaf — parchment texture, generous padding, soft inner shadow.
    The page padding must mirror BOOK_PAD in NotePage.tsx so the pagination
-   measurements match the rendered content area exactly. */
+   measurements match the rendered content area exactly.
+   overflow: auto allows oversized content (wide code, tables) to scroll
+   within the page instead of being clipped. StPageFlip uses its own
+   outer containers for the flip animation clipping.
+   .stf__item is PageFlip's class that sets position:absolute; we must ensure
+   our .page rule does not accidentally override that to position:relative
+   (which would make pages stack in document flow and blow out body height). */
+.page.stf__item {
+  position: absolute;
+}
 .page {
   box-sizing: border-box;
-  padding: 48px 56px 40px;
-  overflow: hidden;
+  padding: 40px 48px 36px;
+  overflow: auto;
+  position: absolute;
   background:
     radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
     linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
@@ -337,7 +381,12 @@ html.dark .map-tooltip {
     inset 0 0 8px rgba(61,50,44,0.06);
   border: 1px solid rgba(140,122,107,0.18);
   border-radius: 2px;
+  -webkit-overflow-scrolling: touch;
 }
+.page::-webkit-scrollbar { width: 6px; height: 6px; }
+.page::-webkit-scrollbar-thumb { background: rgba(140,122,107,0.3); border-radius: 6px; }
+.page::-webkit-scrollbar-track { background: transparent; }
+html.dark .page::-webkit-scrollbar-thumb { background: rgba(138,122,97,0.3); border-radius: 6px; }
 html.dark .page {
   background:
     radial-gradient(120% 100% at 0% 50%, rgba(0,0,0,0.3) 0%, transparent 22%),
@@ -378,13 +427,22 @@ html.dark .page::before {
 /* A block too tall for one leaf (huge table/code/image) scrolls inside its
    own page instead of being clipped by the fixed page height. */
 .book-oversize {
-  height: 100%;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  margin: 0.8em 0;
+  border-radius: 0.5rem;
 }
 .book-oversize::-webkit-scrollbar { width: 6px; height: 6px; }
-.book-oversize::-webkit-scrollbar-thumb { background: #8C7A6B; border-radius: 6px; }
+.book-oversize::-webkit-scrollbar-thumb {
+  background: rgba(140,122,107,0.35);
+  border-radius: 6px;
+}
+html.dark .book-oversize::-webkit-scrollbar-thumb {
+  background: rgba(138,122,97,0.35);
+  border-radius: 6px;
+}
 
 /* ------------------------------------------------------------------ */
 /* Peel hint — the bottom-left corner gently lifts when idle, inviting  */
@@ -587,4 +645,58 @@ html.dark .page-nav-btn:hover:not(:disabled) {
   background: #C44030;
   border-color: #9B2A1E;
   color: #FDF6EC;
+}
+
+/* ------------------------------------------------------------------ */
+/* Per-page corner seal — small cinnabar number stamp at bottom-right
+   of each page, styled like a traditional Chinese seal impression. */
+/* ------------------------------------------------------------------ */
+.page-corner-seal {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  background: #C23A22;
+  color: #FFF8EC;
+  font-family: var(--font-cjk), var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: 1.5px solid #8E1E10;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 248, 236, 0.12),
+    1px 1px 4px rgba(139, 35, 24, 0.3);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  font-synthesis: weight;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.8;
+  line-height: 1;
+}
+.page-corner-seal::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  right: 1px;
+  bottom: 1px;
+  border: 1px solid rgba(255, 248, 236, 0.18);
+  pointer-events: none;
+  border-radius: 1px;
+}
+html.dark .page-corner-seal {
+  background: #D4402A;
+  border-color: #9E2416;
+  color: #FFFAF0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 250, 240, 0.1),
+    1px 2px 6px rgba(0, 0, 0, 0.4);
+  opacity: 0.85;
 }

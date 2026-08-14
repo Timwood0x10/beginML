@@ -297,27 +297,27 @@ export default function MapPage() {
           <rect x="0" y="0" width="100%" height="100%" fill="url(#parchment-vignette)" className="dark:opacity-0" pointerEvents="none" />
           <rect x="0" y="0" width="100%" height="100%" fill="url(#parchment-vignette-dark)" className="hidden dark:block" pointerEvents="none" />
 
-          {/* Connection lines — faint hand-drawn ink strokes (portolan style) */}
+          {/* Connection lines — hand-drawn ink strokes (portolan style).
+              Dark mode uses brighter, thicker, tighter-dashed lines for contrast
+              against the dark parchment; light mode uses softer faded ink. */}
           <g>
             {points.map((p, i) => {
               const a = toSvg(p.x, p.y)
               return points.slice(i + 1).map((q) => {
                 const dist = Math.hypot(p.x - q.x, p.y - q.y)
-                if (dist > 0.45) return null
+                if (dist > 0.5) return null
                 const b = toSvg(q.x, q.y)
                 const touchesHover = hover && (hover.id === p.id || hover.id === q.id)
-                // Base opacity: dark mode is lifted hard (the dark parchment
-                // swallows faint strokes), light mode raised a little so the
-                // ink reads against the warm paper.
-                const floor = dark ? 0.35 : 0.11
-                const baseOpacity = Math.max(floor, (dark ? 0.9 : 0.46) - dist * 0.4)
-                // Hover: related strokes turn into bright ink; the rest fade
-                // like strokes worn away by age. In dark mode use warm cream
-                // ink so edges stay clearly visible on the dark parchment.
-                const opacity = touchesHover ? 0.98 : hover ? baseOpacity * 0.45 : baseOpacity
+                // Dark mode: much higher floor opacity, gentler distance falloff,
+                // brighter color, thicker stroke, tighter dash for visibility.
+                const floor = dark ? 0.5 : 0.11
+                const baseOpacity = Math.max(floor, (dark ? 0.95 : 0.46) - dist * (dark ? 0.5 : 0.4))
+                const opacity = touchesHover ? (dark ? 1.0 : 0.98) : hover ? baseOpacity * 0.4 : baseOpacity
                 const color = touchesHover
-                  ? (dark ? '#FBF6EA' : '#2E241B')
-                  : (dark ? '#F0E7D0' : '#45382A')
+                  ? (dark ? '#FFF8EC' : '#2E241B')
+                  : (dark ? '#EDE0C8' : '#45382A')
+                const sw = touchesHover ? (dark ? 2.2 : 1.8) : (dark ? 1.8 : 1.25)
+                const dash = dark ? '3 1.5' : '4 2.5'
                 return (
                   <line
                     key={`${p.id}-${q.id}`}
@@ -327,8 +327,9 @@ export default function MapPage() {
                     y2={b.y}
                     stroke={color}
                     strokeOpacity={opacity}
-                    strokeWidth={touchesHover ? 1.8 : dark ? 1.6 : 1.25}
-                    strokeDasharray="4 2.5"
+                    strokeWidth={sw}
+                    strokeDasharray={dash}
+                    strokeLinecap="round"
                     className="map-ink-line transition-all duration-300"
                   />
                 )

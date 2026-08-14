@@ -11,13 +11,15 @@ import { useBookPagination } from '../hooks/useBookPagination'
 // Math is rendered server-side as MathML by the backend (latex2mathml) and
 // rendered natively by the browser — no frontend math library needed.
 
-// Book page geometry — a comfortable codex leaf with a book-ish ratio.
+// Book page geometry — a comfortable codex leaf.
 // Width adapts to the container via ResizeObserver; height follows ratio.
-const MAX_PAGE_WIDTH = 720
-const PAGE_RATIO = 1.12 // height = width * ratio (a slightly tall page)
+// Use a wider page (up to 860px) with a more natural aspect ratio to give
+// code blocks and tables room to breathe without horizontal scrolling.
+const MAX_PAGE_WIDTH = 860
+const PAGE_RATIO = 1.0 // height = width * ratio (closer to golden ratio for screen reading)
 // .page padding — the measure container must mirror it so measured heights
 // match the rendered content area exactly.
-const BOOK_PAD = { top: 48, right: 56, bottom: 40, left: 56 }
+const BOOK_PAD = { top: 40, right: 48, bottom: 36, left: 48 }
 const BOOK_PAD_Y = BOOK_PAD.top + BOOK_PAD.bottom
 
 function slugify(text: string): string {
@@ -26,24 +28,6 @@ function slugify(text: string): string {
     .replace(/[^\w\- ]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-}
-
-function toRoman(n: number): string {
-  if (n <= 0 || n >= 4000) return String(n)
-  const table: [number, string][] = [
-    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
-    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
-    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
-  ]
-  let out = ''
-  let v = n
-  for (const [num, sym] of table) {
-    while (v >= num) {
-      out += sym
-      v -= num
-    }
-  }
-  return out
 }
 
 export default function NotePage() {
@@ -55,7 +39,7 @@ export default function NotePage() {
   const [error, setError] = useState<string | null>(null)
   const [activeSlug, setActiveSlug] = useState<string>('')
   const [pageIndex, setPageIndex] = useState(0)
-  const [pageWidth, setPageWidth] = useState(660)
+  const [pageWidth, setPageWidth] = useState(720)
   const articleRef = useRef<HTMLElement | null>(null)
   // The flipbook lives inside this div. StPageFlip owns the subtree; React
   // only provides the empty host so the instance can be rebuilt on demand.
@@ -70,8 +54,12 @@ export default function NotePage() {
     const el = articleRef.current
     if (!el) return
     const measure = () => {
-      const avail = el.clientWidth - 48 // book sits inside the padded article
-      setPageWidth(Math.max(320, Math.min(MAX_PAGE_WIDTH, avail)))
+      // Use the content area width (clientWidth minus horizontal padding)
+      const cs = getComputedStyle(el)
+      const padLeft = parseFloat(cs.paddingLeft) || 0
+      const padRight = parseFloat(cs.paddingRight) || 0
+      const avail = el.clientWidth - padLeft - padRight - 8 // small buffer
+      setPageWidth(Math.max(360, Math.min(MAX_PAGE_WIDTH, avail)))
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -99,7 +87,7 @@ export default function NotePage() {
     load()
   }, [load])
 
-  const { measureRef, pages } = useBookPagination(note?.html ?? '', pageHeight)
+  const { measureRef, pages } = useBookPagination(note?.html ?? '', pageHeight, pageWidth)
 
   // Find which paginated leaf contains a heading slug (id="<slug>").
   const findPageForSlug = useCallback(
@@ -129,10 +117,16 @@ export default function NotePage() {
     if (parent && !el.isConnected) parent.appendChild(el)
     el.replaceChildren()
 
-    const pageEls = pages.map((html) => {
+    const pageEls = pages.map((html, idx) => {
       const div = document.createElement('div')
       div.className = 'page prose-ailearn'
+      div.style.position = 'relative'
       div.innerHTML = html
+      // Add a small cinnabar seal page number in the bottom-right corner
+      const seal = document.createElement('div')
+      seal.className = 'page-corner-seal'
+      seal.textContent = String(idx + 1)
+      div.appendChild(seal)
       return div
     })
     el.append(...pageEls)
@@ -221,7 +215,7 @@ export default function NotePage() {
   const toc: Heading[] = note.headings.filter((h) => h.level >= 2 && h.level <= 3)
 
   return (
-    <div className="flex flex-col gap-8 pt-2">
+    <div className="flex flex-col gap-6 pt-2">
       {/* Breadcrumb / back */}
       <div className="flex items-center gap-2 text-caption text-on-surface-variant dark:text-outline">
         <button
@@ -243,10 +237,10 @@ export default function NotePage() {
         {/* Article */}
         <article
           ref={articleRef}
-          className="flex-1 min-w-0 bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 p-6 md:p-12"
+          className="flex-1 min-w-0 relative bg-surface-container-lowest dark:bg-dark-surface-elevated rounded-3xl shadow-ambient dark:shadow-dark-ambient border border-outline-variant/50 dark:border-white/10 p-5 md:p-10"
         >
-          <header className="mb-8 pb-6 border-b border-outline-variant/50 dark:border-white/10">
-            <div className="flex flex-wrap items-center gap-3 mb-4">
+          <header className="mb-6 pb-5 border-b border-outline-variant/50 dark:border-white/10">
+            <div className="flex flex-wrap items-center gap-3 mb-3">
               <CategoryBadge category={note.category} size="md" />
               <span className="inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline">
                 <span className="material-symbols-outlined" style={{ fontSize: 15 }}>schedule</span>
@@ -257,38 +251,40 @@ export default function NotePage() {
                 {note.wordCount.toLocaleString()} {t.home.words}
               </span>
             </div>
-            <h1 className="font-headline text-3xl md:text-4xl font-bold text-on-surface dark:text-inverse-on-surface leading-tight">
+            <h1 className="font-headline text-2xl md:text-3xl font-bold text-on-surface dark:text-inverse-on-surface leading-tight">
               {note.title}
             </h1>
             {note.description && (
-              <p className="mt-4 text-body-lg text-on-surface-variant dark:text-outline leading-relaxed">
+              <p className="mt-3 text-body-lg text-on-surface-variant dark:text-outline leading-relaxed">
                 {note.description}
               </p>
             )}
           </header>
 
           {/* Hidden measure container — drives pagination layout. React owns
-              its content via dangerouslySetInnerHTML; it sits off-screen but
-              keeps layout so offsetHeight stays meaningful. It mirrors the
+              its content via dangerouslySetInnerHTML; it sits WAY off-screen
+              (position:fixed so it cannot inflate body scrollHeight) but keeps
+              layout so offsetHeight stays meaningful. It mirrors the
               book page padding/border/box-sizing exactly so measured heights
               match the rendered page pixel-for-pixel. */}
           <div
             ref={measureRef}
             className="prose-ailearn page-measure"
             style={{
+              position: 'fixed',
+              left: '-99999px',
+              top: '-99999px',
               width: pageWidth,
               padding: `${BOOK_PAD.top}px ${BOOK_PAD.right}px ${BOOK_PAD.bottom}px ${BOOK_PAD.left}px`,
               boxSizing: 'border-box',
               border: '1px solid transparent',
               overflow: 'visible',
-              position: 'absolute',
-              left: '-9999px',
-              top: 0,
               visibility: 'hidden',
               pointerEvents: 'none',
               height: 'auto',
               minHeight: 'unset',
               maxHeight: 'none',
+              zIndex: -1,
             }}
             aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: note.html }}
@@ -297,7 +293,7 @@ export default function NotePage() {
           {/* Book — StPageFlip turns the pages with a real paper fold. The
               host div is a stable React-owned shell; the library manages the
               page DOM and canvas layers inside it. */}
-          <div className="book-3d mt-4" style={{ width: pageWidth, height: pageHeight }}>
+          <div className="book-3d mt-2" style={{ width: pageWidth, height: pageHeight }}>
             <div ref={bookElRef} className="book-flip-host" style={{ width: pageWidth, height: pageHeight }} />
             {/* Peel hint — invites dragging when idle (hidden while turning) */}
             <div className="book-peel-hint" aria-hidden="true" />
@@ -305,7 +301,7 @@ export default function NotePage() {
 
           {/* Page navigation — Cinnabar Seal (朱砂印) style */}
           {pages.length > 1 && (
-            <div className="flex flex-col items-center gap-3 mt-6">
+            <div className="flex flex-col items-center gap-3 mt-5">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => pageFlipRef.current?.flipPrev()}

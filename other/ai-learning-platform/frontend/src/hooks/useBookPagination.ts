@@ -27,24 +27,47 @@ function prepareNode(el: HTMLElement) {
   })
 }
 
-// Elements that can be safely wrapped in a scrollable container if too tall.
-const SCROLLABLE_TAGS = new Set(['TABLE', 'PRE', 'UL', 'OL', 'IMG'])
-
-function wrapOversizedElement(el: HTMLElement, maxHeight: number): HTMLElement {
+// Wrap a table in a horizontal scroll container so wide tables don't get clipped.
+function wrapTable(table: HTMLElement): HTMLElement {
+  // Avoid double-wrapping
+  if (table.parentElement?.classList.contains('table-wrap')) {
+    return table.parentElement
+  }
   const wrapper = document.createElement('div')
+  wrapper.className = 'table-wrap'
+  wrapper.style.overflowX = 'auto'
+  wrapper.style.overflowY = 'hidden'
+  wrapper.style.margin = '1.2em 0'
+  wrapper.style.webkitOverflowScrolling = 'touch'
+  table.parentNode?.insertBefore(wrapper, table)
+  wrapper.appendChild(table)
+  return wrapper
+}
+
+// Wrap an oversized (too tall) element in a scroll container.
+function wrapOversizedElement(el: HTMLElement, maxHeight: number): HTMLElement {
+  // If it's a table already wrapped, wrap the wrapper
+  if (el.tagName === 'TABLE' && el.parentElement?.classList.contains('table-wrap')) {
+    el = el.parentElement
+  }
+  // Avoid double-wrapping
+  if (el.parentElement?.classList.contains('book-oversize')) {
+    return el.parentElement
+  }
+  const wrapper = document.createElement('div')
+  wrapper.className = 'book-oversize'
   wrapper.style.maxHeight = `${maxHeight}px`
   wrapper.style.overflowY = 'auto'
   wrapper.style.overflowX = 'auto'
   wrapper.style.margin = '0.8em 0'
-  if (el.tagName === 'TABLE') {
-    wrapper.style.fontSize = '0.85em'
-  }
+  wrapper.style.webkitOverflowScrolling = 'touch'
   if (el.tagName === 'IMG') {
     wrapper.style.textAlign = 'center'
     wrapper.style.display = 'flex'
     wrapper.style.justifyContent = 'center'
   }
-  wrapper.appendChild(el.cloneNode(true))
+  el.parentNode?.insertBefore(wrapper, el)
+  wrapper.appendChild(el)
   return wrapper
 }
 
@@ -56,20 +79,38 @@ function measureSoloHeight(
   padTop: number,
   padBottom: number,
 ): number {
-  // Save current container contents
   const savedChildren = Array.from(container.children)
   container.replaceChildren()
 
   const testEl = el.cloneNode(true) as HTMLElement
   container.appendChild(testEl)
-  void container.offsetHeight // force reflow
+  void container.offsetHeight
   const height = container.scrollHeight - padTop - padBottom
 
   container.replaceChildren(...savedChildren)
   return height
 }
 
-export function useBookPagination(html: string, pageHeight: number) {
+// Measure the width of a single element to see if it overflows horizontally.
+function measureSoloWidth(
+  container: HTMLElement,
+  el: HTMLElement,
+  padLeft: number,
+  padRight: number,
+): number {
+  const savedChildren = Array.from(container.children)
+  container.replaceChildren()
+
+  const testEl = el.cloneNode(true) as HTMLElement
+  container.appendChild(testEl)
+  void container.offsetHeight
+  const width = container.scrollWidth - padLeft - padRight
+
+  container.replaceChildren(...savedChildren)
+  return width
+}
+
+export function useBookPagination(html: string, pageHeight: number, pageWidth: number) {
   const measureRef = useRef<HTMLDivElement | null>(null)
   const [pages, setPages] = useState<string[]>([])
 
@@ -85,7 +126,6 @@ export function useBookPagination(html: string, pageHeight: number) {
     const paginate = () => {
       if (cancelled) return
 
-      // Force layout
       void container.offsetHeight
 
       const children = Array.from(container.children) as HTMLElement[]
@@ -97,41 +137,52 @@ export function useBookPagination(html: string, pageHeight: number) {
       // Prepare all nodes (add IDs to headings, target=_blank to external links)
       children.forEach((child) => prepareNode(child))
 
-      // Compute the exact content area height by measuring the container's
-      // own padding + border (box-sizing: border-box means these subtract
-      // from the CSS height to give content box height).
       const cs = getComputedStyle(container)
       const padTop = parseFloat(cs.paddingTop) || 0
       const padBottom = parseFloat(cs.paddingBottom) || 0
+      const padLeft = parseFloat(cs.paddingLeft) || 0
+      const padRight = parseFloat(cs.paddingRight) || 0
       const borderTop = parseFloat(cs.borderTopWidth) || 0
       const borderBottom = parseFloat(cs.borderBottomWidth) || 0
-      // Available content height per page, with a safety margin to account
-      // for sub-pixel rounding differences between measure and render.
-      const contentHeight = pageHeight - padTop - padBottom - borderTop - borderBottom - 4
+      const contentHeight = pageHeight - padTop - padBottom - borderTop - borderBottom - 6
+      const contentWidth = pageWidth - padLeft - padRight
 
-      // Save original children so we can restore the DOM when done.
       const originalOrder = [...children]
 
-      // First pass: scan all elements and pre-wrap any that are individually
-      // taller than a full page so they get a scroll container.
-      const processed: HTMLElement[] = children.map((child) => {
-        const solo = measureSoloHeight(container, child, padTop, padBottom)
-        if (solo > contentHeight && SCROLLABLE_TAGS.has(child.tagName)) {
-          return wrapOversizedElement(child, contentHeight)
+      // Process children: wrap tables in horizontal scroll containers,
+      // and wrap oversized (too tall) elements in vertical scroll containers.
+      const processed: HTMLElement[] = []
+      for (const child of children) {
+        let el = child
+
+        // All tables get a horizontal scroll wrapper to prevent clipping.
+        if (el.tagName === 'TABLE') {
+          el = wrapTable(el)
         }
-        return child
-      })
+
+        // Check if the element (or its wrapper) is too tall for one page.
+        const solo = measureSoloHeight(container, el, padTop, padBottom)
+        if (solo > contentHeight && ['TABLE', 'PRE', 'UL', 'OL', 'IMG'].includes(
+          el.tagName === 'DIV' && el.classList.contains('table-wrap') ? 'TABLE' :
+          el.tagName === 'DIV' && el.classList.contains('book-oversize') ? 'DIV' : el.tagName
+        )) {
+          el = wrapOversizedElement(el, contentHeight)
+        } else if (solo > contentHeight) {
+          // Any other too-tall element also gets wrapped
+          el = wrapOversizedElement(el, contentHeight)
+        }
+
+        processed.push(el)
+      }
 
       // Clear container and build pages greedily.
       container.replaceChildren()
       const result: string[] = []
       let currentPageEls: HTMLElement[] = []
-      let currentHeight = 0 // height of content currently on the page (no padding)
+      let currentHeight = 0
 
       const commitPage = () => {
         if (currentPageEls.length === 0) return
-        // Temporarily add all current page elements to the container to
-        // capture their final outerHTML with proper margin collapsing.
         container.replaceChildren(...currentPageEls)
         void container.offsetHeight
         const pageHtml = Array.from(container.children)
@@ -146,38 +197,27 @@ export function useBookPagination(html: string, pageHeight: number) {
       for (let i = 0; i < processed.length; i++) {
         const child = processed[i]
 
-        // Temporarily add this child to measure its incremental height
-        // (accounting for margin collapsing with existing elements).
         const prevCount = container.children.length
         container.appendChild(child)
         void container.offsetHeight
         const newTotalHeight = container.scrollHeight - padTop - padBottom
         const childIncremental = newTotalHeight - currentHeight
 
-        // If adding this child would exceed the page AND we already have
-        // content on the page, commit the current page and start fresh.
         if (currentPageEls.length > 0 && newTotalHeight > contentHeight) {
-          // Remove the child that caused overflow
           container.removeChild(child)
-          // Commit everything before it
           commitPage()
-          // Now the child starts a new page
           container.appendChild(child)
           void container.offsetHeight
           currentPageEls = [child]
           currentHeight = container.scrollHeight - padTop - padBottom
         } else {
-          // Child fits on current page
           currentPageEls.push(child)
           currentHeight = newTotalHeight
         }
       }
 
-      // Commit final page
       commitPage()
 
-      // Restore original children so the hidden measure container looks
-      // like it did before (useful for debugging / HMR).
       container.replaceChildren(...originalOrder)
 
       if (!cancelled) {
@@ -202,7 +242,7 @@ export function useBookPagination(html: string, pageHeight: number) {
     return () => {
       cancelled = true
     }
-  }, [html, pageHeight])
+  }, [html, pageHeight, pageWidth])
 
   return { measureRef, pages }
 }
