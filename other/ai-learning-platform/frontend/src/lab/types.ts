@@ -23,7 +23,7 @@ export interface LabModule {
   controls: LabControl[]
 }
 
-export type LabParams = Record<string, string | number | boolean | unknown[]>
+export type LabParams = Record<string, unknown>
 
 // Generic compute result — each module adds its own fields.
 export type LabResult = Record<string, unknown>

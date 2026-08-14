@@ -64,9 +64,9 @@ export const labModulesZh: Record<string, LabMeta> = {
     blurb: '在记忆、工具、规划与多智能体协作中各选一个组件，看它们拼成一个完整 Agent：分层架构图、通俗的架构说明与可直接编辑的 YAML 配置。',
   },
   'agent-forge': {
-    title: 'Agent Forge',
-    subtitle: '把认知原语接成一台运行的 Agent',
-    blurb: '把 Agent 当作可执行的认知系统图：选择预设架构、接线语义端口，然后 BUILD → RUN → CHAOS——观察运行轨迹、注入故障、把图编译成 YAML，或并排对比两种架构。',
+    title: 'ARES Agent Lab',
+    subtitle: 'Build. Break. Evolve.',
+    blurb: '像乐高一样搭一个 Agent：拖认知积木、吸附语义端口、展开 Skill 积木盒、接入恢复积木。然后 RUN 观察它思考，用混沌弄坏它，看它如何自愈——编译成 YAML 或对比架构。',
   },
   pca: {
     title: 'PCA 与特征向量',
@@ -142,9 +142,9 @@ export const labModulesEn: Record<string, LabMeta> = {
     blurb: 'Pick one option from memory, tools, planning and multi-agent coordination, and watch the pieces snap into a full agent: a layered diagram, a plain-English architecture summary and a ready-to-edit YAML config.',
   },
   'agent-forge': {
-    title: 'Agent Forge',
-    subtitle: 'Wire cognitive primitives into a running agent',
-    blurb: 'Treat the agent as an executable graph of cognitive primitives. Choose a preset, wire semantic ports, then BUILD → RUN → CHAOS: watch the trace, inject failures, compile the graph to YAML, or compare two architectures side by side.',
+    title: 'ARES Agent Lab',
+    subtitle: 'Build. Break. Evolve.',
+    blurb: 'Build an agent like LEGO: drag cognitive bricks, snap their semantic ports, expand skill boxes, attach recovery bricks. Then RUN to watch it think, BREAK it with chaos, and let it recover — compile the result to YAML, or compare architectures.',
   },
   pca: {
     title: 'PCA & Eigenvectors',

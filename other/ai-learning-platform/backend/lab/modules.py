@@ -615,15 +615,15 @@ MODULES: list[dict[str, Any]] = [
     },
     {
         "id": "agent-forge",
-        "title": "Agent Forge",
-        "subtitle": "Wire cognitive primitives into a running agent",
+        "title": "ARES Agent Lab",
+        "subtitle": "Build. Break. Evolve.",
         "icon": "construction",
         "category": "Architectures",
         "blurb": (
-            "Treat the agent as an executable graph of cognitive primitives. "
-            "Choose a preset architecture, wire semantic ports, then BUILD → "
-            "RUN → CHAOS: watch the trace, inject failures, compile the graph "
-            "to YAML, or compare two architectures side by side."
+            "Build an agent like LEGO: drag cognitive bricks, snap their "
+            "semantic ports, expand skill boxes, attach recovery bricks. Then "
+            "RUN to watch it think, BREAK it with chaos, and let it recover — "
+            "compile the result to YAML, or compare architectures."
         ),
         "controls": [
             {"key": "preset", "label": "Preset architecture", "type": "select",

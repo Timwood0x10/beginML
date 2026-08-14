@@ -100,7 +100,7 @@ export function ControlRow({
   )
 }
 
-function formatValue(v: string | number | boolean | undefined, step?: number): string {
+function formatValue(v: unknown, step?: number): string {
   if (typeof v !== 'number') return String(v ?? '')
   if (step && step < 0.01) return v.toFixed(4)
   if (step && step < 0.1) return v.toFixed(3)
