@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useI18n } from '../i18n/context'
 import ThemeRipple, { type ThemeRippleHandle } from './ThemeRipple'
-import { PALETTES, getRippleColor, type PaletteId } from '../themes/paletteConfig'
+import { PALETTES, getTideGradient, type PaletteId } from '../themes/paletteConfig'
 
 // Theme options — metadata sourced from the paletteConfig module to keep a
 // single source of truth. The preview gradient/colour is used for the dot
@@ -18,9 +18,9 @@ const THEME_OPTIONS = PALETTES.map((p) => ({
 
 type ThemeId = PaletteId
 
-/** Compute the ripple colour for a dark/light toggle based on the *target* mode. */
-function getToggleRippleColor(palette: PaletteId, targetTheme: 'light' | 'dark'): string {
-  return getRippleColor(palette, targetTheme === 'dark')
+/** Compute the tide gradient for a dark/light toggle based on the *target* mode. */
+function getToggleTideGradient(palette: PaletteId, targetTheme: 'light' | 'dark'): string {
+  return getTideGradient(palette, targetTheme === 'dark')
 }
 
 function ThemeDropdown({
@@ -130,13 +130,13 @@ export default function Layout() {
     (id: PaletteId) => {
       if (id === palette) return
       const targetDark = theme === 'dark'
-      const rippleColor = getRippleColor(id, targetDark)
+      const tideGradient = getTideGradient(id, targetDark)
       // 1. Enable global CSS transitions before any property changes so
       //    every element is ready to morph when data-theme flips.
       document.body.classList.add('theme-transitioning')
       // 2. Launch the tide sweep. The underlying palette is swapped at the
       //    sweep midpoint (~425ms in) so the real UI morphs beneath the wave.
-      rippleRef.current?.trigger(rippleColor, () => {
+      rippleRef.current?.trigger(tideGradient, () => {
         setPalette(id)
       })
       // 3. Remove the transitioning class after the sweep + colour morph complete.
@@ -151,9 +151,9 @@ export default function Layout() {
   const handleToggleTheme = useCallback(
     () => {
       const targetTheme = theme === 'dark' ? 'light' : 'dark'
-      const rippleColor = getToggleRippleColor(palette, targetTheme)
+      const tideGradient = getToggleTideGradient(palette, targetTheme)
       document.body.classList.add('theme-transitioning')
-      rippleRef.current?.trigger(rippleColor, () => {
+      rippleRef.current?.trigger(tideGradient, () => {
         toggle()
       })
       window.setTimeout(() => {

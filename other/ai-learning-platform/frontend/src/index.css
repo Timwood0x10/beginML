@@ -878,16 +878,13 @@ body.theme-transitioning .no-theme-anim * {
      only the visible region grows. */
   clip-path: inset(0 0 100% 0);
   will-change: clip-path, opacity;
-  /* Soft gradient for the leading edge of the tide: a feathered band of the
-     ripple colour that reads as water flowing in, with a subtle depth fall-off
-     toward the trailing top edge. */
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--ripple-color) 85%, transparent) 0%,
-    var(--ripple-color) 30%,
-    var(--ripple-color) 88%,
-    color-mix(in srgb, var(--ripple-color) 70%, transparent) 100%
-  );
+  /* The tide gradient (A → B) is injected via --tide-gradient by ThemeRipple.
+     A mask-image adds a soft feather to the leading (bottom) edge so the
+     wave reads as water seeping in rather than a hard colour band. The
+     radial overlay at the top gives a faint "surface sheen" highlight. */
+  background: var(--tide-gradient);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
   mix-blend-mode: normal;
 }
 

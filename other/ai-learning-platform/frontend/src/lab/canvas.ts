@@ -154,8 +154,20 @@ export function setupCanvas(canvas: HTMLCanvasElement, cssW: number, cssH: numbe
   return ctx
 }
 
-/** Read an active theme token so canvas drawings follow the palette. */
+/** Read an active theme token so canvas drawings follow the palette.
+ *
+ * Forces a synchronous style recalculation before reading: when a theme
+ * transition swaps `data-theme` on <html>, the CSS custom property values
+ * are not reflected in `getComputedStyle` until the browser recalculates
+ * styles — which happens asynchronously, often after the current React
+ * effect cycle. Without this flush, a canvas redraw triggered by the same
+ * `palette` state change reads the *previous* palette's colour and the
+ * subplot background appears to not follow the theme. Touching
+ * `offsetHeight` synchronously invalidates the computed style so the read
+ * here picks up the new value immediately. */
 export function themeVar(name: string, fallback: string): string {
+  // Force layout/style recalc so any pending data-theme change is reflected.
+  void document.documentElement.offsetHeight
   const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
   return val || fallback
 }

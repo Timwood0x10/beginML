@@ -17,16 +17,19 @@ import { RIPPLE_DURATION, RIPPLE_EASING } from '../themes/paletteConfig'
 export interface ThemeRippleHandle {
   /**
    * Trigger a tide-wash sweep from the top of the viewport downward.
+   * The `gradient` argument is a full CSS `background` value (typically a
+   * `linear-gradient`) that paints the wave — passing a gradient rather than
+   * a flat colour gives the tide a soft, water-like A → B transition.
    * Returns a promise that resolves when the sweep reaches the bottom.
    * The optional onMidpoint callback fires at ~50% sweep progress — this is
    * the recommended moment to swap the underlying data-theme attribute.
    */
-  trigger: (color: string, onMidpoint?: () => void) => Promise<void>
+  trigger: (gradient: string, onMidpoint?: () => void) => Promise<void>
 }
 
 interface WaveState {
   id: number
-  color: string
+  gradient: string
   phase: 'sweeping' | 'fading'
 }
 
@@ -34,10 +37,10 @@ const ThemeRipple = forwardRef<ThemeRippleHandle>(function ThemeRipple(_props, r
   const [waves, setWaves] = useState<WaveState[]>([])
   const nextId = useRef(0)
 
-  const trigger = useCallback((color: string, onMidpoint?: () => void): Promise<void> => {
+  const trigger = useCallback((gradient: string, onMidpoint?: () => void): Promise<void> => {
     return new Promise((resolve) => {
       const id = nextId.current++
-      const wave: WaveState = { id, color, phase: 'sweeping' }
+      const wave: WaveState = { id, gradient, phase: 'sweeping' }
       setWaves((prev) => [...prev, wave])
 
       // At the midpoint the wave covers ~half the viewport — swap the
@@ -65,7 +68,7 @@ const ThemeRipple = forwardRef<ThemeRippleHandle>(function ThemeRipple(_props, r
     <div className="theme-ripple" aria-hidden="true">
       {waves.map((w) => {
         const style: React.CSSProperties = {
-          ['--ripple-color' as string]: w.color,
+          ['--tide-gradient' as string]: w.gradient,
           ['--ripple-duration' as string]: `${RIPPLE_DURATION}ms`,
           animationTimingFunction: RIPPLE_EASING,
         }

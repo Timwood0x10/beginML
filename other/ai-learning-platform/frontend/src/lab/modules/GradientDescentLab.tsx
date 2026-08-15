@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, drawAxes, warmColor, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, warmColor, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
 import { useTheme } from '../../hooks/useTheme'
 
@@ -11,12 +11,6 @@ interface GdResult extends LabResult {
   start: { x: number; y: number }
   trajectories: { name: string; color: string; points: { x: number; y: number; loss: number }[] }[]
   finalLoss: number | null
-}
-
-// Read an active theme token so canvas drawings follow the palette.
-function themeVar(name: string, fallback: string): string {
-  const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-  return val || fallback
 }
 
 function drawContour(canvas: HTMLCanvasElement, r: GdResult, hover: { x: number; y: number } | null) {

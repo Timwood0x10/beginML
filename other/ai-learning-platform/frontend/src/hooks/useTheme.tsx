@@ -53,10 +53,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // The colour change itself is animated via CSS transition on body (see
   // index.css "Theme switch transition"), so it fades smoothly instead of
   // snapping or sweeping.
+  //
+  // A synchronous style flush follows the DOM write: canvas subplots read
+  // --ailearn-background via getComputedStyle inside their own effect that
+  // runs in the same commit cycle. Without forcing a recalc here, the
+  // browser recalcs styles asynchronously and those reads still see the
+  // previous palette's tokens — making subplot backgrounds appear to ignore
+  // the theme change.
   useEffect(() => {
     const root = document.documentElement
     if (palette === 'parchment') root.removeAttribute('data-theme')
     else root.setAttribute('data-theme', palette)
+    void root.offsetHeight // force style recalc so downstream reads see the new value
     window.localStorage.setItem(PALETTE_KEY, palette)
   }, [palette])
 

@@ -144,22 +144,31 @@ export default function MapPage() {
       /* ignore */
     }
   }
-  const onWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    e.preventDefault()
-    if (!svgRef.current) return
-    const rect = svgRef.current.getBoundingClientRect()
-    const mx = (e.clientX - rect.left) / rect.width
-    const my = (e.clientY - rect.top) / rect.height
-    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15
-    setView((v) => {
-      const nw = Math.min(6, Math.max(0.4, v.w * factor))
-      const nh = Math.min(6, Math.max(0.4, v.h * factor))
-      // keep point under cursor anchored
-      const dataX = v.x + mx * v.w
-      const dataY = v.y + my * v.h
-      return { x: dataX - mx * nw, y: dataY - my * nh, w: nw, h: nh }
-    })
-  }
+  // Wheel zoom must be a *native* non-passive listener so preventDefault can
+  // stop the page scrolling. React's synthetic onWheel attaches as passive on
+  // the root, which throws "Unable to preventDefault inside passive event
+  // listener" and the page scrolls alongside the zoom.
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const rect = svg.getBoundingClientRect()
+      const mx = (e.clientX - rect.left) / rect.width
+      const my = (e.clientY - rect.top) / rect.height
+      const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15
+      setView((v) => {
+        const nw = Math.min(6, Math.max(0.4, v.w * factor))
+        const nh = Math.min(6, Math.max(0.4, v.h * factor))
+        // keep point under cursor anchored
+        const dataX = v.x + mx * v.w
+        const dataY = v.y + my * v.h
+        return { x: dataX - mx * nw, y: dataY - my * nh, w: nw, h: nh }
+      })
+    }
+    svg.addEventListener('wheel', onWheel, { passive: false })
+    return () => svg.removeEventListener('wheel', onWheel)
+  }, [data])
 
   const resetView = () => setView({ x: -1.4, y: -1.3, w: 2.8, h: 2.6 })
 
@@ -215,7 +224,6 @@ export default function MapPage() {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
-          onWheel={onWheel}
         >
           <defs>
             {/* Parchment canvas — warm aged-paper gradient */}
