@@ -29,6 +29,7 @@ import RepresentationRiverLab from './modules/RepresentationRiverLab'
 import TokenSocietyLab from './modules/TokenSocietyLab'
 import DetectiveLab from './modules/DetectiveLab'
 import MoELab from './modules/MoELab'
+import MambaMemoryRaceLab from './modules/MambaMemoryRaceLab'
 
 interface LabComponentProps {
   result: LabResult | null
@@ -71,6 +72,7 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'token-society': TokenSocietyLab,
   'transformer-detective': DetectiveLab,
   'moe-expert-routing': MoELab,
+  'mamba-memory-race': MambaMemoryRaceLab,
 }
 
 export default function LabPage() {

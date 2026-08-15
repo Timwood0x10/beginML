@@ -123,6 +123,11 @@ export const labModulesZh: Record<string, LabMeta> = {
     subtitle: 'MoE：谁接走了这个 token？',
     blurb: '一座 token 分诊室：门控网络把每个 token 路由到最合适的专家，top-k 路由让连接保持稀疏。看负载如何在专家间堆积，看哪个专家接走了每个 token。SIMULATION MODE：合成门控，非真实 MoE 模型。',
   },
+  'mamba-memory-race': {
+    title: 'Mamba 记忆赛道',
+    subtitle: 'O(L) vs O(L²)：序列长度为什么重要',
+    blurb: '一场沿序列展开的记忆赛跑。Transformer attention 每层做 O(L²) 的工作——每个 token 回看所有前序 token；Mamba 式 SSM 保持固定大小的状态，每个 token 只触碰一次：O(L)。拖长序列，看二次曲线甩开线性。',
+  },
 }
 
 export const labModulesEn: Record<string, LabMeta> = {
@@ -241,6 +246,11 @@ export const labModulesEn: Record<string, LabMeta> = {
     subtitle: 'MoE: who picks up this token?',
     blurb: 'A triage room for tokens. A gate network routes each token to the experts most suited to it; top-k routing keeps the strongest connections sparse. Watch loads build up per expert and see which specialist takes each token. SIMULATION MODE: synthetic gate, not a real MoE model.',
   },
+  'mamba-memory-race': {
+    title: 'Mamba Memory Race',
+    subtitle: 'O(L) vs O(L²): why sequence length matters',
+    blurb: 'A memory race down the sequence. A Transformer attention layer does O(L²) work — every token looks back at every previous one. A Mamba-style SSM keeps a fixed-size state and only touches it per token: O(L). Drag the sequence length and watch the quadratic curve pull ahead.',
+  },
 }
 
 // Group labels — sidebar sections keyed by the backend `group` field.
@@ -287,7 +297,7 @@ export const controlLabelsZh: Record<string, string> = {
   layer: '层数', show: '注入类型',
   sentence: '句子',
   case: '案件档案',
-  experts: '专家数', top_k: 'Top-k 路由',
+  experts: '专家数',
   chaos_memory: '记忆不可用', chaos_tool: '工具超时', chaos_mcp: 'MCP 故障',
   chaos_llm: 'LLM 重试', chaos_context: '上下文溢出', compare: '与基线对比',
 }
@@ -316,7 +326,7 @@ export const controlLabelsEn: Record<string, string> = {
   layer: 'Layers', show: 'Injection',
   sentence: 'Sentence',
   case: 'Case file',
-  experts: 'Experts', top_k: 'Top-k routing',
+  experts: 'Experts',
   chaos_memory: 'Memory unavailable', chaos_tool: 'Tool timeout', chaos_mcp: 'MCP failure',
   chaos_llm: 'LLM retry', chaos_context: 'Context overflow', compare: 'Compare with baseline',
 }
@@ -727,6 +737,45 @@ export const labTextsZh: Record<string, LabTexts> = {
       relatedNotes: '相关笔记',
     },
   },
+  'mamba-memory-race': {
+    question: '序列变长时，为什么 Transformer 会比 Mamba 慢这么多？',
+    challengeQuestion: 'L 从 32 增到 256，Transformer 相对 Mamba 的差距会怎样？',
+    challengeOptions: [
+      { value: 'wider', label: '差距拉大（二次 vs 线性）' },
+      { value: 'narrower', label: '差距缩小' },
+      { value: 'same', label: '保持不变' },
+    ],
+    explanation: [
+      'Transformer attention 每层做 O(L²) 工作：每个 token 都要回看所有前序 token。',
+      'Mamba 式 SSM 保持固定大小的状态，每个 token 只触碰状态一次：O(L)。',
+      'L 翻 8 倍时，Transformer 的 FLOPs 翻 64 倍，Mamba 只翻 8 倍——这就是二次 vs 线性。',
+    ],
+    notes: [
+      { title: 'Mamba vs Transformer：O(L²) vs O(L)', src: 'Self-Attention/Appendix_E_Mamba_vs_Transformer.md' },
+    ],
+    ui: {
+      question: '问题',
+      computing: '计算中…',
+      adjustControls: '调整控件开始。',
+      title: 'Mamba 记忆赛道',
+      flops: 'FLOPs（一次前向）',
+      memory: '峰值激活内存',
+      transformer: 'Transformer (O(L²))',
+      mamba: 'Mamba (O(L))',
+      length: '序列长度 L',
+      ratio: '差距倍数',
+      now: '当前 L = {l}',
+      flopsRatio: 'FLOPs 差距 {r}×',
+      memRatio: '内存差距 {r}×',
+      cross: '差距开始超过 2× 的临界点：L = {c}',
+      makePrediction: '做预测',
+      runExperiment: '运行实验',
+      correct: '正确！',
+      notQuite: '不太对。',
+      verdictEvidence: 'FLOPs {t} vs {m}（{r}×）',
+      relatedNotes: '相关笔记',
+    },
+  },
 }
 
 export const labTextsEn: Record<string, LabTexts> = {
@@ -1113,6 +1162,45 @@ export const labTextsEn: Record<string, LabTexts> = {
       correct: 'Correct!',
       notQuite: 'Not quite.',
       verdictEvidence: 'max load {max} · min load {min}',
+      relatedNotes: 'Related Notes',
+    },
+  },
+  'mamba-memory-race': {
+    question: 'Why does a Transformer slow down so much more than Mamba as the sequence grows?',
+    challengeQuestion: 'As L grows from 32 to 256, how does the Transformer-vs-Mamba gap change?',
+    challengeOptions: [
+      { value: 'wider', label: 'Widens (quadratic vs linear)' },
+      { value: 'narrower', label: 'Narrows' },
+      { value: 'same', label: 'Stays the same' },
+    ],
+    explanation: [
+      'Transformer attention does O(L²) work per layer: every token looks back at every previous token.',
+      'A Mamba-style SSM keeps a fixed-size state; each token touches it once: O(L).',
+      'When L grows 8×, Transformer FLOPs grow 64× while Mamba grows only 8× — quadratic vs linear.',
+    ],
+    notes: [
+      { title: 'Mamba vs Transformer: O(L²) vs O(L)', src: 'Self-Attention/Appendix_E_Mamba_vs_Transformer.md' },
+    ],
+    ui: {
+      question: 'Question',
+      computing: 'Computing…',
+      adjustControls: 'Adjust the controls to begin.',
+      title: 'Mamba Memory Race',
+      flops: 'FLOPs (one forward pass)',
+      memory: 'Peak activation memory',
+      transformer: 'Transformer (O(L²))',
+      mamba: 'Mamba (O(L))',
+      length: 'Sequence length L',
+      ratio: 'Gap',
+      now: 'Now L = {l}',
+      flopsRatio: 'FLOPs gap {r}×',
+      memRatio: 'Memory gap {r}×',
+      cross: 'Gap exceeds 2× at L = {c}',
+      makePrediction: 'Make a Prediction',
+      runExperiment: 'RUN EXPERIMENT',
+      correct: 'Correct!',
+      notQuite: 'Not quite.',
+      verdictEvidence: 'FLOPs {t} vs {m} ({r}×)',
       relatedNotes: 'Related Notes',
     },
   },

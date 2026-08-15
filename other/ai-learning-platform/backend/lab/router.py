@@ -25,6 +25,7 @@ from . import (
     entropy,
     forge,
     losses,
+    mamba,
     matrix_transform,
     moe,
     neural_net,
@@ -68,6 +69,7 @@ _COMPUTERS = {
     "token-society": token_society.compute,
     "transformer-detective": detective.compute,
     "moe-expert-routing": moe.compute,
+    "mamba-memory-race": mamba.compute,
 }
 
 

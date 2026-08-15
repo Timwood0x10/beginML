@@ -1186,6 +1186,34 @@ MODULES: list[dict[str, Any]] = [
             {"key": "reshuffle", "label": "NEW TOKENS", "type": "action"},
         ],
     },
+    {
+        "id": "mamba-memory-race",
+        "title": "Mamba Memory Race",
+        "subtitle": "O(L) vs O(L²): why sequence length matters",
+        "icon": "speed",
+        "category": "Model Efficiency",
+        "group": "model-efficiency",
+        "blurb": (
+            "A memory race down the sequence. A Transformer attention layer "
+            "does O(L²) work — every token looks back at every previous one. "
+            "A Mamba-style SSM keeps a fixed-size state and only touches it "
+            "per token: O(L). Drag the sequence length and watch the "
+            "quadratic curve pull ahead."
+        ),
+        "question": "序列变长时，为什么 Transformer 会比 Mamba 慢这么多？",
+        "next_question": "KV Cache 如何缓解 Transformer 的平方开销？",
+        "controls": [
+            {
+                "key": "length",
+                "label": "Sequence length",
+                "type": "range",
+                "min": 4,
+                "max": 256,
+                "step": 4,
+                "default": 64,
+            },
+        ],
+    },
 ]
 
 
