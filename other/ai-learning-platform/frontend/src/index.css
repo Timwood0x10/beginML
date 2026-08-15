@@ -7,6 +7,155 @@
 /* Font stacks are defined once in ./fonts.css (single source of truth).
    To change fonts, edit only that file — nothing else in the app needs touching. */
 
+/* ============================================================
+   @property registrations — enable smooth interpolation (transition) of
+   CSS custom properties. Without registering, browsers treat custom
+   properties as strings and can't animate their values; with @property
+   they animate as <color> values, giving the tide-like colour-wash effect.
+   Only the most visible/impactful tokens are registered to keep the
+   cascade cheap; all other tokens transition via the universal selector rule.
+   ============================================================ */
+@property --ailearn-background {
+  syntax: '<color>';
+  initial-value: #F7F0E3;
+  inherits: true;
+}
+@property --ailearn-surface {
+  syntax: '<color>';
+  initial-value: #F7F0E3;
+  inherits: true;
+}
+@property --ailearn-surface-bright {
+  syntax: '<color>';
+  initial-value: #FCF8EF;
+  inherits: true;
+}
+@property --ailearn-surface-container {
+  syntax: '<color>';
+  initial-value: #EDE2CB;
+  inherits: true;
+}
+@property --ailearn-surface-container-low {
+  syntax: '<color>';
+  initial-value: #F3EBD9;
+  inherits: true;
+}
+@property --ailearn-surface-container-lowest {
+  syntax: '<color>';
+  initial-value: #FCF8EF;
+  inherits: true;
+}
+@property --ailearn-surface-container-high {
+  syntax: '<color>';
+  initial-value: #E6D9BE;
+  inherits: true;
+}
+@property --ailearn-on-surface {
+  syntax: '<color>';
+  initial-value: #3B3023;
+  inherits: true;
+}
+@property --ailearn-on-background {
+  syntax: '<color>';
+  initial-value: #3B3023;
+  inherits: true;
+}
+@property --ailearn-primary {
+  syntax: '<color>';
+  initial-value: #7A5C36;
+  inherits: true;
+}
+@property --ailearn-on-primary {
+  syntax: '<color>';
+  initial-value: #FFF8EC;
+  inherits: true;
+}
+@property --ailearn-primary-container {
+  syntax: '<color>';
+  initial-value: #E4C9A0;
+  inherits: true;
+}
+@property --ailearn-inverse-primary {
+  syntax: '<color>';
+  initial-value: #E7CC9F;
+  inherits: true;
+}
+@property --ailearn-inverse-surface {
+  syntax: '<color>';
+  initial-value: #3B3023;
+  inherits: true;
+}
+@property --ailearn-inverse-on-surface {
+  syntax: '<color>';
+  initial-value: #F7F0E3;
+  inherits: true;
+}
+@property --ailearn-outline-variant {
+  syntax: '<color>';
+  initial-value: #CBBBA0;
+  inherits: true;
+}
+@property --ailearn-dark-surface {
+  syntax: '<color>';
+  initial-value: #1E1913;
+  inherits: true;
+}
+@property --ailearn-dark-surface-elevated {
+  syntax: '<color>';
+  initial-value: #2A2319;
+  inherits: true;
+}
+@property --ailearn-dark-on-surface {
+  syntax: '<color>';
+  initial-value: #ECE2CD;
+  inherits: true;
+}
+@property --ailearn-page-bg-a {
+  syntax: '<color>';
+  initial-value: #F4EAE1;
+  inherits: true;
+}
+@property --ailearn-page-bg-b {
+  syntax: '<color>';
+  initial-value: #EFE2D2;
+  inherits: true;
+}
+@property --ailearn-page-bg-c {
+  syntax: '<color>';
+  initial-value: #E9D9C6;
+  inherits: true;
+}
+@property --ailearn-page-ink {
+  syntax: '<color>';
+  initial-value: #3D322C;
+  inherits: true;
+}
+@property --ailearn-prose {
+  syntax: '<color>';
+  initial-value: #6B5D48;
+  inherits: true;
+}
+@property --ailearn-prose-heading {
+  syntax: '<color>';
+  initial-value: #3B3023;
+  inherits: true;
+}
+@property --ailearn-prose-code-bg {
+  syntax: '<color>';
+  initial-value: #EFE6D2;
+  inherits: true;
+}
+@property --ailearn-code-bg {
+  syntax: '<color>';
+  initial-value: #3B3023;
+  inherits: true;
+}
+@property --ailearn-scrollbar {
+  syntax: '<color>';
+  initial-value: #CBBBA0;
+  inherits: true;
+}
+
 /* Define font stacks as CSS custom properties for consistency */
 :root {
   color-scheme: light;
@@ -662,13 +811,128 @@ html[data-theme='moss'].dark body {
   color: #E7EBE6;
 }
 
-/* Theme switch transition — when data-theme (or .dark) flips, body and the
-   main layout surfaces fade smoothly into the new palette instead of
-   snapping. ~1.2s gives a slow, tide-like gradient feel. */
-body,
-html.dark body,
-.theme-anim {
-  transition: background-color 1.2s ease, color 1.2s ease;
+/* ============================================================
+   Tide transition — global colour morph
+   When --ailearn-* custom properties change (via [data-theme] or .dark),
+   every element that references them smoothly animates between the old
+   and new palette. @property registrations (top of file) make this work
+   for colours; for browsers without @property support, background-color
+   and color still transition via the rule below.
+
+   The transition is ONLY active while <body> has .theme-transitioning —
+   we add this class right before swapping the palette and remove it
+   after the animation completes. This keeps normal interactions (hover,
+   active, focus) snappy and instant; only the theme change gets the slow
+   tide-wash morph.
+   ============================================================ */
+body.theme-transitioning,
+body.theme-transitioning *,
+body.theme-transitioning *::before,
+body.theme-transitioning *::after {
+  transition:
+    background-color 900ms cubic-bezier(0.22, 1, 0.36, 1) !important,
+    color 900ms cubic-bezier(0.22, 1, 0.36, 1) !important,
+    border-color 900ms cubic-bezier(0.22, 1, 0.36, 1) !important,
+    fill 900ms cubic-bezier(0.22, 1, 0.36, 1) !important,
+    stroke 900ms cubic-bezier(0.22, 1, 0.36, 1) !important,
+    box-shadow 900ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Preserve instant interactivity on controls even during theme transition */
+body.theme-transitioning button:active,
+body.theme-transitioning a:active,
+body.theme-transitioning input,
+body.theme-transitioning textarea,
+body.theme-transitioning select,
+body.theme-transitioning .no-theme-anim,
+body.theme-transitioning .no-theme-anim * {
+  transition-duration: 0ms !important;
+}
+
+/* ============================================================
+   Theme ripple / tide-wash overlay
+   A fixed circular mask that expands from the click point, filling
+   the screen with the new palette's surface colour. Works in
+   conjunction with the CSS variable transition above: the ripple
+   provides the "sweeping tide" visual while the underlying elements
+   smoothly morph their colours beneath it.
+   ============================================================ */
+.theme-ripple {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9998;
+  overflow: hidden;
+}
+
+.theme-ripple__wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* clip-path inset animates the band's bottom edge downward, like a tide
+     filling the viewport from the top. The wave element is always full-size;
+     only the visible region grows. */
+  clip-path: inset(0 0 100% 0);
+  will-change: clip-path, opacity;
+  /* Soft gradient for the leading edge of the tide: a feathered band of the
+     ripple colour that reads as water flowing in, with a subtle depth fall-off
+     toward the trailing top edge. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--ripple-color) 85%, transparent) 0%,
+    var(--ripple-color) 30%,
+    var(--ripple-color) 88%,
+    color-mix(in srgb, var(--ripple-color) 70%, transparent) 100%
+  );
+  mix-blend-mode: normal;
+}
+
+.theme-ripple__wave--sweep {
+  animation: tide-sweep var(--ripple-duration, 850ms) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.theme-ripple__wave--fade {
+  animation: tide-fade 500ms ease-out forwards;
+}
+
+/* The tide band grows from the top of the viewport to the bottom.
+   At 50% the band covers the upper half — this is when the underlying
+   data-theme should be swapped so the real UI morphs beneath the wave. */
+@keyframes tide-sweep {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0.95;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes tide-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion — skip the sweeping ripple for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .theme-ripple__wave--animate,
+  .theme-ripple__wave--fade {
+    animation-duration: 200ms !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 200ms !important;
+  }
 }
 
 /* ============================================================

@@ -1,22 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useI18n } from '../i18n/context'
+import ThemeRipple, { type ThemeRippleHandle } from './ThemeRipple'
+import { PALETTES, getRippleColor, type PaletteId } from '../themes/paletteConfig'
 
-// All color palettes — shown as a text dropdown, not just dots.
-const THEME_OPTIONS = [
-  { id: 'parchment', bg: '#F7F0E3', name: 'Parchment', zh: '羊皮纸', desc: 'warm aged paper' },
-  { id: 'matcha', bg: '#EAE8DC', name: 'Matcha', zh: '抹茶', desc: 'sage green' },
-  { id: 'qingdai', bg: 'linear-gradient(135deg,#F3F6F4,#56679F 70%,#8179A8)', name: 'QingDai', zh: '青黛', desc: 'bamboo-indigo lab' },
-  { id: 'pine', bg: 'linear-gradient(135deg,#F2F5F1,#5F8276 70%,#72849A)', name: 'Pine Mist', zh: '松烟', desc: 'grey-green forest' },
-  { id: 'studio', bg: 'linear-gradient(135deg,#F3F4F2,#738895 70%,#B7836C)', name: 'Studio', zh: '工作室', desc: 'fog-blue & clay' },
-  { id: 'moss', bg: 'linear-gradient(135deg,#F1F3EF,#71826C 70%,#899096)', name: 'Moss & Stone', zh: '苔石', desc: 'moss-green field lab' },
-] as const
+// Theme options — metadata sourced from the paletteConfig module to keep a
+// single source of truth. The preview gradient/colour is used for the dot
+// swatch in both the trigger button and the dropdown list.
+const THEME_OPTIONS = PALETTES.map((p) => ({
+  id: p.id,
+  bg: p.preview,
+  name: p.name,
+  zh: p.zh,
+  desc: p.desc,
+}))
 
-type ThemeId = (typeof THEME_OPTIONS)[number]['id']
+type ThemeId = PaletteId
 
-function ThemeDropdown({ compact = false }: { compact?: boolean }) {
-  const { palette, setPalette } = useTheme()
+/** Compute the ripple colour for a dark/light toggle based on the *target* mode. */
+function getToggleRippleColor(palette: PaletteId, targetTheme: 'light' | 'dark'): string {
+  return getRippleColor(palette, targetTheme === 'dark')
+}
+
+function ThemeDropdown({
+  compact = false,
+  onSelectTheme,
+}: {
+  compact?: boolean
+  onSelectTheme: (id: PaletteId, clickX: number, clickY: number) => void
+}) {
+  const { palette } = useTheme()
   const { lang } = useI18n()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
@@ -32,6 +46,15 @@ function ThemeDropdown({ compact = false }: { compact?: boolean }) {
     window.addEventListener('mousedown', onClick)
     return () => window.removeEventListener('mousedown', onClick)
   }, [open])
+
+  const handleSelect = (e: React.MouseEvent<HTMLButtonElement>, id: PaletteId) => {
+    // Capture click coordinates relative to viewport for the ripple origin.
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const x = rect.left + rect.width / 2
+    const y = rect.top + rect.height / 2
+    onSelectTheme(id, x, y)
+    setOpen(false)
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -54,17 +77,14 @@ function ThemeDropdown({ compact = false }: { compact?: boolean }) {
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-surface-container-lowest dark:bg-dark-surface-elevated border border-outline-variant/50 dark:border-white/10 shadow-ambient-lg dark:shadow-dark-ambient p-1.5 z-50"
+          className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-surface-container-lowest dark:bg-dark-surface-elevated border border-outline-variant/50 dark:border-white/10 shadow-ambient-lg dark:shadow-dark-ambient p-1.5 z-50 no-theme-anim"
         >
           {THEME_OPTIONS.map((o) => (
             <button
               key={o.id}
               role="option"
               aria-selected={palette === o.id}
-              onClick={() => {
-                setPalette(o.id as ThemeId)
-                setOpen(false)
-              }}
+              onClick={(e) => handleSelect(e, o.id)}
               className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-colors ${
                 palette === o.id
                   ? 'bg-primary text-on-primary dark:bg-inverse-primary dark:text-inverse-surface'
@@ -88,9 +108,10 @@ function ThemeDropdown({ compact = false }: { compact?: boolean }) {
 }
 
 export default function Layout() {
-  const { theme, toggle } = useTheme()
+  const { theme, toggle, palette, setPalette } = useTheme()
   const { lang, toggleLang, t } = useI18n()
   const location = useLocation()
+  const rippleRef = useRef<ThemeRippleHandle>(null)
 
   const navItems = [
     { to: '/', label: t.nav.roadmap, icon: 'space_dashboard', end: true },
@@ -101,8 +122,52 @@ export default function Layout() {
     { to: '/lab', label: t.nav.lab, icon: 'science' },
   ]
 
+  /** Duration the transitioning class stays on body (ms). Ripple expand (850) + fade (500) + buffer. */
+  const TRANSITION_DURATION = 1400
+
+  /** Select a new palette with a top-down tide-wash sweep. */
+  const handleSelectPalette = useCallback(
+    (id: PaletteId) => {
+      if (id === palette) return
+      const targetDark = theme === 'dark'
+      const rippleColor = getRippleColor(id, targetDark)
+      // 1. Enable global CSS transitions before any property changes so
+      //    every element is ready to morph when data-theme flips.
+      document.body.classList.add('theme-transitioning')
+      // 2. Launch the tide sweep. The underlying palette is swapped at the
+      //    sweep midpoint (~425ms in) so the real UI morphs beneath the wave.
+      rippleRef.current?.trigger(rippleColor, () => {
+        setPalette(id)
+      })
+      // 3. Remove the transitioning class after the sweep + colour morph complete.
+      window.setTimeout(() => {
+        document.body.classList.remove('theme-transitioning')
+      }, TRANSITION_DURATION)
+    },
+    [palette, theme, setPalette],
+  )
+
+  /** Toggle dark/light mode with a top-down tide-wash sweep. */
+  const handleToggleTheme = useCallback(
+    () => {
+      const targetTheme = theme === 'dark' ? 'light' : 'dark'
+      const rippleColor = getToggleRippleColor(palette, targetTheme)
+      document.body.classList.add('theme-transitioning')
+      rippleRef.current?.trigger(rippleColor, () => {
+        toggle()
+      })
+      window.setTimeout(() => {
+        document.body.classList.remove('theme-transitioning')
+      }, TRANSITION_DURATION)
+    },
+    [theme, palette, toggle],
+  )
+
   return (
     <div className="min-h-screen flex flex-col bg-surface dark:bg-dark-surface text-on-surface dark:text-dark-on-surface relative overflow-x-clip">
+      {/* Tide-wash ripple overlay (mounted once at app root) */}
+      <ThemeRipple ref={rippleRef} />
+
       {/* subtle paper texture */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-[0.025] dark:opacity-[0.04]"
@@ -153,9 +218,9 @@ export default function Layout() {
           >
             {lang === 'zh' ? 'EN' : '中文'}
           </button>
-          <ThemeDropdown />
+          <ThemeDropdown onSelectTheme={handleSelectPalette} />
           <button
-            onClick={toggle}
+            onClick={handleToggleTheme}
             aria-label="Toggle theme"
             className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5 transition-colors"
           >
@@ -182,9 +247,10 @@ export default function Layout() {
           >
             {lang === 'zh' ? 'EN' : '中文'}
           </button>
-          <ThemeDropdown compact />
+          <ThemeDropdown compact onSelectTheme={handleSelectPalette} />
           <button
-            onClick={toggle}
+            onClick={handleToggleTheme}
+            aria-label="Toggle theme"
             className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>

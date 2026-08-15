@@ -40,8 +40,8 @@ export default function AgentPage() {
     attnDesc: { title: '', desc: '' },
   }
   const copyEn: Record<string, { title: string; desc: string }> = {
-    builderTitle: { title: 'Agent Builder', desc: 'Assemble an agent from blocks: pick memory, tools, planning & multi-agent, get a live diagram and YAML.' },
-    builderDesc: { title: '', desc: '' },
+    forgeTitle: { title: 'ARES Agent Lab', desc: 'Build an agent like Lego: drag cognitive blocks, snap semantic ports, inject faults, watch self-heal and evolve.' },
+    forgeDesc: { title: '', desc: '' },
     trainTitle: { title: 'Transformer Training', desc: 'Train a tiny transformer from scratch; watch loss and attention emerge.' },
     trainDesc: { title: '', desc: '' },
     attnTitle: { title: 'Self-Attention', desc: 'Build Q·Kᵀ/√d attention weights step by step and see softmax sharpen.' },
