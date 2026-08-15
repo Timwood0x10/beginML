@@ -118,6 +118,11 @@ export const labModulesZh: Record<string, LabMeta> = {
     subtitle: '为什么模型预测了这个？',
     blurb: '一份案件档案：模型做出了预测——你的任务是找出原因。审问嫌疑人（注意力头、特征、FFN），用最有影响力的证据结案。证据由算法从案例库生成——不检查真实模型。',
   },
+  'moe-expert-routing': {
+    title: '专家分诊室',
+    subtitle: 'MoE：谁接走了这个 token？',
+    blurb: '一座 token 分诊室：门控网络把每个 token 路由到最合适的专家，top-k 路由让连接保持稀疏。看负载如何在专家间堆积，看哪个专家接走了每个 token。SIMULATION MODE：合成门控，非真实 MoE 模型。',
+  },
 }
 
 export const labModulesEn: Record<string, LabMeta> = {
@@ -231,6 +236,30 @@ export const labModulesEn: Record<string, LabMeta> = {
     subtitle: 'Why did the model predict this?',
     blurb: 'A case file. The model made a prediction — your job is to find out why. Interrogate the suspects (heads, features, FFN) and close the case with the most influential evidence. Evidence is algorithmically generated from a curated case library — no real model is inspected.',
   },
+  'moe-expert-routing': {
+    title: 'Expert Routing Room',
+    subtitle: 'MoE: who picks up this token?',
+    blurb: 'A triage room for tokens. A gate network routes each token to the experts most suited to it; top-k routing keeps the strongest connections sparse. Watch loads build up per expert and see which specialist takes each token. SIMULATION MODE: synthetic gate, not a real MoE model.',
+  },
+}
+
+// Group labels — sidebar sections keyed by the backend `group` field.
+export const labGroupsZh: Record<string, string> = {
+  'now-experimenting': '正在实验',
+  'rotary-observatory': '旋转观测台',
+  'model-behavior': '模型行为',
+  'learning-dynamics': '学习动力学',
+  'model-efficiency': '模型效率',
+  classic: '经典数学',
+}
+
+export const labGroupsEn: Record<string, string> = {
+  'now-experimenting': 'Now Experimenting',
+  'rotary-observatory': 'Rotary Observatory',
+  'model-behavior': 'Model Behavior',
+  'learning-dynamics': 'Learning Dynamics',
+  'model-efficiency': 'Model Efficiency',
+  classic: 'Classic Math',
 }
 
 // Control labels keyed by control key (shared across modules).
@@ -258,6 +287,7 @@ export const controlLabelsZh: Record<string, string> = {
   layer: '层数', show: '注入类型',
   sentence: '句子',
   case: '案件档案',
+  experts: '专家数', top_k: 'Top-k 路由',
   chaos_memory: '记忆不可用', chaos_tool: '工具超时', chaos_mcp: 'MCP 故障',
   chaos_llm: 'LLM 重试', chaos_context: '上下文溢出', compare: '与基线对比',
 }
@@ -286,6 +316,7 @@ export const controlLabelsEn: Record<string, string> = {
   layer: 'Layers', show: 'Injection',
   sentence: 'Sentence',
   case: 'Case file',
+  experts: 'Experts', top_k: 'Top-k routing',
   chaos_memory: 'Memory unavailable', chaos_tool: 'Tool timeout', chaos_mcp: 'MCP failure',
   chaos_llm: 'LLM retry', chaos_context: 'Context overflow', compare: 'Compare with baseline',
 }
@@ -353,6 +384,16 @@ export const labTextsZh: Record<string, LabTexts> = {
       tSharp: 'T={t} ≤ 1 → 分布更尖锐',
       tFlat: 'T={t} > 1 → 分布更平坦',
       relatedNotes: '相关笔记',
+      l2Title: '操纵挑战',
+      l2Diverse: '让采样分布更发散',
+      l2Concentrated: '让采样分布更集中',
+      l2Tagline: '不直接调 entropy——它是结果，不是参数。想想要调哪个控件。',
+      l2Entropy: '当前 entropy',
+      l2Target: '目标',
+      l2Hint: '提示：温度决定锐化/平坦；过滤门只放行一部分 token。',
+      l2Success: '✓ 达成！你亲手找到了解法。',
+      l2NotYet: '还没到位——继续调。',
+      l2Reset: '换个目标',
     },
   },
   'rotary-observatory': {
@@ -650,6 +691,42 @@ export const labTextsZh: Record<string, LabTexts> = {
       yourEvidence: '你的取证记录',
     },
   },
+  'moe-expert-routing': {
+    question: '一个 token 会被哪些专家接走？',
+    challengeQuestion: '哪个专家接走了最多的 token 负载？',
+    challengeOptions: [
+      { value: 'busiest', label: '负载最高的专家' },
+      { value: 'emptiest', label: '负载最低的专家' },
+      { value: 'even', label: '负载均衡' },
+    ],
+    explanation: [
+      '门控网络 softmax(E·W_gate) 决定每个 token 的路由权重。',
+      'top-k 路由只保留最强的 k 条连接，其余置零并重归一化——路由变得稀疏。',
+      '每个专家的负载 = 它接收的路由权重之和；负载差异大时专家忙闲不均。',
+    ],
+    notes: [
+      { title: 'MoE：专家路由', src: 'Hybrid-models/MoE.md' },
+    ],
+    ui: {
+      question: '问题',
+      computing: '计算中…',
+      adjustControls: '调整控件开始。',
+      title: '专家分诊室',
+      tokensIn: 'token 队列',
+      experts: '专家',
+      load: '负载',
+      routing: '路由权重',
+      gate: '门控网络',
+      topK: 'top-k',
+      clicked: '点击 token 看它被谁接走',
+      makePrediction: '做预测',
+      runExperiment: '运行实验',
+      correct: '正确！',
+      notQuite: '不太对。',
+      verdictEvidence: 'max load {max} · min load {min}',
+      relatedNotes: '相关笔记',
+    },
+  },
 }
 
 export const labTextsEn: Record<string, LabTexts> = {
@@ -696,6 +773,16 @@ export const labTextsEn: Record<string, LabTexts> = {
       tSharp: 'T={t} ≤ 1 → sharper distribution',
       tFlat: 'T={t} > 1 → flatter distribution',
       relatedNotes: 'Related Notes',
+      l2Title: 'Manipulate Challenge',
+      l2Diverse: 'Make the sampling distribution more diverse',
+      l2Concentrated: 'Make the sampling distribution more concentrated',
+      l2Tagline: 'You cannot touch entropy directly — it is a result, not a parameter. Figure out which control pushes it.',
+      l2Entropy: 'Current entropy',
+      l2Target: 'Target',
+      l2Hint: 'Hint: temperature controls sharpness; the filter gate admits only part of the tokens.',
+      l2Success: '✓ Done! You found a solution by hand.',
+      l2NotYet: 'Not there yet — keep tuning.',
+      l2Reset: 'Pick another goal',
     },
   },
   'rotary-observatory': {
@@ -991,6 +1078,42 @@ export const labTextsEn: Record<string, LabTexts> = {
       locked: '🔒 {a}/{n} collected to close',
       lockedHint: 'Interrogate each suspect (click Collect) and close the case once all evidence is gathered.',
       yourEvidence: 'Your collected evidence',
+    },
+  },
+  'moe-expert-routing': {
+    question: 'Which experts pick up this token?',
+    challengeQuestion: 'Which expert carries the most token load?',
+    challengeOptions: [
+      { value: 'busiest', label: 'The busiest expert' },
+      { value: 'emptiest', label: 'The emptiest expert' },
+      { value: 'even', label: 'Evenly balanced' },
+    ],
+    explanation: [
+      'A gate network softmax(E·W_gate) decides each token\'s routing weights.',
+      'Top-k routing keeps only the strongest k connections, zeroes the rest and renormalizes — routing becomes sparse.',
+      'Each expert\'s load is the routing weight it receives; big gaps mean busy vs idle experts.',
+    ],
+    notes: [
+      { title: 'MoE: expert routing', src: 'Hybrid-models/MoE.md' },
+    ],
+    ui: {
+      question: 'Question',
+      computing: 'Computing…',
+      adjustControls: 'Adjust the controls to begin.',
+      title: 'Expert Routing Room',
+      tokensIn: 'Token queue',
+      experts: 'Experts',
+      load: 'Load',
+      routing: 'Routing weight',
+      gate: 'Gate network',
+      topK: 'top-k',
+      clicked: 'Click a token to see who picks it up',
+      makePrediction: 'Make a Prediction',
+      runExperiment: 'RUN EXPERIMENT',
+      correct: 'Correct!',
+      notQuite: 'Not quite.',
+      verdictEvidence: 'max load {max} · min load {min}',
+      relatedNotes: 'Related Notes',
     },
   },
 }

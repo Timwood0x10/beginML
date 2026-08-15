@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
@@ -34,9 +34,10 @@ const PIPELINE = [
 
 const CHALLENGE_CORRECT = 'diverse'
 
-export default function SamplingMachineLab({ result, loading, onAction }: {
+export default function SamplingMachineLab({ result, loading, onAction, onRecord, params }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['sampling-machine']
@@ -44,6 +45,33 @@ export default function SamplingMachineLab({ result, loading, onAction }: {
   const [answer, setAnswer] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const correct = answer === CHALLENGE_CORRECT
+
+  // --- L2 Manipulate Challenge ------------------------------------------
+  // Goal picked by the learner; success is DERIVED from the current result
+  // (entropy is a consequence of the controls, never set directly). The
+  // learner must tune temperature / gate / top-k / top-p until it passes.
+  const [l2Goal, setL2Goal] = useState<'diverse' | 'concentrated' | null>(null)
+  const recordedL2 = useRef<string | null>(null)
+
+  const l2Achieved = l2Goal === 'diverse'
+    ? (r?.entropy ?? 0) >= 0.8 * (r?.max_entropy ?? 1)
+    : l2Goal === 'concentrated'
+      ? (r?.entropy ?? 0) <= 0.25 * (r?.max_entropy ?? 1)
+      : false
+
+  // Record the achievement into the Journal exactly once per goal.
+  useEffect(() => {
+    if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
+      recordedL2.current = l2Goal
+      onRecord?.({
+        question: l2Goal === 'diverse' ? texts.ui.l2Diverse : texts.ui.l2Concentrated,
+        prediction: 'manual tuning',
+        correct: true,
+        evidence: `entropy=${r.entropy.toFixed(2)}bits, T=${r.temperature}`,
+        params: { ...params },
+      })
+    }
+  }, [l2Goal, l2Achieved, r, onRecord, texts, params])
 
   if (!r) {
     return (
@@ -183,7 +211,19 @@ export default function SamplingMachineLab({ result, loading, onAction }: {
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct: answer === CHALLENGE_CORRECT,
+                evidence: `entropy=${r.entropy.toFixed(2)}bits, T=${r.temperature}`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -201,6 +241,72 @@ export default function SamplingMachineLab({ result, loading, onAction }: {
             <ul className="text-caption text-on-surface-variant dark:text-outline space-y-1">
               {texts.explanation.map((line) => <li key={line}>• {line}</li>)}
             </ul>
+          </div>
+        )}
+      </div>
+
+      {/* L2 Manipulate Challenge — independent of Controls, independent of Predict */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎛️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => { setL2Goal('diverse'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'diverse'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Diverse}
+          </button>
+          <button
+            onClick={() => { setL2Goal('concentrated'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'concentrated'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Concentrated}
+          </button>
+        </div>
+
+        {l2Goal && (
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-caption text-on-surface-variant dark:text-outline">{texts.ui.l2Entropy}</span>
+              <div className="flex-1 h-4 bg-surface-container dark:bg-white/5 rounded-md overflow-hidden">
+                <div
+                  className="h-full rounded-md bg-primary dark:bg-inverse-primary transition-all duration-300"
+                  style={{ width: `${Math.min(100, (r.entropy / r.max_entropy) * 100)}%` }}
+                />
+              </div>
+              <span className="font-mono text-caption text-on-surface-variant dark:text-outline tabular-nums">
+                {r.entropy.toFixed(2)} / {r.max_entropy.toFixed(2)} bits
+              </span>
+            </div>
+            <div className={`rounded-2xl p-3 border ${
+              l2Achieved
+                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
+                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
+            }`}>
+              <div className="text-label-md font-semibold mb-1">
+                {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
+              </div>
+              <div className="text-caption">{texts.ui.l2Hint}</div>
+            </div>
+            <button
+              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              {texts.ui.l2Reset}
+            </button>
           </div>
         )}
       </div>

@@ -1130,6 +1130,62 @@ MODULES: list[dict[str, Any]] = [
             },
         ],
     },
+    {
+        "id": "moe-expert-routing",
+        "title": "Expert Routing Room",
+        "subtitle": "MoE: who picks up this token?",
+        "icon": "call_split",
+        "category": "Model Efficiency",
+        "group": "model-efficiency",
+        "blurb": (
+            "A triage room for tokens. A gate network routes each token to "
+            "the experts most suited to it; top-k routing keeps the strongest "
+            "connections sparse. Watch loads build up per expert and see "
+            "which specialist takes each token. SIMULATION MODE: synthetic "
+            "gate, not a real MoE model."
+        ),
+        "question": "一个 token 会被哪些专家接走？",
+        "next_question": "路由负载均衡为什么重要？",
+        "controls": [
+            {
+                "key": "experts",
+                "label": "Experts",
+                "type": "range",
+                "min": 2,
+                "max": 8,
+                "step": 1,
+                "default": 4,
+            },
+            {
+                "key": "top_k",
+                "label": "Top-k routing",
+                "type": "range",
+                "min": 1,
+                "max": 4,
+                "step": 1,
+                "default": 2,
+            },
+            {
+                "key": "tokens",
+                "label": "Tokens",
+                "type": "range",
+                "min": 4,
+                "max": 12,
+                "step": 1,
+                "default": 8,
+            },
+            {
+                "key": "temperature",
+                "label": "Gate temperature",
+                "type": "range",
+                "min": 0.2,
+                "max": 3.0,
+                "step": 0.05,
+                "default": 1.0,
+            },
+            {"key": "reshuffle", "label": "NEW TOKENS", "type": "action"},
+        ],
+    },
 ]
 
 

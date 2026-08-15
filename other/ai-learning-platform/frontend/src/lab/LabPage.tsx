@@ -4,7 +4,8 @@ import { api } from '../api'
 import type { LabModule, LabParams, LabResult } from './types'
 import { ControlRow, defaultParams } from './Controls'
 import { useI18n } from '../i18n/context'
-import { labModulesZh, labModulesEn, controlLabelsZh, controlLabelsEn } from '../i18n/lab'
+import { labModulesZh, labModulesEn, labGroupsZh, labGroupsEn, controlLabelsZh, controlLabelsEn } from '../i18n/lab'
+import { useDiscoveries, JournalPanel } from './Journal'
 import GradientDescentLab from './modules/GradientDescentLab'
 import AttentionLab from './modules/AttentionLab'
 import TransformerLab from './modules/TransformerLab'
@@ -27,6 +28,7 @@ import WeightFreezerLab from './modules/WeightFreezerLab'
 import RepresentationRiverLab from './modules/RepresentationRiverLab'
 import TokenSocietyLab from './modules/TokenSocietyLab'
 import DetectiveLab from './modules/DetectiveLab'
+import MoELab from './modules/MoELab'
 
 interface LabComponentProps {
   result: LabResult | null
@@ -35,6 +37,14 @@ interface LabComponentProps {
   onAction: (key: string) => void
   params: LabParams
   setParams: (p: LabParams) => void
+  /** Record a Challenge outcome into the Experiment Journal. */
+  onRecord?: (entry: {
+    question: string
+    prediction: string
+    correct: boolean
+    evidence: string
+    params: LabParams
+  }) => void
 }
 
 const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
@@ -60,6 +70,7 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'representation-river': RepresentationRiverLab,
   'token-society': TokenSocietyLab,
   'transformer-detective': DetectiveLab,
+  'moe-expert-routing': MoELab,
 }
 
 export default function LabPage() {
@@ -76,6 +87,7 @@ export default function LabPage() {
 
   const labMeta = lang === 'zh' ? labModulesZh : labModulesEn
   const controlLabels = lang === 'zh' ? controlLabelsZh : controlLabelsEn
+  const { entries, addEntry, clear } = useDiscoveries()
 
   useEffect(() => {
     let alive = true
@@ -87,6 +99,21 @@ export default function LabPage() {
     () => modules.find((m) => m.id === moduleId) ?? modules[0],
     [modules, moduleId],
   )
+
+  const record = useCallback((entry: {
+    question: string
+    prediction: string
+    correct: boolean
+    evidence: string
+    params: LabParams
+  }) => {
+    if (!active) return
+    addEntry({
+      experimentId: active.id,
+      experimentTitle: labMeta[active.id]?.title ?? active.title,
+      ...entry,
+    })
+  }, [active, labMeta, addEntry])
 
   // Reset state when switching modules — prevents stale-result crashes.
   useEffect(() => {
@@ -143,6 +170,20 @@ export default function LabPage() {
   // mounted module from briefly receiving the previous module's data shape.
   const safeResult = active && resultFor === active.id ? result : null
 
+  // Sidebar sections — the Experiment Lab is organized by "what I want to
+  // explore", not by a flat folder list. Modules without a `group` fall into
+  // the `classic` bucket (the original math lab).
+  const groupOrder = ['now-experimenting', 'rotary-observatory', 'model-behavior', 'learning-dynamics', 'model-efficiency', 'classic']
+  const grouped = new Map<string, LabModule[]>()
+  for (const m of modules) {
+    const g = m.group ?? 'classic'
+    if (!grouped.has(g)) grouped.set(g, [])
+    grouped.get(g)!.push(m)
+  }
+  const orderedGroups = groupOrder.filter((g) => grouped.has(g))
+  for (const g of grouped.keys()) if (!orderedGroups.includes(g)) orderedGroups.push(g)
+  const labGroups = lang === 'zh' ? labGroupsZh : labGroupsEn
+
   return (
     <div className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
       <aside className="hidden md:flex flex-col w-72 shrink-0 bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
@@ -158,27 +199,34 @@ export default function LabPage() {
           </div>
         </div>
 
-        <nav className="flex flex-col gap-1 mb-5">
-          {modules.map((m) => {
-            const isActive = active?.id === m.id
-            return (
-              <button
-                key={m.id}
-                onClick={() => navigate(`/lab/${m.id}`)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
-                  isActive
-                    ? 'bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface font-semibold shadow-sm'
-                    : 'text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5'
-                }`}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{m.icon}</span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-body-md truncate">{labMeta[m.id]?.title ?? m.title}</span>
-                  <span className={`block text-caption truncate ${isActive ? 'opacity-80' : ''}`}>{labMeta[m.id]?.subtitle ?? m.subtitle}</span>
-                </span>
-              </button>
-            )
-          })}
+        <nav className="flex flex-col gap-4 mb-5">
+          {orderedGroups.map((g) => (
+            <div key={g}>
+              <h4 className="px-2 mb-1 text-caption uppercase tracking-wider font-semibold text-outline">{labGroups[g] ?? g}</h4>
+              <div className="flex flex-col gap-1">
+                {grouped.get(g)!.map((m) => {
+                  const isActive = active?.id === m.id
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => navigate(`/lab/${m.id}`)}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
+                        isActive
+                          ? 'bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface font-semibold shadow-sm'
+                          : 'text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{m.icon}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-body-md truncate">{labMeta[m.id]?.title ?? m.title}</span>
+                        <span className={`block text-caption truncate ${isActive ? 'opacity-80' : ''}`}>{labMeta[m.id]?.subtitle ?? m.subtitle}</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {active && active.controls.length > 0 && (
@@ -247,8 +295,15 @@ export default function LabPage() {
         {error ? (
           <div className="bg-error-container text-on-error-container rounded-2xl p-6 text-body-md">{error}</div>
         ) : Lab ? (
-          <Lab result={safeResult} loading={loading} error={error} onAction={onAction} params={params} setParams={setParams} />
+          <Lab result={safeResult} loading={loading} error={error} onAction={onAction} params={params} setParams={setParams} onRecord={record} />
         ) : null}
+
+        {/* Experiment Journal — the learner's own discovery trail */}
+        <JournalPanel
+          entries={entries}
+          onClear={clear}
+          nextQuestion={active?.next_question}
+        />
       </main>
     </div>
   )

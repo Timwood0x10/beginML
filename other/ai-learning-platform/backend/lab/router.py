@@ -26,6 +26,7 @@ from . import (
     forge,
     losses,
     matrix_transform,
+    moe,
     neural_net,
     optimizers,
     pca,
@@ -66,6 +67,7 @@ _COMPUTERS = {
     "representation-river": residual_river.compute,
     "token-society": token_society.compute,
     "transformer-detective": detective.compute,
+    "moe-expert-routing": moe.compute,
 }
 
 

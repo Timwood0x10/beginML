@@ -20,6 +20,9 @@ export interface LabModule {
   icon: string
   category: string
   blurb: string
+  group?: string
+  question?: string
+  next_question?: string
   controls: LabControl[]
 }
 
