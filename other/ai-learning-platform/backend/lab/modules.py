@@ -783,6 +783,353 @@ MODULES: list[dict[str, Any]] = [
             {"key": "reset", "label": "Reset points", "type": "action"},
         ],
     },
+    {
+        "id": "sampling-machine",
+        "title": "Sampling Machine",
+        "subtitle": "Temperature, Top-k & Top-p decode logits",
+        "icon": "casino",
+        "category": "Inference",
+        "group": "now-experimenting",
+        "blurb": (
+            "A probability slot machine. Watch how temperature rescales the "
+            "softmax input (logits themselves stay untouched), how the filter "
+            "gate admits only top-k or top-p tokens, and how the sampler "
+            "draws balls into token slots. Predict first, then run."
+        ),
+        "question": "为什么调高温度会让输出更随机？",
+        "next_question": "什么是熵？",
+        "controls": [
+            {
+                "key": "logits_mode",
+                "label": "Logits shape",
+                "type": "select",
+                "options": ["multi", "spiky", "flat"],
+            },
+            {
+                "key": "temperature",
+                "label": "Temperature",
+                "type": "range",
+                "min": 0.1,
+                "max": 3.0,
+                "step": 0.05,
+                "default": 1.0,
+            },
+            {
+                "key": "gate",
+                "label": "Filter gate",
+                "type": "select",
+                "options": ["none", "top-k", "top-p", "both"],
+            },
+            {
+                "key": "top_k",
+                "label": "Top-k",
+                "type": "range",
+                "min": 1,
+                "max": 8,
+                "step": 1,
+                "default": 3,
+            },
+            {
+                "key": "top_p",
+                "label": "Top-p",
+                "type": "range",
+                "min": 0.05,
+                "max": 1.0,
+                "step": 0.05,
+                "default": 0.9,
+            },
+            {"key": "sample", "label": "SAMPLE ×20", "type": "action"},
+        ],
+    },
+    {
+        "id": "rotary-observatory",
+        "title": "Rotary Observatory",
+        "subtitle": "RoPE: positions become rotation phases",
+        "icon": "rotate_right",
+        "category": "Positional Encoding",
+        "group": "rotary-observatory",
+        "blurb": (
+            "Watch a token star rotate on the complex plane as its position "
+            "grows — then add a second star and discover that only the "
+            "relative phase matters. Rotate together, find the distance, and "
+            "inspect the frequency lens. Predict first, then run."
+        ),
+        "question": "为什么位置信息能被编码成旋转角度？",
+        "next_question": "RoPE 如何注入 Transformer？",
+        "controls": [
+            {
+                "key": "position",
+                "label": "Position",
+                "type": "range",
+                "min": 0,
+                "max": 32,
+                "step": 1,
+                "default": 8,
+            },
+            {
+                "key": "position_b",
+                "label": "Position B",
+                "type": "range",
+                "min": 0,
+                "max": 32,
+                "step": 1,
+                "default": 4,
+            },
+            {
+                "key": "frequency",
+                "label": "Frequency",
+                "type": "range",
+                "min": 0.25,
+                "max": 4.0,
+                "step": 0.05,
+                "default": 1.0,
+            },
+            {
+                "key": "dims",
+                "label": "Dimensions",
+                "type": "range",
+                "min": 4,
+                "max": 32,
+                "step": 4,
+                "default": 8,
+            },
+            {
+                "key": "pair",
+                "label": "Two tokens",
+                "type": "toggle",
+                "default": True,
+            },
+            {
+                "key": "distance_mode",
+                "label": "Find the distance",
+                "type": "toggle",
+                "default": True,
+            },
+        ],
+    },
+    {
+        "id": "dangerous-mountain",
+        "title": "Dangerous Mountain",
+        "subtitle": "Double descent: bigger models can generalize better",
+        "icon": "terrain",
+        "category": "Learning Dynamics",
+        "group": "learning-dynamics",
+        "blurb": (
+            "A mountain of model capacity. Drag the capacity slider across "
+            "the interpolation threshold and watch test error spike into the "
+            "danger zone — then fall again as the model gets bigger. "
+            "Classical bias-variance says the mountain only grows; the "
+            "modern view says the opposite. Predict first, then run."
+        ),
+        "question": "更大的模型应该过拟合更严重——你信吗？",
+        "next_question": "经典 bias-variance 在这里预言了什么？",
+        "controls": [
+            {
+                "key": "capacity",
+                "label": "Model capacity",
+                "type": "range",
+                "min": 2,
+                "max": 300,
+                "step": 2,
+                "default": 64,
+            },
+            {
+                "key": "samples",
+                "label": "Samples",
+                "type": "select",
+                "options": ["32", "64", "96"],
+            },
+            {
+                "key": "noise",
+                "label": "Label noise",
+                "type": "range",
+                "min": 0.2,
+                "max": 0.6,
+                "step": 0.05,
+                "default": 0.4,
+            },
+        ],
+    },
+    {
+        "id": "shooting-range",
+        "title": "Shooting Range",
+        "subtitle": "Bias² + Variance + Noise², taken apart",
+        "icon": "track_changes",
+        "category": "Learning Dynamics",
+        "group": "learning-dynamics",
+        "blurb": (
+            "A firing range for models. Each bootstrap fit is one shot; the "
+            "bullseye is the true function. Scatter is variance, offset is "
+            "bias, the irreducible ring is noise. Drag complexity and sample "
+            "count to watch the three terms trade off — then feed 500 "
+            "samples and watch variance shrink."
+        ),
+        "question": "模型表现差——是偏差还是方差在捣鬼？",
+        "next_question": "正则化如何权衡偏差与方差？",
+        "controls": [
+            {
+                "key": "complexity",
+                "label": "Model complexity",
+                "type": "range",
+                "min": 1,
+                "max": 15,
+                "step": 1,
+                "default": 3,
+            },
+            {
+                "key": "samples",
+                "label": "Samples",
+                "type": "select",
+                "options": ["10", "50", "500"],
+            },
+            {
+                "key": "noise",
+                "label": "Label noise",
+                "type": "range",
+                "min": 0.1,
+                "max": 0.4,
+                "step": 0.05,
+                "default": 0.2,
+            },
+        ],
+    },
+    {
+        "id": "weight-freezer",
+        "title": "Weight Freezer",
+        "subtitle": "Quantization: compression vs error",
+        "icon": "ac_unit",
+        "category": "Model Efficiency",
+        "group": "model-efficiency",
+        "blurb": (
+            "A freezer for weights. Float them free, then FREEZE them onto a "
+            "coarser and coarser grid — FP32 → INT8 → INT4 → INT2 → TERNARY. "
+            "Memory drops, error climbs. Shake the cloud and find the Pareto "
+            "sweet spot: where does compression stop being worth it?"
+        ),
+        "question": "压缩多少还值得？",
+        "next_question": "BitNet 的 1.58 bit 为什么可行？",
+        "controls": [
+            {
+                "key": "bit_width",
+                "label": "Bit width",
+                "type": "range",
+                "min": 2,
+                "max": 16,
+                "step": 2,
+                "default": 8,
+            },
+            {
+                "key": "ternary",
+                "label": "BitNet 1.58b mode",
+                "type": "toggle",
+                "default": False,
+            },
+            {"key": "reshuffle", "label": "SHAKE WEIGHTS", "type": "action"},
+        ],
+    },
+    {
+        "id": "representation-river",
+        "title": "Representation River",
+        "subtitle": "The residual stream: how a token's meaning flows",
+        "icon": "water",
+        "category": "Model Behavior",
+        "group": "model-behavior",
+        "blurb": (
+            "A river runs through the Transformer: the residual stream. "
+            "Attention and FFN are tributaries injecting information at "
+            "every layer. Pick a token and watch its representation drift "
+            "downstream — SIMULATION MODE: this models dynamics, it does not "
+            "inspect a real model."
+        ),
+        "question": "一个 token 在模型里逐渐变成了什么？",
+        "next_question": "注意力如何决定谁影响谁？",
+        "controls": [
+            {
+                "key": "tokens",
+                "label": "Tokens",
+                "type": "range",
+                "min": 4,
+                "max": 10,
+                "step": 1,
+                "default": 6,
+            },
+            {
+                "key": "layer",
+                "label": "Layers",
+                "type": "range",
+                "min": 1,
+                "max": 12,
+                "step": 1,
+                "default": 12,
+            },
+            {
+                "key": "show",
+                "label": "Injection",
+                "type": "select",
+                "options": ["all", "attention", "ffn"],
+            },
+        ],
+    },
+    {
+        "id": "token-society",
+        "title": "Token Society",
+        "subtitle": "Who looks at whom in a sentence",
+        "icon": "diversity_3",
+        "category": "Model Behavior",
+        "group": "model-behavior",
+        "blurb": (
+            "A sentence is a small society. Each token is a member; each "
+            "attention head is a different kind of observer — the Repeater, "
+            "the Long-Distance Scout, the Nearby One. Click a token to see "
+            "who it listens to, and meet the observer behind each pattern. "
+            "SIMULATION MODE: synthetic, not a real model."
+        ),
+        "question": "一个句子里，token 如何互相注视？",
+        "next_question": "为什么这个 token 看那个 token？",
+        "controls": [
+            {
+                "key": "sentence",
+                "label": "Sentence",
+                "type": "select",
+                "options": ["0", "1", "2", "3"],
+            },
+            {
+                "key": "heads",
+                "label": "Observers (heads)",
+                "type": "range",
+                "min": 2,
+                "max": 8,
+                "step": 1,
+                "default": 6,
+            },
+            {"key": "reshuffle", "label": "NEW SOCIETY", "type": "action"},
+        ],
+    },
+    {
+        "id": "transformer-detective",
+        "title": "Transformer Detective",
+        "subtitle": "Why did the model predict this?",
+        "icon": "search",
+        "category": "Model Behavior",
+        "group": "model-behavior",
+        "blurb": (
+            "A case file. The model made a prediction — your job is to find "
+            "out why. Interrogate the suspects (heads, features, FFN) and "
+            "close the case with the most influential evidence. Evidence is "
+            "algorithmically generated from a curated case library — no real "
+            "model is inspected."
+        ),
+        "question": "为什么模型在这里预测了这个？",
+        "next_question": "残差流如何运送这些证据？",
+        "controls": [
+            {
+                "key": "case",
+                "label": "Case file",
+                "type": "select",
+                "options": ["0", "1", "2"],
+            },
+        ],
+    },
 ]
 
 

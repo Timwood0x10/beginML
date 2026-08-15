@@ -19,6 +19,14 @@ import MatrixTransformLab from './modules/MatrixTransformLab'
 import DistributionLab from './modules/DistributionLab'
 import EntropyLab from './modules/EntropyLab'
 import NeuralNetLab from './modules/NeuralNetLab'
+import SamplingMachineLab from './modules/SamplingMachineLab'
+import RotaryObservatoryLab from './modules/RotaryObservatoryLab'
+import DangerousMountainLab from './modules/DangerousMountainLab'
+import ShootingRangeLab from './modules/ShootingRangeLab'
+import WeightFreezerLab from './modules/WeightFreezerLab'
+import RepresentationRiverLab from './modules/RepresentationRiverLab'
+import TokenSocietyLab from './modules/TokenSocietyLab'
+import DetectiveLab from './modules/DetectiveLab'
 
 interface LabComponentProps {
   result: LabResult | null
@@ -44,6 +52,14 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   distributions: DistributionLab,
   entropy: EntropyLab,
   'neural-net': NeuralNetLab,
+  'sampling-machine': SamplingMachineLab,
+  'rotary-observatory': RotaryObservatoryLab,
+  'dangerous-mountain': DangerousMountainLab,
+  'shooting-range': ShootingRangeLab,
+  'weight-freezer': WeightFreezerLab,
+  'representation-river': RepresentationRiverLab,
+  'token-society': TokenSocietyLab,
+  'transformer-detective': DetectiveLab,
 }
 
 export default function LabPage() {
@@ -110,6 +126,11 @@ export default function LabPage() {
   }
   const onAction = (key: string) => {
     if (key === 'reset') setParams((p) => ({ ...p }))
+    // Sampling Machine: each SAMPLE run advances the seed so the seeded
+    // sampler draws a fresh stochastic batch (Simulation Contract).
+    else if (key === 'sample') setParams((p) => ({ ...p, seed: (Number(p.seed) || 1) + 1 }))
+    // Weight Freezer: SHAKE WEIGHTS regenerates the seeded weight cloud.
+    else if (key === 'reshuffle') setParams((p) => ({ ...p, seed: (Number(p.seed) || 1) + 1 }))
   }
 
   if (modules.length === 0) {

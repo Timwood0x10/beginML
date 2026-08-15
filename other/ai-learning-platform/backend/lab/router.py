@@ -17,8 +17,11 @@ from pydantic import BaseModel
 from . import (
     activations,
     attention,
+    bias_variance,
     convolution,
+    detective,
     distributions,
+    double_descent,
     entropy,
     forge,
     losses,
@@ -26,8 +29,13 @@ from . import (
     neural_net,
     optimizers,
     pca,
+    quantization,
     regularization,
+    residual_river,
+    rope,
+    sampling,
     svm,
+    token_society,
     transformer,
 )
 from .modules import MODULES, get_module
@@ -50,6 +58,14 @@ _COMPUTERS = {
     "pca": pca.compute,
     "regularization": regularization.compute,
     "svm": svm.compute,
+    "sampling-machine": sampling.compute,
+    "rotary-observatory": rope.compute,
+    "dangerous-mountain": double_descent.compute,
+    "shooting-range": bias_variance.compute,
+    "weight-freezer": quantization.compute,
+    "representation-river": residual_river.compute,
+    "token-society": token_society.compute,
+    "transformer-detective": detective.compute,
 }
 
 
