@@ -114,9 +114,14 @@ const NODE_W = 150
 const NODE_H = 96
 const GROUP_GAP = 26
 
-// Helper: pick a color per port type.
+// Helper: pick a color per port type — semantic system variables so the
+// hue-meaning mapping (task=brain, context=memory, action=amber,
+// result=agent) follows every theme.
 const PORT_COLORS: Record<string, string> = {
-  task: '#2B4C6F', context: '#3A6B58', action: '#C88A35', result: '#7A5C8E',
+  task: 'var(--ailearn-semantic-brain)',
+  context: 'var(--ailearn-semantic-memory)',
+  action: 'var(--ailearn-semantic-action)',
+  result: 'var(--ailearn-semantic-agent)',
 }
 
 export default function AgentForgeLab({

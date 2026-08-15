@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, drawAxes, warmColor, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, warmColor, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface RegResult extends LabResult {
   domain: Domain
@@ -17,7 +18,6 @@ function drawReg(canvas: HTMLCanvasElement, r: RegResult, hover: { x: number; y:
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, r.domain, { l: 44, r: 20, t: 20, b: 36 })
   const dark = document.documentElement.classList.contains('dark')
-  const bg = dark ? '#1E1913' : '#F7F0E3'
 
   // contour heatmap
   const { x, y, z, zmax } = r.contour
@@ -60,7 +60,7 @@ function drawReg(canvas: HTMLCanvasElement, r: RegResult, hover: { x: number; y:
     const [px, py] = c.point
     ctx.fillStyle = c.penalty === 'l1' ? '#C8604A' : '#5B6BB0'
     ctx.beginPath(); ctx.arc(s.px(px), s.py(py), 6, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = bg; ctx.lineWidth = 2; ctx.stroke()
+    ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2; ctx.stroke()
   }
 
   // optimum marker (draggable)
@@ -68,7 +68,7 @@ function drawReg(canvas: HTMLCanvasElement, r: RegResult, hover: { x: number; y:
   const px = s.px(ox), py = s.py(oy)
   ctx.fillStyle = '#2f6b3e'
   ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = bg; ctx.lineWidth = 2.5; ctx.stroke()
+  ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2.5; ctx.stroke()
   ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText(`(${ox.toFixed(2)}, ${oy.toFixed(2)})`, px + 10, py - 10)
@@ -78,6 +78,7 @@ export default function RegularizationLab({ result, params, setParams }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
 }) {
+  const { theme, palette } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const scaleRef = useRef<Scale | null>(null)
   const r = result as RegResult | null
@@ -89,7 +90,7 @@ export default function RegularizationLab({ result, params, setParams }: {
       const ctx = canvasRef.current.getContext('2d')!
       scaleRef.current = makeScale(ctx, r.domain, { l: 44, r: 20, t: 20, b: 36 })
     }
-  }, [r, hover])
+  }, [r, hover, theme, palette])
 
   const clamp = (v: number, lo: number, hi: number) => Math.max(lo + 0.1, Math.min(hi - 0.1, v))
 

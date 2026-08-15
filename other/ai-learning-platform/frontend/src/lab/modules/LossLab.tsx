@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Probe { x: number; y: number; dy: number }
 interface LossResult extends LabResult {
@@ -24,7 +25,7 @@ function drawLoss(canvas: HTMLCanvasElement, r: LossResult, hoverX: number | nul
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
     { l: 52, r: 20, t: 20, b: 40 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+  ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
   ctx.fillRect(0, 0, W, H)
   drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
     { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
@@ -61,13 +62,13 @@ function drawLoss(canvas: HTMLCanvasElement, r: LossResult, hoverX: number | nul
   // minimum
   ctx.fillStyle = '#2f6b3e'
   ctx.beginPath(); ctx.arc(s.px(r.minimum.x), s.py(r.minimum.y), 6, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2; ctx.stroke()
+  ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2; ctx.stroke()
 
   // probe
   const px = s.px(r.probe.x), py = s.py(r.probe.y)
   ctx.fillStyle = '#C8604A'
   ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2.5; ctx.stroke()
+  ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2.5; ctx.stroke()
   ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText(`(${r.probe.x.toFixed(2)}, ${r.probe.y.toFixed(2)})`, px + 10, py - 8)
@@ -87,6 +88,7 @@ export default function LossLab({ result, params, setParams }: {
   const scaleRef = useRef<Scale | null>(null)
   const r = result as LossResult | null
   const [hover, setHover] = useState<number | null>(null)
+  const { theme, palette } = useTheme()
 
   useEffect(() => {
     if (r && ref.current) {
@@ -95,7 +97,7 @@ export default function LossLab({ result, params, setParams }: {
       scaleRef.current = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
         { l: 52, r: 20, t: 20, b: 40 })
     }
-  }, [r, hover])
+  }, [r, hover, theme, palette])
 
   const clampX = (x: number) => {
     if (!r) return x

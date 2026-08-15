@@ -58,11 +58,6 @@ export const labModulesZh: Record<string, LabMeta> = {
     subtitle: '训练迷你 Transformer：损失曲线与注意力',
     blurb: '从零训练一个小型 decoder-only Transformer（预测前一个 token）。观察损失收敛、各头注意力热图逐步锐化成可解释的"回看一步"对角线模式。',
   },
-  'agent-builder': {
-    title: 'Agent 构建器',
-    subtitle: '用积木搭建一个 Agent',
-    blurb: '在记忆、工具、规划与多智能体协作中各选一个组件，看它们拼成一个完整 Agent：分层架构图、通俗的架构说明与可直接编辑的 YAML 配置。',
-  },
   'agent-forge': {
     title: 'ARES Agent Lab',
     subtitle: 'Build. Break. Evolve.',
@@ -135,11 +130,6 @@ export const labModulesEn: Record<string, LabMeta> = {
     title: 'Transformer Training',
     subtitle: 'Train a tiny transformer: loss curve & attention',
     blurb: 'Train a small decoder-only transformer from scratch on a predict-the-previous-token task. Watch the loss converge and the per-head attention heatmaps sharpen into an interpretable one-step-back diagonal pattern.',
-  },
-  'agent-builder': {
-    title: 'Agent Builder',
-    subtitle: 'Assemble an agent from building blocks',
-    blurb: 'Pick one option from memory, tools, planning and multi-agent coordination, and watch the pieces snap into a full agent: a layered diagram, a plain-English architecture summary and a ready-to-edit YAML config.',
   },
   'agent-forge': {
     title: 'ARES Agent Lab',

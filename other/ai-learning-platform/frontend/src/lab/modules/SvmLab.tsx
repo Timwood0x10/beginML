@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { api } from '../../api'
 import type { LabParams, LabResult } from '../types'
-import { setupCanvas, makeScale, type Domain } from '../canvas'
+import { setupCanvas, makeScale, themeVar, type Domain } from '../canvas'
+import { useTheme } from '../../hooks/useTheme'
 
 interface SvmPoint { x: number; y: number; cls: number; support: boolean }
 interface SvmResult extends LabResult {
@@ -24,6 +25,7 @@ export default function SvmLab({
   onAction: (key: string) => void
   params: LabParams; setParams: (p: LabParams) => void
 }) {
+  const { theme, palette } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [points, setPoints] = useState<SvmPoint[]>([])
   const [cls, setCls] = useState<0 | 1>(1)
@@ -69,8 +71,7 @@ export default function SvmLab({
     const ctx = setupCanvas(canvas, W, H)
     const s = makeScale(ctx, domain, { l: 44, r: 20, t: 20, b: 36 })
     const dark = document.documentElement.classList.contains('dark')
-    const bg = dark ? '#1E1913' : '#F7F0E3'
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.fillRect(0, 0, W, H)
 
     // decision background: color regions by sign
     if (data) {
@@ -116,12 +117,12 @@ export default function SvmLab({
       ctx.fillStyle = COLORS[p.cls]
       ctx.beginPath(); ctx.arc(s.px(p.x), s.py(p.y), p.support ? 8 : 6, 0, Math.PI * 2); ctx.fill()
       if (p.support) {
-        ctx.strokeStyle = bg; ctx.lineWidth = 2.5; ctx.stroke()
+        ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2.5; ctx.stroke()
         ctx.strokeStyle = COLORS[p.cls]; ctx.lineWidth = 1.5
         ctx.beginPath(); ctx.arc(s.px(p.x), s.py(p.y), 11, 0, Math.PI * 2); ctx.stroke()
       }
     })
-  }, [data, points, domain])
+  }, [data, points, domain, theme, palette])
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!

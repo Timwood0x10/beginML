@@ -153,3 +153,9 @@ export function setupCanvas(canvas: HTMLCanvasElement, cssW: number, cssH: numbe
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   return ctx
 }
+
+/** Read an active theme token so canvas drawings follow the palette. */
+export function themeVar(name: string, fallback: string): string {
+  const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return val || fallback
+}

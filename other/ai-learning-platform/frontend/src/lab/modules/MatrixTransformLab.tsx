@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Eigen { value: number; vector: number[] }
 interface MatrixResult extends LabResult {
@@ -66,7 +67,7 @@ function drawScene(canvas: HTMLCanvasElement, r: MatrixResult, pt: { x: number; 
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 20, r: 20, t: 20, b: 20 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+  ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
   ctx.fillRect(0, 0, W, H)
 
   drawGrid(ctx, s, r.gridOriginal, dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.1)', 1)
@@ -104,7 +105,7 @@ function drawScene(canvas: HTMLCanvasElement, r: MatrixResult, pt: { x: number; 
     // original point
     ctx.fillStyle = '#2f6b3e'
     ctx.beginPath(); ctx.arc(s.px(pt.x), s.py(pt.y), 7, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2; ctx.stroke()
+    ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2; ctx.stroke()
     ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
     ctx.font = '600 12px Manrope'
     ctx.fillText(`p (${pt.x.toFixed(2)}, ${pt.y.toFixed(2)})`, s.px(pt.x) + 10, s.py(pt.y) - 10)
@@ -112,7 +113,7 @@ function drawScene(canvas: HTMLCanvasElement, r: MatrixResult, pt: { x: number; 
     // transformed point
     ctx.fillStyle = '#C8604A'
     ctx.beginPath(); ctx.arc(s.px(tx), s.py(ty), 7, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2; ctx.stroke()
+    ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2; ctx.stroke()
     ctx.fillStyle = '#C8604A'
     ctx.fillText(`M·p (${tx.toFixed(2)}, ${ty.toFixed(2)})`, s.px(tx) + 10, s.py(ty) - 10)
   }
@@ -135,6 +136,7 @@ export default function MatrixTransformLab({ result }: {
   const r = result as MatrixResult | null
   const [pt, setPt] = useState<{ x: number; y: number } | null>(null)
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null)
+  const { theme, palette } = useTheme()
 
   useEffect(() => {
     if (r && ref.current) {
@@ -142,7 +144,7 @@ export default function MatrixTransformLab({ result }: {
       const ctx = ref.current.getContext('2d')!
       scaleRef.current = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 20, r: 20, t: 20, b: 20 })
     }
-  }, [r, pt, hover])
+  }, [r, pt, hover, theme, palette])
 
   // clear the placed point when the matrix changes
   useEffect(() => {

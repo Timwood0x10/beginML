@@ -2,8 +2,6 @@
 
 from typing import Any
 
-from . import agent_builder
-
 MODULES: list[dict[str, Any]] = [
     {
         "id": "gradient-descent",
@@ -591,26 +589,6 @@ MODULES: list[dict[str, Any]] = [
                 "step": 1,
                 "default": 3,
             },
-        ],
-    },
-    {
-        "id": "agent-builder",
-        "title": "Agent Builder",
-        "subtitle": "Assemble an agent from building blocks",
-        "icon": "widgets",
-        "category": "Architectures",
-        "blurb": (
-            "Pick one option from memory, tools, planning and multi-agent "
-            "coordination, and watch the pieces snap into a full agent: a "
-            "layered diagram, a plain-English architecture summary and a "
-            "ready-to-edit YAML config."
-        ),
-        "controls": [
-            {"key": cat, "label": agent_builder.COMPONENTS[cat]["label"],
-             "type": "select",
-             "options": agent_builder.option_labels(cat),
-             "default": agent_builder.option_labels(cat)[0]}
-            for cat in agent_builder.CATEGORY_ORDER
         ],
     },
     {

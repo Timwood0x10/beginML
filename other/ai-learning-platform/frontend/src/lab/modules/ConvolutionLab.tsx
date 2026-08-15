@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, themeVar, type Domain } from '../canvas'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Window {
   position: number
@@ -23,6 +24,7 @@ export default function ConvolutionLab({ result }: { result: LabResult | null })
   const r = result as ConvResult | null
   const [pos, setPos] = useState(0)
   const [playing, setPlaying] = useState(false)
+  const { theme, palette } = useTheme()
 
   // Clamp position when data changes
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function ConvolutionLab({ result }: { result: LabResult | null })
     const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
       { l: 48, r: 20, t: 20, b: 36 })
     const dark = document.documentElement.classList.contains('dark')
-    ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+    ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
     ctx.fillRect(0, 0, W, H)
     drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
       { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
@@ -82,7 +84,7 @@ export default function ConvolutionLab({ result }: { result: LabResult | null })
     ctx.font = '600 12px Manrope'
     ctx.fillStyle = '#C8604A'; ctx.fillText('input', W - 120, 28)
     ctx.fillStyle = '#5B6BB0'; ctx.fillText('output', W - 60, 28)
-  }, [r, pos])
+  }, [r, pos, theme, palette])
 
   if (!r) return null
   const win = r.windows[pos]

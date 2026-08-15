@@ -1,6 +1,91 @@
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useI18n } from '../i18n/context'
+
+// All color palettes — shown as a text dropdown, not just dots.
+const THEME_OPTIONS = [
+  { id: 'parchment', bg: '#F7F0E3', name: 'Parchment', zh: '羊皮纸', desc: 'warm aged paper' },
+  { id: 'matcha', bg: '#EAE8DC', name: 'Matcha', zh: '抹茶', desc: 'sage green' },
+  { id: 'qingdai', bg: 'linear-gradient(135deg,#F3F6F4,#56679F 70%,#8179A8)', name: 'QingDai', zh: '青黛', desc: 'bamboo-indigo lab' },
+  { id: 'pine', bg: 'linear-gradient(135deg,#F2F5F1,#5F8276 70%,#72849A)', name: 'Pine Mist', zh: '松烟', desc: 'grey-green forest' },
+  { id: 'studio', bg: 'linear-gradient(135deg,#F3F4F2,#738895 70%,#B7836C)', name: 'Studio', zh: '工作室', desc: 'fog-blue & clay' },
+  { id: 'moss', bg: 'linear-gradient(135deg,#F1F3EF,#71826C 70%,#899096)', name: 'Moss & Stone', zh: '苔石', desc: 'moss-green field lab' },
+] as const
+
+type ThemeId = (typeof THEME_OPTIONS)[number]['id']
+
+function ThemeDropdown({ compact = false }: { compact?: boolean }) {
+  const { palette, setPalette } = useTheme()
+  const { lang } = useI18n()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  const current = THEME_OPTIONS.find((o) => o.id === palette) ?? THEME_OPTIONS[0]
+
+  // Close when clicking outside the dropdown.
+  useEffect(() => {
+    if (!open) return
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    window.addEventListener('mousedown', onClick)
+    return () => window.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={`inline-flex items-center gap-1.5 rounded-full text-label-md font-semibold text-on-surface-variant dark:text-outline hover:bg-surface-variant dark:hover:bg-white/5 transition-colors ${
+          compact ? 'h-9 px-2.5' : 'h-10 px-3'
+        }`}
+      >
+        <span
+          className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/20"
+          style={{ background: current.bg }}
+        />
+        <span>{lang === 'zh' ? current.zh : current.name}</span>
+        <span className="material-symbols-outlined text-[15px]" style={{ fontSize: 15 }}>arrow_drop_down</span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-surface-container-lowest dark:bg-dark-surface-elevated border border-outline-variant/50 dark:border-white/10 shadow-ambient-lg dark:shadow-dark-ambient p-1.5 z-50"
+        >
+          {THEME_OPTIONS.map((o) => (
+            <button
+              key={o.id}
+              role="option"
+              aria-selected={palette === o.id}
+              onClick={() => {
+                setPalette(o.id as ThemeId)
+                setOpen(false)
+              }}
+              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-colors ${
+                palette === o.id
+                  ? 'bg-primary text-on-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                  : 'text-on-surface dark:text-dark-on-surface hover:bg-surface-variant dark:hover:bg-white/5'
+              }`}
+            >
+              <span
+                className="w-5 h-5 rounded-full shrink-0 border border-black/10 dark:border-white/20"
+                style={{ background: o.bg }}
+              />
+              <span className="min-w-0">
+                <span className="block text-caption font-semibold">{lang === 'zh' ? `${o.zh} · ${o.name}` : `${o.name} · ${o.zh}`}</span>
+                <span className={`block text-[10px] truncate ${palette === o.id ? 'opacity-80' : 'text-outline'}`}>{o.desc}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Layout() {
   const { theme, toggle } = useTheme()
@@ -68,6 +153,7 @@ export default function Layout() {
           >
             {lang === 'zh' ? 'EN' : '中文'}
           </button>
+          <ThemeDropdown />
           <button
             onClick={toggle}
             aria-label="Toggle theme"
@@ -96,6 +182,7 @@ export default function Layout() {
           >
             {lang === 'zh' ? 'EN' : '中文'}
           </button>
+          <ThemeDropdown compact />
           <button
             onClick={toggle}
             className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline"

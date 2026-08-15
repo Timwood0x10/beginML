@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface BernoulliResult extends LabResult {
   mode: 'bernoulli'
@@ -49,6 +50,7 @@ function BernoulliView({ r, params, setParams }: {
   const scaleRef = useRef<Scale | null>(null)
   const [inspect, setInspect] = useState<Inspect | null>(null)
   const [hover, setHover] = useState<number | null>(null)
+  const { theme, palette } = useTheme()
 
   // Look up curve values at a given q by nearest sample (no formula here).
   const sampleAt = (q: number): Inspect => {
@@ -68,7 +70,7 @@ function BernoulliView({ r, params, setParams }: {
     const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 52, r: 20, t: 20, b: 40 })
     scaleRef.current = s
     const dark = document.documentElement.classList.contains('dark')
-    ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+    ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
     ctx.fillRect(0, 0, W, H)
     drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
       { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
@@ -133,7 +135,7 @@ function BernoulliView({ r, params, setParams }: {
     })
     ctx.fillStyle = '#2f6b3e'
     ctx.fillText(`P = ${r.p.toFixed(2)}`, s.px(r.p) + 8, 36)
-  }, [r, inspect, hover])
+  }, [r, inspect, hover, theme, palette])
 
   const { handlers } = useCanvasDrag({
     getScale: () => scaleRef.current,

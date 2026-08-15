@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { setupCanvas, makeScale, drawAxes, warmColor, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface GdResult extends LabResult {
   domain: Domain
@@ -12,11 +13,18 @@ interface GdResult extends LabResult {
   finalLoss: number | null
 }
 
+// Read an active theme token so canvas drawings follow the palette.
+function themeVar(name: string, fallback: string): string {
+  const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return val || fallback
+}
+
 function drawContour(canvas: HTMLCanvasElement, r: GdResult, hover: { x: number; y: number } | null) {
   const W = 560, H = 440
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, r.domain)
-  const bg = document.documentElement.classList.contains('dark') ? '#1E1913' : '#F7F0E3'
+  const bg = themeVar('--ailearn-background', '#F7F0E3')
+  const ink = themeVar('--ailearn-outline', '#8A7A61')
 
   // filled contour heatmap
   const { x, y, z, zmin, zmax } = r.contour
@@ -29,7 +37,7 @@ function drawContour(canvas: HTMLCanvasElement, r: GdResult, hover: { x: number;
       ctx.fillRect(s.px(x[i]), s.py(y[j + 1]), s.px(x[i + 1]) - s.px(x[i]) + 0.5, s.py(y[j]) - s.py(y[j + 1]) + 0.5)
     }
   }
-  drawAxes(ctx, s, r.domain, { color: '#8A7A61', gridColor: 'rgba(125,118,109,0.15)' })
+  drawAxes(ctx, s, r.domain, { color: ink, gridColor: 'rgba(125,118,109,0.15)' })
 
   // hover crosshair + z value
   if (hover) {
@@ -88,10 +96,11 @@ function drawLossCurve(canvas: HTMLCanvasElement, r: GdResult) {
   const maxSteps = Math.max(...r.trajectories.map((t) => t.points.length))
   const domain: Domain = { x: [0, maxSteps - 1], y: [0, maxLoss * 1.05] }
   const s = makeScale(ctx, domain, pad)
-  const bg = document.documentElement.classList.contains('dark') ? '#1E1913' : '#F7F0E3'
+  const bg = themeVar('--ailearn-background', '#F7F0E3')
+  const ink = themeVar('--ailearn-outline', '#8A7A61')
 
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
-  drawAxes(ctx, s, domain, { color: '#8A7A61', gridColor: 'rgba(125,118,109,0.15)' })
+  drawAxes(ctx, s, domain, { color: ink, gridColor: 'rgba(125,118,109,0.15)' })
 
   for (const traj of r.trajectories) {
     ctx.strokeStyle = traj.color
@@ -103,7 +112,7 @@ function drawLossCurve(canvas: HTMLCanvasElement, r: GdResult) {
     })
     ctx.stroke()
   }
-  ctx.fillStyle = '#8A7A61'
+  ctx.fillStyle = ink
   ctx.font = '11px Manrope'
   ctx.fillText('step', W - 40, H - 8)
   ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2)
@@ -119,6 +128,9 @@ export default function GradientDescentLab({ result, loading, params, setParams 
   const scaleRef = useRef<Scale | null>(null)
   const r = result as GdResult | null
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null)
+  // Redraw whenever the theme palette or light/dark mode flips — the canvas
+  // otherwise keeps its old colours (drawn once when the result changed).
+  const { theme, palette } = useTheme()
 
   useEffect(() => {
     if (r && contourRef.current) {
@@ -126,11 +138,11 @@ export default function GradientDescentLab({ result, loading, params, setParams 
       const ctx = contourRef.current.getContext('2d')!
       scaleRef.current = makeScale(ctx, r.domain)
     }
-  }, [r, hover])
+  }, [r, hover, theme, palette])
 
   useEffect(() => {
     if (r && lossRef.current) drawLossCurve(lossRef.current, r)
-  }, [r])
+  }, [r, theme, palette])
 
   const clampPt = (x: number, y: number) => {
     if (!r) return { x, y }

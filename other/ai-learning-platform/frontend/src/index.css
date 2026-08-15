@@ -10,9 +10,817 @@
 /* Define font stacks as CSS custom properties for consistency */
 :root {
   color-scheme: light;
+
+  /* ============================================================
+     THEME TOKENS — Parchment (default)
+     Every color below is referenced by tailwind.config.js via
+     var(--ailearn-*). Themes are layered:
+       :root                          -> Parchment (default, light)
+       html.dark                      -> Parchment dark
+       html[data-theme="matcha"]      -> Matcha (sage green), light
+       html[data-theme="matcha"].dark -> Matcha dark (deep forest)
+     ============================================================ */
+  --ailearn-background: #F7F0E3;
+  --ailearn-surface: #F7F0E3;
+  --ailearn-surface-bright: #FCF8EF;
+  --ailearn-surface-dim: #DFD2B6;
+  --ailearn-surface-container: #EDE2CB;
+  --ailearn-surface-container-low: #F3EBD9;
+  --ailearn-surface-container-lowest: #FCF8EF;
+  --ailearn-surface-container-high: #E6D9BE;
+  --ailearn-surface-container-highest: #DFCFB0;
+  --ailearn-surface-variant: #E9DEC6;
+  --ailearn-on-surface: #3B3023;
+  --ailearn-on-background: #3B3023;
+  --ailearn-on-surface-variant: #6B5D48;
+  --ailearn-outline: #8A7A61;
+  --ailearn-outline-variant: #CBBBA0;
+  --ailearn-primary: #7A5C36;
+  --ailearn-on-primary: #FFF8EC;
+  --ailearn-primary-container: #E4C9A0;
+  --ailearn-on-primary-container: #FFF8EC;
+  --ailearn-primary-fixed: #EBD9BC;
+  --ailearn-primary-fixed-dim: #D4B882;
+  --ailearn-on-primary-fixed: #2E1F0E;
+  --ailearn-on-primary-fixed-variant: #5C4423;
+  --ailearn-secondary: #6E5F49;
+  --ailearn-on-secondary: #FFFFFF;
+  --ailearn-secondary-container: #EFE6D2;
+  --ailearn-on-secondary-container: #54483A;
+  --ailearn-secondary-fixed: #EFE6D2;
+  --ailearn-secondary-fixed-dim: #D3C5A8;
+  --ailearn-on-secondary-fixed: #221B10;
+  --ailearn-on-secondary-fixed-variant: #4A3E2E;
+  --ailearn-tertiary: #5E6151;
+  --ailearn-on-tertiary: #FFFFFF;
+  --ailearn-tertiary-container: #D8CBB0;
+  --ailearn-on-tertiary-container: #211B10;
+  --ailearn-tertiary-fixed: #EFE6D2;
+  --ailearn-tertiary-fixed-dim: #C5BA9F;
+  --ailearn-on-tertiary-fixed: #211B10;
+  --ailearn-on-tertiary-fixed-variant: #444838;
+  --ailearn-inverse-surface: #3B3023;
+  --ailearn-inverse-on-surface: #F7F0E3;
+  --ailearn-inverse-primary: #E7CC9F;
+  --ailearn-surface-tint: #7A5C36;
+  --ailearn-error: #A94535;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #F5D9CE;
+  --ailearn-on-error-container: #5C1D12;
+  --ailearn-dark-surface: #1E1913;
+  --ailearn-dark-surface-elevated: #2A2319;
+  --ailearn-dark-on-surface: #ECE2CD;
+
+  /* Book / reader tokens — the note leaf (parchment page) and prose colors.
+     Each theme overrides these so the flipbook matches the surrounding UI. */
+  --ailearn-page-bg-a: #F4EAE1;
+  --ailearn-page-bg-b: #EFE2D2;
+  --ailearn-page-bg-c: #E9D9C6;
+  --ailearn-page-ink: #3D322C;
+  --ailearn-page-ink-muted: #6B5D48;
+  --ailearn-page-border: rgba(140, 122, 107, 0.18);
+  --ailearn-page-shade: rgba(140, 122, 107, 0.12);
+  --ailearn-prose: #6B5D48;
+  --ailearn-prose-heading: #3B3023;
+  --ailearn-prose-border: #CBBBA0;
+  --ailearn-prose-code-bg: #EFE6D2;
+  --ailearn-prose-code-ink: #54483A;
+  /* Code blocks are dark ink slabs regardless of theme (so pygments light
+     tokens stay readable); each theme picks its own ink tone. */
+  --ailearn-code-bg: #3B3023;
+  --ailearn-code-ink: #F3EADA;
+  --ailearn-scrollbar: #CBBBA0;
+
+  /* Semantic system colors — the cognitive-layer language.
+     Memory=bamboo green · Brain=fog indigo · Agent=dusty violet ·
+     Action=clay amber · Chaos=coral · Capability=teal.
+     Each theme may re-tune them, but the hue-meaning mapping stays. */
+  --ailearn-semantic-memory: #397F73;
+  --ailearn-semantic-brain: #56679F;
+  --ailearn-semantic-agent: #8179A8;
+  --ailearn-semantic-action: #C18A52;
+  --ailearn-semantic-chaos: #C96B5E;
+  --ailearn-semantic-capability: #7187B3;
 }
 html.dark {
   color-scheme: dark;
+  --ailearn-semantic-memory: #7FBFA9;
+  --ailearn-semantic-brain: #A9B6E0;
+  --ailearn-semantic-agent: #CBC4E2;
+  --ailearn-semantic-action: #D8A878;
+  --ailearn-semantic-chaos: #E08A7C;
+  --ailearn-semantic-capability: #9FB5C1;
+  --ailearn-page-bg-a: #2A2319;
+  --ailearn-page-bg-b: #262017;
+  --ailearn-page-bg-c: #201B13;
+  --ailearn-page-ink: #D9CDB8;
+  --ailearn-page-ink-muted: #C9BCA6;
+  --ailearn-page-border: rgba(0, 0, 0, 0.35);
+  --ailearn-page-shade: rgba(0, 0, 0, 0.25);
+  --ailearn-prose: #C9BCA6;
+  --ailearn-prose-heading: #F3EADA;
+  --ailearn-prose-border: #54483A;
+  --ailearn-prose-code-bg: #3B3023;
+  --ailearn-prose-code-ink: #E7CC9F;
+  --ailearn-code-bg: #1A1611;
+  --ailearn-code-ink: #F3EADA;
+  --ailearn-scrollbar: #54483A;
+}
+
+/* ============================================================
+   THEME TOKENS — Matcha (sage green / matcha parchment)
+   Warm parchment + botanical green: 抹茶羊皮纸（鼠尾草绿）
+   ============================================================ */
+html[data-theme='matcha'] {
+  --ailearn-background: #E9EECF;
+  --ailearn-surface: #F1F4E3;
+  --ailearn-surface-bright: #F7F9ED;
+  --ailearn-surface-dim: #D5DBB8;
+  --ailearn-surface-container: #E2E8CD;
+  --ailearn-surface-container-low: #EDF1DA;
+  --ailearn-surface-container-lowest: #F4F7E9;
+  --ailearn-surface-container-high: #DAE1C2;
+  --ailearn-surface-container-highest: #D1D9B7;
+  --ailearn-surface-variant: #DEE5C6;
+  --ailearn-on-surface: #232F26;
+  --ailearn-on-background: #232F26;
+  --ailearn-on-surface-variant: #565C4E;
+  --ailearn-outline: #7D826C;
+  --ailearn-outline-variant: #C4C7AE;
+  --ailearn-primary: #5C6B5D;
+  --ailearn-on-primary: #F4F3ED;
+  --ailearn-primary-container: #CBD5C4;
+  --ailearn-on-primary-container: #F2F4EE;
+  --ailearn-primary-fixed: #DCE3D5;
+  --ailearn-primary-fixed-dim: #B9C4B0;
+  --ailearn-on-primary-fixed: #1E2A1F;
+  --ailearn-on-primary-fixed-variant: #44503F;
+  --ailearn-secondary: #6E6B52;
+  --ailearn-on-secondary: #FFFFFF;
+  --ailearn-secondary-container: #E4E1CC;
+  --ailearn-on-secondary-container: #47452F;
+  --ailearn-secondary-fixed: #E4E1CC;
+  --ailearn-secondary-fixed-dim: #CAC6A8;
+  --ailearn-on-secondary-fixed: #1F1E10;
+  --ailearn-on-secondary-fixed-variant: #3E3C28;
+  --ailearn-tertiary: #56634F;
+  --ailearn-on-tertiary: #FFFFFF;
+  --ailearn-tertiary-container: #D8D8C4;
+  --ailearn-on-tertiary-container: #1F2418;
+  --ailearn-tertiary-fixed: #E0E0CD;
+  --ailearn-tertiary-fixed-dim: #C4C6AE;
+  --ailearn-on-tertiary-fixed: #1B1F13;
+  --ailearn-on-tertiary-fixed-variant: #3F4435;
+  --ailearn-inverse-surface: #2D3A30;
+  --ailearn-inverse-on-surface: #EAE8DC;
+  --ailearn-inverse-primary: #B9C4B0;
+  --ailearn-surface-tint: #5C6B5D;
+  --ailearn-dark-surface: #161C16;
+  --ailearn-dark-surface-elevated: #1F2922;
+  --ailearn-dark-on-surface: #E3E5D7;
+  --ailearn-page-bg-a: #ECEBDB;
+  --ailearn-page-bg-b: #E6E5D1;
+  --ailearn-page-bg-c: #E0DFC8;
+  --ailearn-page-ink: #3A463C;
+  --ailearn-page-ink-muted: #5A6250;
+  --ailearn-page-border: rgba(92, 107, 93, 0.18);
+  --ailearn-page-shade: rgba(92, 107, 93, 0.12);
+  --ailearn-prose: #565C4E;
+  --ailearn-prose-heading: #232F26;
+  --ailearn-prose-border: #C4C7AE;
+  --ailearn-prose-code-bg: #E4E3D4;
+  --ailearn-prose-code-ink: #47452F;
+  --ailearn-code-bg: #3A463C;
+  --ailearn-code-ink: #E3E5D7;
+  --ailearn-scrollbar: #C4C7AE;
+  --ailearn-semantic-memory: #6E8B72;
+  --ailearn-semantic-brain: #72849A;
+  --ailearn-semantic-agent: #85809A;
+  --ailearn-semantic-action: #B28D68;
+  --ailearn-semantic-chaos: #B86F67;
+  --ailearn-semantic-capability: #71879A;
+}
+html[data-theme='matcha'] body {
+  background-color: #EAE8DC;
+  color: #232F26;
+}
+html[data-theme='matcha'].dark body {
+  background-color: #161C16;
+  color: #E3E5D7;
+}
+
+/* ============================================================
+   THEME TOKENS — Pine Mist（松烟）
+   Grey-green + pine + ink: forest paper, engineering laboratory.
+   BG #F2F5F1 · Text #293632 · Memory #6F9084 · Brain #72849A
+   ============================================================ */
+html[data-theme='pine'] {
+  --ailearn-background: #CDE5D4;
+  --ailearn-surface: #E5F2E8;
+  --ailearn-surface-bright: #F0F8F2;
+  --ailearn-surface-dim: #BBD8C5;
+  --ailearn-surface-container: #C8E2D1;
+  --ailearn-surface-container-low: #DCEEE1;
+  --ailearn-surface-container-lowest: #EDF7F0;
+  --ailearn-surface-container-high: #BFDCCA;
+  --ailearn-surface-container-highest: #B5D5C1;
+  --ailearn-surface-variant: #CBDFD1;
+  --ailearn-on-surface: #293632;
+  --ailearn-on-background: #293632;
+  --ailearn-on-surface-variant: #55685E;
+  --ailearn-outline: #7E9386;
+  --ailearn-outline-variant: #C4D4C9;
+  --ailearn-primary: #5F8276;
+  --ailearn-on-primary: #FFFFFF;
+  --ailearn-primary-container: #CFE0D8;
+  --ailearn-on-primary-container: #12332B;
+  --ailearn-primary-fixed: #DCEAE3;
+  --ailearn-primary-fixed-dim: #AFC9BE;
+  --ailearn-on-primary-fixed: #122B24;
+  --ailearn-on-primary-fixed-variant: #2F5248;
+  --ailearn-secondary: #89A49A;
+  --ailearn-on-secondary: #FFFFFF;
+  --ailearn-secondary-container: #E0EDE7;
+  --ailearn-on-secondary-container: #263C35;
+  --ailearn-secondary-fixed: #E0EDE7;
+  --ailearn-secondary-fixed-dim: #BBD3C9;
+  --ailearn-on-secondary-fixed: #1A2C26;
+  --ailearn-on-secondary-fixed-variant: #33493F;
+  --ailearn-tertiary: #71879A;
+  --ailearn-on-tertiary: #FFFFFF;
+  --ailearn-tertiary-container: #DBE4EC;
+  --ailearn-on-tertiary-container: #24394A;
+  --ailearn-tertiary-fixed: #DBE4EC;
+  --ailearn-tertiary-fixed-dim: #B9C9D6;
+  --ailearn-on-tertiary-fixed: #1C2D3B;
+  --ailearn-on-tertiary-fixed-variant: #3A5061;
+  --ailearn-inverse-surface: #2E3B35;
+  --ailearn-inverse-on-surface: #EAF0EB;
+  --ailearn-inverse-primary: #AFC9BE;
+  --ailearn-surface-tint: #5F8276;
+  --ailearn-error: #B86F67;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #F5DFDC;
+  --ailearn-on-error-container: #5C241E;
+  --ailearn-dark-surface: #141A16;
+  --ailearn-dark-surface-elevated: #1E2621;
+  --ailearn-dark-on-surface: #E6ECE7;
+  --ailearn-page-bg-a: #EDF1EC;
+  --ailearn-page-bg-b: #E6EBE5;
+  --ailearn-page-bg-c: #DFE5DE;
+  --ailearn-page-ink: #293632;
+  --ailearn-page-ink-muted: #5F6F67;
+  --ailearn-page-border: rgba(95, 130, 118, 0.2);
+  --ailearn-page-shade: rgba(95, 130, 118, 0.1);
+  --ailearn-prose: #5F6F67;
+  --ailearn-prose-heading: #293632;
+  --ailearn-prose-border: #CBD6CE;
+  --ailearn-prose-code-bg: #E9EEE8;
+  --ailearn-prose-code-ink: #33493F;
+  --ailearn-code-bg: #232D28;
+  --ailearn-code-ink: #E6ECE7;
+  --ailearn-scrollbar: #A9BCB1;
+  --ailearn-semantic-memory: #6F9084;
+  --ailearn-semantic-brain: #72849A;
+  --ailearn-semantic-agent: #817F91;
+  --ailearn-semantic-action: #B28D68;
+  --ailearn-semantic-chaos: #B86F67;
+  --ailearn-semantic-capability: #71879A;
+}
+html[data-theme='pine'] body {
+  background-color: #F2F5F1;
+  color: #293632;
+}
+html[data-theme='pine'].dark {
+  --ailearn-background: #141A16;
+  --ailearn-surface: #1A221D;
+  --ailearn-surface-bright: #222B25;
+  --ailearn-surface-dim: #121713;
+  --ailearn-surface-container: #1E2621;
+  --ailearn-surface-container-low: #19201C;
+  --ailearn-surface-container-lowest: #121713;
+  --ailearn-surface-container-high: #242E28;
+  --ailearn-surface-container-highest: #2A352F;
+  --ailearn-surface-variant: #26312B;
+  --ailearn-on-surface: #E6ECE7;
+  --ailearn-on-background: #E6ECE7;
+  --ailearn-on-surface-variant: #9AA9A1;
+  --ailearn-outline: #7B8B83;
+  --ailearn-outline-variant: #39453E;
+  --ailearn-primary: #8FB5A7;
+  --ailearn-on-primary: #12332B;
+  --ailearn-primary-container: #2F5248;
+  --ailearn-on-primary-container: #DCEAE3;
+  --ailearn-primary-fixed: #DCEAE3;
+  --ailearn-primary-fixed-dim: #AFC9BE;
+  --ailearn-on-primary-fixed: #122B24;
+  --ailearn-on-primary-fixed-variant: #2F5248;
+  --ailearn-secondary: #BBD3C9;
+  --ailearn-on-secondary: #1A2C26;
+  --ailearn-secondary-container: #33493F;
+  --ailearn-on-secondary-container: #E0EDE7;
+  --ailearn-secondary-fixed: #E0EDE7;
+  --ailearn-secondary-fixed-dim: #BBD3C9;
+  --ailearn-on-secondary-fixed: #1A2C26;
+  --ailearn-on-secondary-fixed-variant: #33493F;
+  --ailearn-tertiary: #B9C9D6;
+  --ailearn-on-tertiary: #1C2D3B;
+  --ailearn-tertiary-container: #3A5061;
+  --ailearn-on-tertiary-container: #DBE4EC;
+  --ailearn-tertiary-fixed: #DBE4EC;
+  --ailearn-tertiary-fixed-dim: #B9C9D6;
+  --ailearn-on-tertiary-fixed: #1C2D3B;
+  --ailearn-on-tertiary-fixed-variant: #3A5061;
+  --ailearn-inverse-surface: #E6ECE7;
+  --ailearn-inverse-on-surface: #141A16;
+  --ailearn-inverse-primary: #5F8276;
+  --ailearn-surface-tint: #8FB5A7;
+  --ailearn-error: #D18D84;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #5C241E;
+  --ailearn-on-error-container: #F5DFDC;
+  --ailearn-page-bg-a: #1E2621;
+  --ailearn-page-bg-b: #19201C;
+  --ailearn-page-bg-c: #151B17;
+  --ailearn-page-ink: #DCE4DF;
+  --ailearn-page-ink-muted: #9AA9A1;
+  --ailearn-page-border: rgba(143, 181, 167, 0.18);
+  --ailearn-page-shade: rgba(0, 0, 0, 0.3);
+  --ailearn-prose: #9AA9A1;
+  --ailearn-prose-heading: #E6ECE7;
+  --ailearn-prose-border: #39453E;
+  --ailearn-prose-code-bg: #26312B;
+  --ailearn-prose-code-ink: #BBD3C9;
+  --ailearn-code-bg: #1B231E;
+  --ailearn-code-ink: #DCE4DF;
+  --ailearn-scrollbar: #39453E;
+}
+html[data-theme='pine'].dark body {
+  background-color: #141A16;
+  color: #E6ECE7;
+}
+
+/* ============================================================
+   THEME TOKENS — Studio（工作室）
+   Fog-blue + clay: architectural design studio.
+   BG #F3F4F2 · Text #34393A · Brain #738895 · Clay #B7836C
+   ============================================================ */
+html[data-theme='studio'] {
+  --ailearn-background: #CCE1EE;
+  --ailearn-surface: #E5F0F6;
+  --ailearn-surface-bright: #F1F8FB;
+  --ailearn-surface-dim: #BBD2E0;
+  --ailearn-surface-container: #C9DDE9;
+  --ailearn-surface-container-low: #DDEBF2;
+  --ailearn-surface-container-lowest: #EDF6F9;
+  --ailearn-surface-container-high: #C0D6E3;
+  --ailearn-surface-container-highest: #B6CEDD;
+  --ailearn-surface-variant: #CDE0EB;
+  --ailearn-on-surface: #34393A;
+  --ailearn-on-background: #34393A;
+  --ailearn-on-surface-variant: #5C6A6E;
+  --ailearn-outline: #839296;
+  --ailearn-outline-variant: #C8D3D7;
+  --ailearn-primary: #738895;
+  --ailearn-on-primary: #FFFFFF;
+  --ailearn-primary-container: #D9E1E7;
+  --ailearn-on-primary-container: #233A46;
+  --ailearn-primary-fixed: #E3E9EE;
+  --ailearn-primary-fixed-dim: #B9C7D1;
+  --ailearn-on-primary-fixed: #1E2E38;
+  --ailearn-on-primary-fixed-variant: #3A525E;
+  --ailearn-secondary: #829B92;
+  --ailearn-on-secondary: #FFFFFF;
+  --ailearn-secondary-container: #DDE9E3;
+  --ailearn-on-secondary-container: #263B34;
+  --ailearn-secondary-fixed: #DDE9E3;
+  --ailearn-secondary-fixed-dim: #B9CEC5;
+  --ailearn-on-secondary-fixed: #1B2E28;
+  --ailearn-on-secondary-fixed-variant: #33493F;
+  --ailearn-tertiary: #85809A;
+  --ailearn-on-tertiary: #FFFFFF;
+  --ailearn-tertiary-container: #E3E0EC;
+  --ailearn-on-tertiary-container: #2E2C44;
+  --ailearn-tertiary-fixed: #E3E0EC;
+  --ailearn-tertiary-fixed-dim: #C4C0D6;
+  --ailearn-on-tertiary-fixed: #232136;
+  --ailearn-on-tertiary-fixed-variant: #45425C;
+  --ailearn-inverse-surface: #30363A;
+  --ailearn-inverse-on-surface: #EDF0F1;
+  --ailearn-inverse-primary: #B9C7D1;
+  --ailearn-surface-tint: #738895;
+  --ailearn-error: #BD7167;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #F6DFDC;
+  --ailearn-on-error-container: #5E241E;
+  --ailearn-dark-surface: #16191B;
+  --ailearn-dark-surface-elevated: #202527;
+  --ailearn-dark-on-surface: #E8ECEE;
+  --ailearn-page-bg-a: #EFF1EF;
+  --ailearn-page-bg-b: #E8EBE8;
+  --ailearn-page-bg-c: #E1E5E1;
+  --ailearn-page-ink: #34393A;
+  --ailearn-page-ink-muted: #66706F;
+  --ailearn-page-border: rgba(115, 136, 149, 0.2);
+  --ailearn-page-shade: rgba(115, 136, 149, 0.1);
+  --ailearn-prose: #66706F;
+  --ailearn-prose-heading: #34393A;
+  --ailearn-prose-border: #CFD5D2;
+  --ailearn-prose-code-bg: #EAEDEA;
+  --ailearn-prose-code-ink: #33493F;
+  --ailearn-code-bg: #242B2E;
+  --ailearn-code-ink: #E8ECEE;
+  --ailearn-scrollbar: #ABB4B2;
+  --ailearn-semantic-memory: #829B92;
+  --ailearn-semantic-brain: #738895;
+  --ailearn-semantic-agent: #85809A;
+  --ailearn-semantic-action: #B7836C;
+  --ailearn-semantic-chaos: #BD7167;
+  --ailearn-semantic-capability: #A6B5BA;
+}
+html[data-theme='studio'] body {
+  background-color: #F3F4F2;
+  color: #34393A;
+}
+html[data-theme='studio'].dark {
+  --ailearn-background: #16191B;
+  --ailearn-surface: #1C2123;
+  --ailearn-surface-bright: #242A2D;
+  --ailearn-surface-dim: #131618;
+  --ailearn-surface-container: #202527;
+  --ailearn-surface-container-low: #1A1F21;
+  --ailearn-surface-container-lowest: #131618;
+  --ailearn-surface-container-high: #262C2F;
+  --ailearn-surface-container-highest: #2C3336;
+  --ailearn-surface-variant: #283034;
+  --ailearn-on-surface: #E8ECEE;
+  --ailearn-on-background: #E8ECEE;
+  --ailearn-on-surface-variant: #A2ADAE;
+  --ailearn-outline: #828D8E;
+  --ailearn-outline-variant: #3D4547;
+  --ailearn-primary: #9FB5C1;
+  --ailearn-on-primary: #233A46;
+  --ailearn-primary-container: #3A525E;
+  --ailearn-on-primary-container: #E3E9EE;
+  --ailearn-primary-fixed: #E3E9EE;
+  --ailearn-primary-fixed-dim: #B9C7D1;
+  --ailearn-on-primary-fixed: #1E2E38;
+  --ailearn-on-primary-fixed-variant: #3A525E;
+  --ailearn-secondary: #B9CEC5;
+  --ailearn-on-secondary: #1B2E28;
+  --ailearn-secondary-container: #33493F;
+  --ailearn-on-secondary-container: #DDE9E3;
+  --ailearn-secondary-fixed: #DDE9E3;
+  --ailearn-secondary-fixed-dim: #B9CEC5;
+  --ailearn-on-secondary-fixed: #1B2E28;
+  --ailearn-on-secondary-fixed-variant: #33493F;
+  --ailearn-tertiary: #C4C0D6;
+  --ailearn-on-tertiary: #232136;
+  --ailearn-tertiary-container: #45425C;
+  --ailearn-on-tertiary-container: #E3E0EC;
+  --ailearn-tertiary-fixed: #E3E0EC;
+  --ailearn-tertiary-fixed-dim: #C4C0D6;
+  --ailearn-on-tertiary-fixed: #232136;
+  --ailearn-on-tertiary-fixed-variant: #45425C;
+  --ailearn-inverse-surface: #E8ECEE;
+  --ailearn-inverse-on-surface: #16191B;
+  --ailearn-inverse-primary: #738895;
+  --ailearn-surface-tint: #9FB5C1;
+  --ailearn-error: #D4938A;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #5E241E;
+  --ailearn-on-error-container: #F6DFDC;
+  --ailearn-page-bg-a: #202527;
+  --ailearn-page-bg-b: #1A1F21;
+  --ailearn-page-bg-c: #161A1C;
+  --ailearn-page-ink: #DEE3E4;
+  --ailearn-page-ink-muted: #A2ADAE;
+  --ailearn-page-border: rgba(159, 181, 193, 0.18);
+  --ailearn-page-shade: rgba(0, 0, 0, 0.3);
+  --ailearn-prose: #A2ADAE;
+  --ailearn-prose-heading: #E8ECEE;
+  --ailearn-prose-border: #3D4547;
+  --ailearn-prose-code-bg: #283034;
+  --ailearn-prose-code-ink: #B9CEC5;
+  --ailearn-code-bg: #1C2224;
+  --ailearn-code-ink: #DEE3E4;
+  --ailearn-scrollbar: #3D4547;
+}
+html[data-theme='studio'].dark body {
+  background-color: #16191B;
+  color: #E8ECEE;
+}
+
+/* ============================================================
+   THEME TOKENS — Moss & Stone（苔石）
+   Moss green + limestone: field research, experiment tool.
+   BG #F1F3EF · Text #30352F · Moss #71826C · Stone #899096
+   ============================================================ */
+html[data-theme='moss'] {
+  --ailearn-background: #E1EAD1;
+  --ailearn-surface: #EEF4E3;
+  --ailearn-surface-bright: #F6F9EF;
+  --ailearn-surface-dim: #CBD8B4;
+  --ailearn-surface-container: #D9E4C4;
+  --ailearn-surface-container-low: #E7EFD8;
+  --ailearn-surface-container-lowest: #F1F7EB;
+  --ailearn-surface-container-high: #D1DEBA;
+  --ailearn-surface-container-highest: #C8D7B0;
+  --ailearn-surface-variant: #DCE6C7;
+  --ailearn-on-surface: #30352F;
+  --ailearn-on-background: #30352F;
+  --ailearn-on-surface-variant: #59665A;
+  --ailearn-outline: #818C80;
+  --ailearn-outline-variant: #C6D0C2;
+  --ailearn-primary: #71826C;
+  --ailearn-on-primary: #FFFFFF;
+  --ailearn-primary-container: #D4DED0;
+  --ailearn-on-primary-container: #1D3620;
+  --ailearn-primary-fixed: #E1E9DD;
+  --ailearn-primary-fixed-dim: #B4C6AE;
+  --ailearn-on-primary-fixed: #182B1B;
+  --ailearn-on-primary-fixed-variant: #2F4A2F;
+  --ailearn-secondary: #899096;
+  --ailearn-on-secondary: #FFFFFF;
+  --ailearn-secondary-container: #DFE3E5;
+  --ailearn-on-secondary-container: #2A3136;
+  --ailearn-secondary-fixed: #DFE3E5;
+  --ailearn-secondary-fixed-dim: #BCC3C7;
+  --ailearn-on-secondary-fixed: #20262A;
+  --ailearn-on-secondary-fixed-variant: #394147;
+  --ailearn-tertiary: #89829A;
+  --ailearn-on-tertiary: #FFFFFF;
+  --ailearn-tertiary-container: #E4E0EA;
+  --ailearn-on-tertiary-container: #302C3E;
+  --ailearn-tertiary-fixed: #E4E0EA;
+  --ailearn-tertiary-fixed-dim: #C6C1D2;
+  --ailearn-on-tertiary-fixed: #262231;
+  --ailearn-on-tertiary-fixed-variant: #47425A;
+  --ailearn-inverse-surface: #31382F;
+  --ailearn-inverse-on-surface: #ECF0EA;
+  --ailearn-inverse-primary: #B4C6AE;
+  --ailearn-surface-tint: #71826C;
+  --ailearn-error: #B86F67;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #F5DFDC;
+  --ailearn-on-error-container: #5C241E;
+  --ailearn-dark-surface: #151715;
+  --ailearn-dark-surface-elevated: #1F231F;
+  --ailearn-dark-on-surface: #E7EBE6;
+  --ailearn-page-bg-a: #EDF0EB;
+  --ailearn-page-bg-b: #E6EAE4;
+  --ailearn-page-bg-c: #DFE4DD;
+  --ailearn-page-ink: #30352F;
+  --ailearn-page-ink-muted: #626B62;
+  --ailearn-page-border: rgba(113, 130, 108, 0.2);
+  --ailearn-page-shade: rgba(113, 130, 108, 0.1);
+  --ailearn-prose: #626B62;
+  --ailearn-prose-heading: #30352F;
+  --ailearn-prose-border: #CCD3CB;
+  --ailearn-prose-code-bg: #E8ECE7;
+  --ailearn-prose-code-ink: #394147;
+  --ailearn-code-bg: #242922;
+  --ailearn-code-ink: #E7EBE6;
+  --ailearn-scrollbar: #AAB2AA;
+  --ailearn-semantic-memory: #71826C;
+  --ailearn-semantic-brain: #788796;
+  --ailearn-semantic-agent: #89829A;
+  --ailearn-semantic-action: #A68D70;
+  --ailearn-semantic-chaos: #B86F67;
+  --ailearn-semantic-capability: #899096;
+}
+html[data-theme='moss'] body {
+  background-color: #F1F3EF;
+  color: #30352F;
+}
+html[data-theme='moss'].dark {
+  --ailearn-background: #151715;
+  --ailearn-surface: #1B1F1B;
+  --ailearn-surface-bright: #232823;
+  --ailearn-surface-dim: #121412;
+  --ailearn-surface-container: #1F231F;
+  --ailearn-surface-container-low: #191C19;
+  --ailearn-surface-container-lowest: #121412;
+  --ailearn-surface-container-high: #252A25;
+  --ailearn-surface-container-highest: #2B312B;
+  --ailearn-surface-variant: #273026;
+  --ailearn-on-surface: #E7EBE6;
+  --ailearn-on-background: #E7EBE6;
+  --ailearn-on-surface-variant: #9BA39B;
+  --ailearn-outline: #7D857D;
+  --ailearn-outline-variant: #3B433B;
+  --ailearn-primary: #91A48B;
+  --ailearn-on-primary: #1D3620;
+  --ailearn-primary-container: #2F4A2F;
+  --ailearn-on-primary-container: #E1E9DD;
+  --ailearn-primary-fixed: #E1E9DD;
+  --ailearn-primary-fixed-dim: #B4C6AE;
+  --ailearn-on-primary-fixed: #182B1B;
+  --ailearn-on-primary-fixed-variant: #2F4A2F;
+  --ailearn-secondary: #BCC3C7;
+  --ailearn-on-secondary: #20262A;
+  --ailearn-secondary-container: #394147;
+  --ailearn-on-secondary-container: #DFE3E5;
+  --ailearn-secondary-fixed: #DFE3E5;
+  --ailearn-secondary-fixed-dim: #BCC3C7;
+  --ailearn-on-secondary-fixed: #20262A;
+  --ailearn-on-secondary-fixed-variant: #394147;
+  --ailearn-tertiary: #C6C1D2;
+  --ailearn-on-tertiary: #262231;
+  --ailearn-tertiary-container: #47425A;
+  --ailearn-on-tertiary-container: #E4E0EA;
+  --ailearn-tertiary-fixed: #E4E0EA;
+  --ailearn-tertiary-fixed-dim: #C6C1D2;
+  --ailearn-on-tertiary-fixed: #262231;
+  --ailearn-on-tertiary-fixed-variant: #47425A;
+  --ailearn-inverse-surface: #E7EBE6;
+  --ailearn-inverse-on-surface: #151715;
+  --ailearn-inverse-primary: #71826C;
+  --ailearn-surface-tint: #91A48B;
+  --ailearn-error: #D18D84;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #5C241E;
+  --ailearn-on-error-container: #F5DFDC;
+  --ailearn-page-bg-a: #1F231F;
+  --ailearn-page-bg-b: #191C19;
+  --ailearn-page-bg-c: #151715;
+  --ailearn-page-ink: #DCE1DA;
+  --ailearn-page-ink-muted: #9BA39B;
+  --ailearn-page-border: rgba(145, 164, 139, 0.18);
+  --ailearn-page-shade: rgba(0, 0, 0, 0.3);
+  --ailearn-prose: #9BA39B;
+  --ailearn-prose-heading: #E7EBE6;
+  --ailearn-prose-border: #3B433B;
+  --ailearn-prose-code-bg: #273026;
+  --ailearn-prose-code-ink: #BCC3C7;
+  --ailearn-code-bg: #1C211B;
+  --ailearn-code-ink: #DCE1DA;
+  --ailearn-scrollbar: #3B433B;
+}
+html[data-theme='moss'].dark body {
+  background-color: #151715;
+  color: #E7EBE6;
+}
+
+/* Theme switch transition — when data-theme (or .dark) flips, body and the
+   main layout surfaces fade smoothly into the new palette instead of
+   snapping. ~1.2s gives a slow, tide-like gradient feel. */
+body,
+html.dark body,
+.theme-anim {
+  transition: background-color 1.2s ease, color 1.2s ease;
+}
+
+/* ============================================================
+   THEME TOKENS — QingDai Lab（青黛实验室）
+   Bamboo × Indigo × Violet — a quiet East-Asian laboratory.
+   Bamboo/Memory #397F73 · Indigo/Brain #56679F · Violet/Agent
+   #8179A8 · Amber/Action #C18A52 · Coral/Chaos #C96B5E
+   ============================================================ */
+html[data-theme='qingdai'] {
+  --ailearn-background: #D3EBE5;
+  --ailearn-surface: #E7F4F0;
+  --ailearn-surface-bright: #F2F9F6;
+  --ailearn-surface-dim: #C3DEDA;
+  --ailearn-surface-container: #CDE6E0;
+  --ailearn-surface-container-low: #DFF0EB;
+  --ailearn-surface-container-lowest: #EFF8F5;
+  --ailearn-surface-container-high: #C4E0DA;
+  --ailearn-surface-container-highest: #BBD8D1;
+  --ailearn-surface-variant: #CFE6E1;
+  --ailearn-on-surface: #26363A;
+  --ailearn-on-background: #26363A;
+  --ailearn-on-surface-variant: #566F6B;
+  --ailearn-outline: #7E9893;
+  --ailearn-outline-variant: #C9DAD5;
+  --ailearn-primary: #397F73;            /* bamboo / memory */
+  --ailearn-on-primary: #FFFFFF;
+  --ailearn-primary-container: #C7E0D7;
+  --ailearn-on-primary-container: #0F2E28;
+  --ailearn-primary-fixed: #D6E8E1;
+  --ailearn-primary-fixed-dim: #A9CDC2;
+  --ailearn-on-primary-fixed: #0F2E28;
+  --ailearn-on-primary-fixed-variant: #2C5C50;
+  --ailearn-secondary: #56679F;          /* indigo / brain */
+  --ailearn-on-secondary: #FFFFFF;
+  --ailearn-secondary-container: #DCE1F0;
+  --ailearn-on-secondary-container: #242E4E;
+  --ailearn-secondary-fixed: #DCE1F0;
+  --ailearn-secondary-fixed-dim: #BCC6E2;
+  --ailearn-on-secondary-fixed: #1C2440;
+  --ailearn-on-secondary-fixed-variant: #3C4670;
+  --ailearn-tertiary: #8179A8;           /* violet / agent */
+  --ailearn-on-tertiary: #FFFFFF;
+  --ailearn-tertiary-container: #E6E2F2;
+  --ailearn-on-tertiary-container: #312C4E;
+  --ailearn-tertiary-fixed: #E6E2F2;
+  --ailearn-tertiary-fixed-dim: #CBC4E2;
+  --ailearn-on-tertiary-fixed: #1E1B33;
+  --ailearn-on-tertiary-fixed-variant: #4C4670;
+  --ailearn-inverse-surface: #2C3A36;
+  --ailearn-inverse-on-surface: #EAF1ED;
+  --ailearn-inverse-primary: #A9CDC2;
+  --ailearn-surface-tint: #397F73;
+  --ailearn-error: #C96B5E;              /* coral / chaos */
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #F6DED6;
+  --ailearn-on-error-container: #522016;
+  --ailearn-dark-surface: #101714;
+  --ailearn-dark-surface-elevated: #1A2420;
+  --ailearn-dark-on-surface: #E4ECE8;
+  --ailearn-page-bg-a: #EAF1ED;
+  --ailearn-page-bg-b: #E3ECE7;
+  --ailearn-page-bg-c: #DCE5E1;
+  --ailearn-page-ink: #26363A;
+  --ailearn-page-ink-muted: #718087;
+  --ailearn-page-border: rgba(57, 127, 115, 0.2);
+  --ailearn-page-shade: rgba(57, 127, 115, 0.1);
+  --ailearn-prose: #718087;
+  --ailearn-prose-heading: #26363A;
+  --ailearn-prose-border: #D9E3DF;
+  --ailearn-prose-code-bg: #EDF2EF;
+  --ailearn-prose-code-ink: #2C5C50;
+  --ailearn-code-bg: #24302B;
+  --ailearn-code-ink: #D9E4DF;
+  --ailearn-scrollbar: #A9C3BA;
+  --ailearn-semantic-memory: #397F73;
+  --ailearn-semantic-brain: #56679F;
+  --ailearn-semantic-agent: #8179A8;
+  --ailearn-semantic-action: #C18A52;
+  --ailearn-semantic-chaos: #C96B5E;
+  --ailearn-semantic-capability: #7187B3;
+}
+html[data-theme='qingdai'] body {
+  background-color: #F3F6F4;
+  color: #26363A;
+}
+html[data-theme='qingdai'].dark {
+  --ailearn-background: #101714;
+  --ailearn-surface: #151E1A;
+  --ailearn-surface-bright: #1F2A25;
+  --ailearn-surface-dim: #101714;
+  --ailearn-surface-container: #1A2420;
+  --ailearn-surface-container-low: #17201C;
+  --ailearn-surface-container-lowest: #101714;
+  --ailearn-surface-container-high: #212C27;
+  --ailearn-surface-container-highest: #283530;
+  --ailearn-surface-variant: #24302B;
+  --ailearn-on-surface: #E4ECE8;
+  --ailearn-on-background: #E4ECE8;
+  --ailearn-on-surface-variant: #93A39C;
+  --ailearn-outline: #71877F;
+  --ailearn-outline-variant: #33443E;
+  --ailearn-primary: #7FBFA9;
+  --ailearn-on-primary: #10322A;
+  --ailearn-primary-container: #2C5C50;
+  --ailearn-on-primary-container: #D6E8E1;
+  --ailearn-primary-fixed: #D6E8E1;
+  --ailearn-primary-fixed-dim: #A9CDC2;
+  --ailearn-on-primary-fixed: #0F2E28;
+  --ailearn-on-primary-fixed-variant: #2C5C50;
+  --ailearn-secondary: #A9B6E0;
+  --ailearn-on-secondary: #1C2440;
+  --ailearn-secondary-container: #3C4670;
+  --ailearn-on-secondary-container: #DCE1F0;
+  --ailearn-secondary-fixed: #DCE1F0;
+  --ailearn-secondary-fixed-dim: #BCC6E2;
+  --ailearn-on-secondary-fixed: #1C2440;
+  --ailearn-on-secondary-fixed-variant: #3C4670;
+  --ailearn-tertiary: #CBC4E2;
+  --ailearn-on-tertiary: #1E1B33;
+  --ailearn-tertiary-container: #4C4670;
+  --ailearn-on-tertiary-container: #E6E2F2;
+  --ailearn-tertiary-fixed: #E6E2F2;
+  --ailearn-tertiary-fixed-dim: #CBC4E2;
+  --ailearn-on-tertiary-fixed: #1E1B33;
+  --ailearn-on-tertiary-fixed-variant: #4C4670;
+  --ailearn-inverse-surface: #E4ECE8;
+  --ailearn-inverse-on-surface: #101714;
+  --ailearn-inverse-primary: #397F73;
+  --ailearn-surface-tint: #7FBFA9;
+  --ailearn-error: #E08A7C;
+  --ailearn-on-error: #FFFFFF;
+  --ailearn-error-container: #522016;
+  --ailearn-on-error-container: #F6DED6;
+  --ailearn-page-bg-a: #1A2420;
+  --ailearn-page-bg-b: #16201C;
+  --ailearn-page-bg-c: #121A17;
+  --ailearn-page-ink: #D9E4DF;
+  --ailearn-page-ink-muted: #93A39C;
+  --ailearn-page-border: rgba(127, 191, 169, 0.18);
+  --ailearn-page-shade: rgba(0, 0, 0, 0.3);
+  --ailearn-prose: #93A39C;
+  --ailearn-prose-heading: #E4ECE8;
+  --ailearn-prose-border: #33443E;
+  --ailearn-prose-code-bg: #24302B;
+  --ailearn-prose-code-ink: #A9CDC2;
+  --ailearn-code-bg: #18201C;
+  --ailearn-code-ink: #D9E4DF;
+  --ailearn-scrollbar: #33443E;
+}
+html[data-theme='qingdai'].dark body {
+  background-color: #101714;
+  color: #E4ECE8;
 }
 
 html, body, #root {
@@ -31,14 +839,30 @@ html {
   font-synthesis: weight style;
 }
 
-/* Body base styling */
+/* Body base styling — the page background is a soft vertical gradient
+   built from the active theme's surface tokens (bright top → base middle →
+   container-low bottom). Switching palette/dark flips these tokens, and the
+   slow transition fades the whole gradient over instead of snapping. */
 body {
-  background-color: #F7F0E3;
-  color: #3B3023;
+  background: linear-gradient(
+    180deg,
+    var(--ailearn-surface-bright) 0%,
+    var(--ailearn-background) 42%,
+    var(--ailearn-surface-container-low) 100%
+  );
+  background-attachment: fixed;
+  color: var(--ailearn-on-background);
+  transition: background-color 1.2s ease, color 1.2s ease;
 }
 html.dark body {
-  background-color: #1E1913;
-  color: #ECE2CD;
+  background: linear-gradient(
+    180deg,
+    var(--ailearn-dark-surface) 0%,
+    var(--ailearn-dark-surface-elevated) 55%,
+    var(--ailearn-surface-container) 100%
+  );
+  background-attachment: fixed;
+  color: var(--ailearn-dark-on-surface);
 }
 
 /* Ensure form elements and other special tags inherit the document font */
@@ -64,8 +888,8 @@ button, input, select, textarea, label {
 /* Scrollbars */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #CBBBA0; border-radius: 8px; }
-html.dark ::-webkit-scrollbar-thumb { background: #54483A; }
+::-webkit-scrollbar-thumb { background: var(--ailearn-scrollbar); border-radius: 8px; }
+html.dark ::-webkit-scrollbar-thumb { background: var(--ailearn-scrollbar); }
 
 /* ------------------------------------------------------------------ */
 /* Markdown / prose styling (used by the note reader)                 */
@@ -74,10 +898,10 @@ html.dark ::-webkit-scrollbar-thumb { background: #54483A; }
   font-family: var(--stack-body);
   font-size: 17px;
   line-height: 1.8;
-  color: #6B5D48;
+  color: var(--ailearn-prose);
   font-weight: 400;
 }
-html.dark .prose-ailearn { color: #C9BCA6; }
+html.dark .prose-ailearn { color: var(--ailearn-prose); }
 
 /* Headings — mono for Latin, soft sans (黑体) for CJK (stacks from ./fonts.css). */
 .prose-ailearn h1,
@@ -85,32 +909,32 @@ html.dark .prose-ailearn { color: #C9BCA6; }
 .prose-ailearn h3,
 .prose-ailearn h4 {
   font-family: var(--stack-body);
-  color: #3B3023;
+  color: var(--ailearn-prose-heading);
   font-weight: 500;
   scroll-margin-top: 96px;
 }
 html.dark .prose-ailearn h1,
 html.dark .prose-ailearn h2,
 html.dark .prose-ailearn h3,
-html.dark .prose-ailearn h4 { color: #F3EADA; }
+html.dark .prose-ailearn h4 { color: var(--ailearn-prose-heading); }
 
 .prose-ailearn h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 0.8em; }
-.prose-ailearn h2 { font-size: 1.6rem; margin: 1.8em 0 0.6em; padding-bottom: 0.3em; border-bottom: 1px solid #CBBBA0; }
+.prose-ailearn h2 { font-size: 1.6rem; margin: 1.8em 0 0.6em; padding-bottom: 0.3em; border-bottom: 1px solid var(--ailearn-prose-border); }
 .prose-ailearn h3 { font-size: 1.3rem; margin: 1.4em 0 0.5em; }
 .prose-ailearn h4 { font-size: 1.1rem; margin: 1.2em 0 0.4em; }
-html.dark .prose-ailearn h2 { border-bottom-color: #54483A; }
+html.dark .prose-ailearn h2 { border-bottom-color: var(--ailearn-prose-border); }
 
 .prose-ailearn p { margin: 1em 0; }
-.prose-ailearn a { color: #7A5C36; text-decoration: underline; text-underline-offset: 3px; }
-html.dark .prose-ailearn a { color: #E7CC9F; }
-.prose-ailearn a:hover { color: #5C4423; }
+.prose-ailearn a { color: var(--ailearn-primary); text-decoration: underline; text-underline-offset: 3px; }
+html.dark .prose-ailearn a { color: var(--ailearn-inverse-primary); }
+.prose-ailearn a:hover { color: var(--ailearn-on-primary-fixed-variant); }
 
 /* Strong/bold — allow synthetic bold so CJK doesn't fall back */
 .prose-ailearn strong, .prose-ailearn b {
   font-weight: 700;
-  color: #3B3023;
+  color: var(--ailearn-prose-heading);
 }
-html.dark .prose-ailearn strong, html.dark .prose-ailearn b { color: #FFFFFF; }
+html.dark .prose-ailearn strong, html.dark .prose-ailearn b { color: var(--ailearn-prose-heading); }
 
 .prose-ailearn ul, .prose-ailearn ol { margin: 1em 0; padding-left: 1.6em; }
 .prose-ailearn li { margin: 0.4em 0; }
@@ -118,28 +942,28 @@ html.dark .prose-ailearn strong, html.dark .prose-ailearn b { color: #FFFFFF; }
 .prose-ailearn ol > li { list-style: decimal; }
 
 .prose-ailearn blockquote {
-  border-left: 3px solid #7A5C36;
+  border-left: 3px solid var(--ailearn-primary);
   padding: 0.4em 1em;
   margin: 1.4em 0;
-  background: #F3EBD9;
+  background: var(--ailearn-surface-container-low);
   border-radius: 0 0.5rem 0.5rem 0;
-  color: #6B5D48;
+  color: var(--ailearn-prose);
 }
-html.dark .prose-ailearn blockquote { background: #2A2319; color: #C9BCA6; border-left-color: #E7CC9F; }
+html.dark .prose-ailearn blockquote { background: var(--ailearn-dark-surface-elevated); color: var(--ailearn-prose); border-left-color: var(--ailearn-inverse-primary); }
 
 .prose-ailearn code {
   font-family: var(--font-mono);
   font-size: 0.88em;
-  background: #EDE2CB;
+  background: var(--ailearn-prose-code-bg);
   padding: 0.15em 0.4em;
   border-radius: 0.35rem;
-  color: #7A5C36;
+  color: var(--ailearn-primary);
 }
-html.dark .prose-ailearn code { background: #3B3023; color: #E7CC9F; }
+html.dark .prose-ailearn code { background: var(--ailearn-prose-code-bg); color: var(--ailearn-inverse-primary); }
 
 .prose-ailearn pre {
-  background: #3B3023;
-  color: #F3EADA;
+  background: var(--ailearn-code-bg);
+  color: var(--ailearn-code-ink);
   padding: 1em 1.2em;
   border-radius: 0.75rem;
   overflow-x: auto;
@@ -147,7 +971,7 @@ html.dark .prose-ailearn code { background: #3B3023; color: #E7CC9F; }
   margin: 1.2em 0;
   font-size: 0.82em;
   line-height: 1.55;
-  box-shadow: 0 4px 24px rgba(59, 48, 35, 0.14);
+  box-shadow: 0 4px 24px var(--ailearn-page-shade);
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
   white-space: pre;
@@ -155,7 +979,7 @@ html.dark .prose-ailearn code { background: #3B3023; color: #E7CC9F; }
   word-break: normal;
 }
 html.dark .prose-ailearn pre {
-  background: #1A1611;
+  background: var(--ailearn-code-bg);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 .prose-ailearn pre code {
@@ -202,25 +1026,25 @@ html.dark .prose-ailearn .table-wrap::-webkit-scrollbar-thumb {
   line-height: 1.5;
 }
 .prose-ailearn th, .prose-ailearn td {
-  border: 1px solid #CBBBA0;
+  border: 1px solid var(--ailearn-prose-border);
   padding: 0.5em 0.8em;
   text-align: left;
   vertical-align: top;
 }
-.prose-ailearn th { background: #EDE2CB; font-weight: 600; color: #3B3023; }
-html.dark .prose-ailearn th, html.dark .prose-ailearn td { border-color: #54483A; }
-html.dark .prose-ailearn th { background: #2A2319; color: #F3EADA; }
-html.dark .prose-ailearn td { color: #D9CDB8; }
+.prose-ailearn th { background: var(--ailearn-surface-container); font-weight: 600; color: var(--ailearn-prose-heading); }
+html.dark .prose-ailearn th, html.dark .prose-ailearn td { border-color: var(--ailearn-prose-border); }
+html.dark .prose-ailearn th { background: var(--ailearn-dark-surface-elevated); color: var(--ailearn-prose-heading); }
+html.dark .prose-ailearn td { color: var(--ailearn-page-ink); }
 
 .prose-ailearn img {
   max-width: 100%;
   border-radius: 1rem;
   margin: 1.4em auto;
   display: block;
-  box-shadow: 0 4px 24px rgba(59, 48, 35, 0.1);
+  box-shadow: 0 4px 24px var(--ailearn-page-shade);
 }
-.prose-ailearn hr { border: none; border-top: 1px solid #CBBBA0; margin: 2em 0; }
-html.dark .prose-ailearn hr { border-top-color: #54483A; }
+.prose-ailearn hr { border: none; border-top: 1px solid var(--ailearn-prose-border); margin: 2em 0; }
+html.dark .prose-ailearn hr { border-top-color: var(--ailearn-prose-border); }
 
 /* KaTeX math formulas — Cascadia Code preferred, then mono, then KaTeX's math fonts */
 .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.5em 0; }
@@ -243,14 +1067,14 @@ html.dark .prose-ailearn hr { border-top-color: #54483A; }
   display: inline-block;
   font-family: var(--font-mono);
   font-size: 0.85em;
-  background: #F5D9CE;
-  color: #5C1D12;
+  background: var(--ailearn-error-container);
+  color: var(--ailearn-on-error-container);
   padding: 0.1em 0.4em;
   border-radius: 0.35rem;
 }
 html.dark .prose-ailearn .ailearn-math-error {
-  background: #4A2A20;
-  color: #E9B8B2;
+  background: var(--ailearn-error-container);
+  color: var(--ailearn-on-error-container);
 }
 
 /* ------------------------------------------------------------------ */
@@ -361,28 +1185,28 @@ html.dark .map-tooltip {
   position: absolute;
   background:
     radial-gradient(120% 100% at 0% 50%, rgba(61,50,44,0.05) 0%, transparent 22%),
-    linear-gradient(135deg, #F4EAE1 0%, #EFE2D2 55%, #E9D9C6 100%);
-  color: #3D322C;
+    linear-gradient(135deg, var(--ailearn-page-bg-a) 0%, var(--ailearn-page-bg-b) 55%, var(--ailearn-page-bg-c) 100%);
+  color: var(--ailearn-page-ink);
   box-shadow:
-    inset 0 0 60px rgba(140,122,107,0.12),
+    inset 0 0 60px var(--ailearn-page-shade),
     inset 0 0 8px rgba(61,50,44,0.06);
-  border: 1px solid rgba(140,122,107,0.18);
+  border: 1px solid var(--ailearn-page-border);
   border-radius: 2px;
   -webkit-overflow-scrolling: touch;
 }
 .page::-webkit-scrollbar { width: 6px; height: 6px; }
-.page::-webkit-scrollbar-thumb { background: rgba(140,122,107,0.3); border-radius: 6px; }
+.page::-webkit-scrollbar-thumb { background: var(--ailearn-scrollbar); border-radius: 6px; }
 .page::-webkit-scrollbar-track { background: transparent; }
-html.dark .page::-webkit-scrollbar-thumb { background: rgba(138,122,97,0.3); border-radius: 6px; }
+html.dark .page::-webkit-scrollbar-thumb { background: var(--ailearn-scrollbar); border-radius: 6px; }
 html.dark .page {
   background:
     radial-gradient(120% 100% at 0% 50%, rgba(0,0,0,0.3) 0%, transparent 22%),
-    linear-gradient(135deg, #2A2319 0%, #262017 55%, #201B13 100%);
-  color: #D9CDB8;
+    linear-gradient(135deg, var(--ailearn-page-bg-a) 0%, var(--ailearn-page-bg-b) 55%, var(--ailearn-page-bg-c) 100%);
+  color: var(--ailearn-page-ink);
   box-shadow:
-    inset 0 0 60px rgba(0,0,0,0.25),
+    inset 0 0 60px var(--ailearn-page-shade),
     inset 0 0 8px rgba(0,0,0,0.15);
-  border-color: rgba(0,0,0,0.35);
+  border-color: var(--ailearn-page-border);
 }
 
 /* Spine crease — shadow along the binding edge of each leaf */
@@ -423,11 +1247,11 @@ html.dark .page::before {
 }
 .book-oversize::-webkit-scrollbar { width: 6px; height: 6px; }
 .book-oversize::-webkit-scrollbar-thumb {
-  background: rgba(140,122,107,0.35);
+  background: var(--ailearn-scrollbar);
   border-radius: 6px;
 }
 html.dark .book-oversize::-webkit-scrollbar-thumb {
-  background: rgba(138,122,97,0.35);
+  background: var(--ailearn-scrollbar);
   border-radius: 6px;
 }
 

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { api } from '../../api'
 import type { LabParams, LabResult } from '../types'
-import { setupCanvas, makeScale, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Point { x: number; y: number; cls: number; prob: number }
 interface NnResult extends LabResult {
@@ -73,8 +74,7 @@ function drawScene(canvas: HTMLCanvasElement, r: NnResult, hover: { x: number; y
   const W = 560, H = 480
   const ctx = setupCanvas(canvas, W, H)
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 20, r: 20, t: 20, b: 20 })
-  const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+  ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
   ctx.fillRect(0, 0, W, H)
   drawBoundary(ctx, s, r.grid)
   drawContourLine(ctx, s, r.grid, 0.5)
@@ -90,7 +90,7 @@ function drawScene(canvas: HTMLCanvasElement, r: NnResult, hover: { x: number; y
   r.points.forEach((p) => {
     ctx.fillStyle = COLORS[p.cls] ?? '#8a8376'
     ctx.beginPath(); ctx.arc(s.px(p.x), s.py(p.y), 5, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'
+    ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3')
     ctx.lineWidth = 1.5
     ctx.stroke()
   })
@@ -103,7 +103,7 @@ function drawLoss(canvas: HTMLCanvasElement, r: NnResult) {
   const maxLoss = Math.max(...r.losses, 0.01)
   const s = makeScale(ctx, { x: [0, r.losses.length - 1], y: [0, maxLoss * 1.1] }, pad)
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+  ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
   ctx.fillRect(0, 0, W, H)
 
   ctx.strokeStyle = dark ? 'rgba(255,255,255,0.08)' : 'rgba(125,118,109,0.12)'
@@ -133,6 +133,7 @@ export default function NeuralNetLab({ params }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
 }) {
+  const { theme, palette } = useTheme()
   const boundaryRef = useRef<HTMLCanvasElement>(null)
   const lossRef = useRef<HTMLCanvasElement>(null)
   const scaleRef = useRef<Scale | null>(null)
@@ -174,11 +175,11 @@ export default function NeuralNetLab({ params }: {
       const ctx = boundaryRef.current.getContext('2d')!
       scaleRef.current = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] }, { l: 20, r: 20, t: 20, b: 20 })
     }
-  }, [r, hover])
+  }, [r, hover, theme, palette])
 
   useEffect(() => {
     if (r && lossRef.current) drawLoss(lossRef.current, r)
-  }, [r])
+  }, [r, theme, palette])
 
   const { handlers } = useCanvasDrag({
     getScale: () => scaleRef.current,

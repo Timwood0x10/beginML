@@ -31,14 +31,18 @@ GROUPS = ["THINK", "REMEMBER", "ACT", "PLAN", "COORDINATE"]
 
 # Brick classes — the LEGO-like categories every primitive belongs to.
 # rarity tiers (matching the "rarety" ladder): primitive < capability <
-# skill < agent < system. Color hints are used by the UI palette.
+# skill < agent < system. Color hints are used by the UI palette — they are
+# CSS variables of the semantic system (--ailearn-semantic-*), so the same
+# hue-meaning mapping holds across every theme: Brain=fog indigo,
+# Memory=bamboo green, Action=clay amber, Recovery=coral, Agent=dusty
+# violet, Capability=teal.
 BRICK_CLASSES: dict[str, dict[str, Any]] = {
-    "brain": {"label": "Brain", "icon": "psychology", "color": "#2B4C6F", "rarity": "primitive"},
-    "memory": {"label": "Memory", "icon": "memory", "color": "#3A6B58", "rarity": "primitive"},
-    "action": {"label": "Action", "icon": "handyman", "color": "#C88A35", "rarity": "primitive"},
-    "capability": {"label": "Capability", "icon": "extension", "color": "#7A5C8E", "rarity": "capability"},
-    "recovery": {"label": "Recovery", "icon": "healing", "color": "#C8604A", "rarity": "capability"},
-    "agent": {"label": "Agent", "icon": "smart_toy", "color": "#A8382A", "rarity": "agent"},
+    "brain": {"label": "Brain", "icon": "psychology", "color": "var(--ailearn-semantic-brain)", "rarity": "primitive"},
+    "memory": {"label": "Memory", "icon": "memory", "color": "var(--ailearn-semantic-memory)", "rarity": "primitive"},
+    "action": {"label": "Action", "icon": "handyman", "color": "var(--ailearn-semantic-action)", "rarity": "primitive"},
+    "capability": {"label": "Capability", "icon": "extension", "color": "var(--ailearn-semantic-capability)", "rarity": "capability"},
+    "recovery": {"label": "Recovery", "icon": "healing", "color": "var(--ailearn-semantic-chaos)", "rarity": "capability"},
+    "agent": {"label": "Agent", "icon": "smart_toy", "color": "var(--ailearn-semantic-agent)", "rarity": "agent"},
 }
 
 # primitive id -> brick class (kept separate so PRIMITIVES stays readable).

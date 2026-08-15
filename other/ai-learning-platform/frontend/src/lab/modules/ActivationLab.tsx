@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain, type Scale } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, themeVar, type Domain, type Scale } from '../canvas'
 import { useCanvasDrag } from '../useCanvasDrag'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Point { x: number; y: number; dy: number }
 interface ActResult extends LabResult {
@@ -32,7 +33,7 @@ function drawActivation(canvas: HTMLCanvasElement, r: ActResult, hoverX: number 
   const s = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
     { l: 48, r: 20, t: 20, b: 36 })
   const dark = document.documentElement.classList.contains('dark')
-  ctx.fillStyle = dark ? '#1E1913' : '#F7F0E3'
+  ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3')
   ctx.fillRect(0, 0, W, H)
   drawAxes(ctx, s, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
     { color: dark ? '#A99B82' : '#8A7A61', gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
@@ -55,7 +56,7 @@ function drawActivation(canvas: HTMLCanvasElement, r: ActResult, hoverX: number 
   const px = s.px(r.point.x), py = s.py(r.point.y)
   ctx.fillStyle = '#2f6b3e'
   ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = dark ? '#1E1913' : '#F7F0E3'; ctx.lineWidth = 2.5; ctx.stroke()
+  ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2.5; ctx.stroke()
   ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
   ctx.font = '600 12px Manrope'
   ctx.fillText(`(${r.point.x.toFixed(2)}, ${r.point.y.toFixed(2)})`, px + 10, py - 8)
@@ -73,6 +74,7 @@ export default function ActivationLab({ result, params, setParams }: {
   const scaleRef = useRef<Scale | null>(null)
   const r = result as ActResult | null
   const [hover, setHover] = useState<number | null>(null)
+  const { theme, palette } = useTheme()
 
   useEffect(() => {
     if (r && ref.current) {
@@ -81,7 +83,7 @@ export default function ActivationLab({ result, params, setParams }: {
       scaleRef.current = makeScale(ctx, { x: r.domain.x as [number, number], y: r.domain.y as [number, number] },
         { l: 48, r: 20, t: 20, b: 36 })
     }
-  }, [r, hover])
+  }, [r, hover, theme, palette])
 
   const clampX = (x: number) => {
     if (!r) return x

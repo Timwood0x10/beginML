@@ -14,10 +14,12 @@
    - Math formulas          → --stack-math
    ================================================================== */
 
-/* Web font loading: JetBrains Mono for English/code (kept as-is).
-   CJK relies on system fonts (PingFang SC / Microsoft YaHei / Noto Sans CJK SC),
-   so no CJK webfont download is needed. */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Web font loading: JetBrains Mono for English/code.
+   NOTE: we no longer @import from fonts.googleapis.com — that external
+   request 404s in some networks (e.g. mainland China) and shows up as a
+   console error. The stacks below fall back through locally-installed
+   monospace fonts (Cascadia Code, Fira Code, Consolas, ui-monospace), so
+   removing the web font only costs the exact JetBrains Mono glyphs. */
 
 :root {
   /* Latin / numbers / symbols — English & code fonts, unchanged */

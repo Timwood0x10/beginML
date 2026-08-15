@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { LabResult } from '../types'
-import { setupCanvas, makeScale, drawAxes, type Domain } from '../canvas'
+import { setupCanvas, makeScale, drawAxes, themeVar, type Domain } from '../canvas'
+import { useTheme } from '../../hooks/useTheme'
 
 interface PcaResult extends LabResult {
   domain: Domain
@@ -16,6 +17,7 @@ interface PcaResult extends LabResult {
 }
 
 export default function PcaLab({ result }: { result: LabResult | null }) {
+  const { theme, palette } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const r = result as PcaResult | null
 
@@ -25,10 +27,9 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
     const ctx = setupCanvas(canvasRef.current, W, H)
     const s = makeScale(ctx, r.domain, { l: 44, r: 20, t: 20, b: 36 })
     const dark = document.documentElement.classList.contains('dark')
-    const bg = dark ? '#1E1913' : '#F7F0E3'
     const axisColor = dark ? '#A99B82' : '#8A7A61'
 
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.fillRect(0, 0, W, H)
     drawAxes(ctx, s, r.domain, { color: axisColor, gridColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(125,118,109,0.13)' })
 
     // residual lines (original -> projection)
@@ -80,8 +81,8 @@ export default function PcaLab({ result }: { result: LabResult | null }) {
     // mean marker
     ctx.fillStyle = '#2f6b3e'
     ctx.beginPath(); ctx.arc(s.px(mx), s.py(my), 5, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = bg; ctx.lineWidth = 2; ctx.stroke()
-  }, [r])
+    ctx.strokeStyle = themeVar('--ailearn-background', '#F7F0E3'); ctx.lineWidth = 2; ctx.stroke()
+  }, [r, theme, palette])
 
   if (!r) return null
 

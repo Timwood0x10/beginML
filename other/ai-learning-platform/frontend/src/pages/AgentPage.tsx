@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n/context'
 
 // Landing page for the Agent Engineering column. Points to the interactive
-// Agent Builder lab, the Transformer training lab, and the note library
+// ARES Agent Lab, the Transformer training lab, and the note library
 // filtered to this category.
 
 const INTERACTIVES = [
   {
-    to: '/lab/agent-builder',
-    icon: 'widgets',
-    titleKey: 'builderTitle',
-    descKey: 'builderDesc',
+    to: '/lab/agent-forge',
+    icon: 'construction',
+    titleKey: 'forgeTitle',
+    descKey: 'forgeDesc',
   },
   {
     to: '/lab/transformer-training',
@@ -32,8 +32,8 @@ export default function AgentPage() {
   const blurb = t.home.categoryBlurbs.agent ?? ''
 
   const copy: Record<string, { title: string; desc: string }> = {
-    builderTitle: { title: 'Agent 构建器', desc: '积木式搭建 Agent：选记忆、工具、规划与多智能体协作，实时生成架构图与 YAML 配置。' },
-    builderDesc: { title: '', desc: '' },
+    forgeTitle: { title: 'ARES Agent Lab', desc: '像乐高一样搭 Agent：拖认知积木、吸附语义端口、注入故障、观察自愈与进化。' },
+    forgeDesc: { title: '', desc: '' },
     trainTitle: { title: 'Transformer 训练', desc: '从零训练迷你 Transformer，观察损失曲线与注意力热图逐步成形。' },
     trainDesc: { title: '', desc: '' },
     attnTitle: { title: '自注意力', desc: '一步步构建 Q·Kᵀ/√d 注意力权重矩阵，观察 softmax 的锐化。' },
