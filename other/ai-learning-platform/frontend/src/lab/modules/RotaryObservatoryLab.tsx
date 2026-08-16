@@ -1,207 +1,271 @@
-import { useEffect, useRef, useState } from 'react'
-import type { LabResult, LabParams } from '../types'
-import { setupCanvas, makeScale, themeVar, type Scale } from '../canvas'
-import { useTheme } from '../../hooks/useTheme'
-import { useI18n } from '../../i18n/context'
-import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
-import { ExplainBox } from '../Journal'
-import { VerificationPanel } from '../VerificationPanel'
-import { verificationData } from '../verification'
-import { NotesPanel } from '../NotesPanel'
-import { QuestList, type Quest } from '../QuestList'
+import { useEffect, useRef, useState } from "react";
+import type { LabResult, LabParams } from "../types";
+import { setupCanvas, makeScale, themeVar, type Scale } from "../canvas";
+import { useTheme } from "../../hooks/useTheme";
+import { useI18n } from "../../i18n/context";
+import { labTextsZh, labTextsEn, fmt } from "../../i18n/lab";
+import { ExplainBox } from "../Journal";
+import { VerificationPanel } from "../VerificationPanel";
+import { verificationData } from "../verification";
+import { NotesPanel } from "../NotesPanel";
+import { QuestList, type Quest } from "../QuestList";
 
 interface RopeResult extends LabResult {
-  position: number
-  position_b: number
-  frequency: number
-  theta0: number
-  dims: number
-  pair: boolean
-  distance_mode: boolean
-  angle_m: number
-  angle_n: number
-  relative_phase: number
-  point_m: [number, number]
-  point_n: [number, number]
-  similarity: number
-  sim_at_4: number
-  sim_at_8: number
-  distance_curve: { distances: number[]; similarities: number[] }
-  frequency_lens: { dim: number; theta: number; angle_at_m: number; angle_at_n: number }[]
-  provenance: string
+  position: number;
+  position_b: number;
+  frequency: number;
+  theta0: number;
+  dims: number;
+  pair: boolean;
+  distance_mode: boolean;
+  angle_m: number;
+  angle_n: number;
+  relative_phase: number;
+  point_m: [number, number];
+  point_n: [number, number];
+  similarity: number;
+  sim_at_4: number;
+  sim_at_8: number;
+  distance_curve: { distances: number[]; similarities: number[] };
+  frequency_lens: {
+    dim: number;
+    theta: number;
+    angle_at_m: number;
+    angle_at_n: number;
+  }[];
+  provenance: string;
 }
 
 function drawObservatory(canvas: HTMLCanvasElement, r: RopeResult) {
-  const W = 640, H = 560
-  const ctx = setupCanvas(canvas, W, H)
-  const s = makeScale(ctx, { x: [-1.5, 1.5], y: [-1.5, 1.5] }, { l: 20, r: 20, t: 20, b: 20 })
-  const dark = document.documentElement.classList.contains('dark')
-  const bg = themeVar('--ailearn-background', '#F7F0E3')
-  const ink = dark ? '#A99B82' : '#8A7A61'
-  ctx.fillStyle = bg
-  ctx.fillRect(0, 0, W, H)
+  const W = 640,
+    H = 560;
+  const ctx = setupCanvas(canvas, W, H);
+  const s = makeScale(
+    ctx,
+    { x: [-1.5, 1.5], y: [-1.5, 1.5] },
+    { l: 20, r: 20, t: 20, b: 20 },
+  );
+  const dark = document.documentElement.classList.contains("dark");
+  const bg = themeVar("--ailearn-background", "#F7F0E3");
+  const ink = dark ? "#A99B82" : "#8A7A61";
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
-  const cx = s.px(0)
-  const cy = s.py(0)
-  const radius = s.px(1) - s.px(0)
+  const cx = s.px(0);
+  const cy = s.py(0);
+  const radius = s.px(1) - s.px(0);
 
   // axes
-  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.08)' : 'rgba(125,118,109,0.15)'
-  ctx.lineWidth = 1
-  ctx.beginPath(); ctx.moveTo(s.px(-1.4), cy); ctx.lineTo(s.px(1.4), cy); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(cx, s.py(-1.4)); ctx.lineTo(cx, s.py(1.4)); ctx.stroke()
+  ctx.strokeStyle = dark ? "rgba(255,255,255,0.08)" : "rgba(125,118,109,0.15)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(s.px(-1.4), cy);
+  ctx.lineTo(s.px(1.4), cy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, s.py(-1.4));
+  ctx.lineTo(cx, s.py(1.4));
+  ctx.stroke();
   // unit circle
-  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(125,118,109,0.35)'
-  ctx.setLineDash([4, 4])
-  ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.stroke()
-  ctx.setLineDash([])
+  ctx.strokeStyle = dark ? "rgba(255,255,255,0.25)" : "rgba(125,118,109,0.35)";
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
 
   // rotation sweep for token A (from angle 0 to angle_m)
   if (r.angle_m !== 0) {
-    ctx.fillStyle = 'rgba(200,96,74,0.16)'
-    ctx.beginPath()
-    ctx.moveTo(cx, cy)
-    ctx.arc(cx, cy, radius, 0, -r.angle_m, true)
-    ctx.closePath()
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(200,96,74,0.5)'
-    ctx.setLineDash([6, 4])
-    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, -r.angle_m, true); ctx.stroke()
-    ctx.setLineDash([])
+    ctx.fillStyle = "rgba(200,96,74,0.16)";
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, 0, -r.angle_m, true);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "rgba(200,96,74,0.5)";
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, -r.angle_m, true);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   // token A star
-  const [ax, ay] = r.point_m
-  drawStar(ctx, s.px(ax), s.py(ay), 9, '#C8604A')
-  ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
-  ctx.font = '600 12px Manrope'
-  ctx.fillText(`A @ pos ${r.position}`, s.px(ax) + 12, s.py(ay) - 10)
+  const [ax, ay] = r.point_m;
+  drawStar(ctx, s.px(ax), s.py(ay), 9, "#C8604A");
+  ctx.fillStyle = dark ? "#C9BCA6" : "#54483A";
+  ctx.font = "600 12px Manrope";
+  ctx.fillText(`A @ pos ${r.position}`, s.px(ax) + 12, s.py(ay) - 10);
 
   // token B star
   if (r.pair) {
-    const [bx, by] = r.point_n
-    drawStar(ctx, s.px(bx), s.py(by), 9, '#5B6BB0')
-    ctx.fillStyle = dark ? '#C9BCA6' : '#54483A'
-    ctx.fillText(`B @ pos ${r.position_b}`, s.px(bx) + 12, s.py(by) - 10)
+    const [bx, by] = r.point_n;
+    drawStar(ctx, s.px(bx), s.py(by), 9, "#5B6BB0");
+    ctx.fillStyle = dark ? "#C9BCA6" : "#54483A";
+    ctx.fillText(`B @ pos ${r.position_b}`, s.px(bx) + 12, s.py(by) - 10);
 
     // relative phase arc between the two stars (drawn from B's angle to A's)
-    const a0 = -r.angle_n
-    const a1 = -r.angle_m
-    ctx.strokeStyle = dark ? 'rgba(91,107,176,0.7)' : 'rgba(91,107,176,0.6)'
-    ctx.lineWidth = 2
-    ctx.beginPath(); ctx.arc(cx, cy, radius * 0.55, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke()
+    const a0 = -r.angle_n;
+    const a1 = -r.angle_m;
+    ctx.strokeStyle = dark ? "rgba(91,107,176,0.7)" : "rgba(91,107,176,0.6)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.55, Math.min(a0, a1), Math.max(a0, a1));
+    ctx.stroke();
 
     // phase label at mid-angle
-    const mid = (a0 + a1) / 2
-    const lr = radius * 0.68
-    ctx.fillStyle = '#5B6BB0'
-    ctx.font = '600 12px Manrope'
-    ctx.fillText(`Δθ = ${r.relative_phase.toFixed(2)} rad`, cx + Math.cos(mid) * lr - 40, cy + Math.sin(mid) * lr + 4)
+    const mid = (a0 + a1) / 2;
+    const lr = radius * 0.68;
+    ctx.fillStyle = "#5B6BB0";
+    ctx.font = "600 12px Manrope";
+    ctx.fillText(
+      `Δθ = ${r.relative_phase.toFixed(2)} rad`,
+      cx + Math.cos(mid) * lr - 40,
+      cy + Math.sin(mid) * lr + 4,
+    );
   }
 
   // "start" marker at angle 0
-  ctx.fillStyle = dark ? 'rgba(255,255,255,0.4)' : 'rgba(125,118,109,0.4)'
-  ctx.beginPath(); ctx.arc(cx + radius, cy, 3, 0, Math.PI * 2); ctx.fill()
-  ctx.font = '11px Manrope'
-  ctx.fillText('0 (no rotation)', cx + radius + 8, cy + 4)
+  ctx.fillStyle = dark ? "rgba(255,255,255,0.4)" : "rgba(125,118,109,0.4)";
+  ctx.beginPath();
+  ctx.arc(cx + radius, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = "11px Manrope";
+  ctx.fillText("0 (no rotation)", cx + radius + 8, cy + 4);
 
   // angle annotation
-  ctx.fillStyle = ink
-  ctx.font = '12px Manrope'
-  ctx.fillText(`angle A = ${r.angle_m.toFixed(2)} rad`, 24, 28)
-  if (r.pair) ctx.fillText(`angle B = ${r.angle_n.toFixed(2)} rad`, 24, 46)
-  ctx.fillText(`θ₀ = ${r.theta0.toFixed(3)} rad / pos`, 24, 64)
+  ctx.fillStyle = ink;
+  ctx.font = "12px Manrope";
+  ctx.fillText(`angle A = ${r.angle_m.toFixed(2)} rad`, 24, 28);
+  if (r.pair) ctx.fillText(`angle B = ${r.angle_n.toFixed(2)} rad`, 24, 46);
+  ctx.fillText(`θ₀ = ${r.theta0.toFixed(3)} rad / pos`, 24, 64);
 }
 
-function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
-  ctx.save()
-  ctx.fillStyle = color
-  ctx.strokeStyle = '#fff'
-  ctx.lineWidth = 2
-  ctx.beginPath()
+function drawStar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  color: string,
+) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
   for (let i = 0; i < 10; i++) {
-    const rad = i % 2 === 0 ? r : r * 0.45
-    const a = (Math.PI / 5) * i - Math.PI / 2
-    const px = x + Math.cos(a) * rad
-    const py = y + Math.sin(a) * rad
-    if (i === 0) ctx.moveTo(px, py)
-    else ctx.lineTo(px, py)
+    const rad = i % 2 === 0 ? r : r * 0.45;
+    const a = (Math.PI / 5) * i - Math.PI / 2;
+    const px = x + Math.cos(a) * rad;
+    const py = y + Math.sin(a) * rad;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
   }
-  ctx.closePath()
-  ctx.fill()
-  ctx.stroke()
-  ctx.restore()
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 }
 
-export default function RotaryObservatoryLab({ result, loading, params, onRecord }: {
-  result: LabResult | null; loading: boolean; error: string | null
-  onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
-  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
+export default function RotaryObservatoryLab({
+  result,
+  loading,
+  params,
+  onRecord,
+}: {
+  result: LabResult | null;
+  loading: boolean;
+  error: string | null;
+  onAction: (k: string) => void;
+  params: LabParams;
+  setParams: (p: LabParams) => void;
+  onRecord?: (entry: {
+    question: string;
+    prediction: string;
+    correct: boolean;
+    evidence: string;
+    params: LabParams;
+  }) => void;
 }) {
-  const { lang } = useI18n()
-  const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['rotary-observatory']
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const scaleRef = useRef<Scale | null>(null)
-  const r = result as RopeResult | null
-  const { theme, palette } = useTheme()
-  const [answer, setAnswer] = useState<string | null>(null)
-  const [submitted, setSubmitted] = useState(false)
+  const { lang } = useI18n();
+  const texts = (lang === "zh" ? labTextsZh : labTextsEn)["rotary-observatory"];
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scaleRef = useRef<Scale | null>(null);
+  const r = result as RopeResult | null;
+  const { theme, palette } = useTheme();
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (r && canvasRef.current) {
-      drawObservatory(canvasRef.current, r)
-      const ctx = canvasRef.current.getContext('2d')!
-      scaleRef.current = makeScale(ctx, { x: [-1.5, 1.5], y: [-1.5, 1.5] }, { l: 20, r: 20, t: 20, b: 20 })
+      drawObservatory(canvasRef.current, r);
+      const ctx = canvasRef.current.getContext("2d")!;
+      scaleRef.current = makeScale(
+        ctx,
+        { x: [-1.5, 1.5], y: [-1.5, 1.5] },
+        { l: 20, r: 20, t: 20, b: 20 },
+      );
     }
-  }, [r, theme, palette])
+  }, [r, theme, palette]);
 
   // --- L2 Manipulate Challenge ------------------------------------------
   // Success is DERIVED from the computed similarity (a result, not a
   // control). The learner tunes position / frequency until the two
   // positions align or the similarity turns negative. Hooks must live
   // ABOVE the `if (!r) return` early exit.
-  const [l2Goal, setL2Goal] = useState<'align' | 'neg' | null>(null)
-  const recordedL2 = useRef<string | null>(null)
+  const [l2Goal, setL2Goal] = useState<"align" | "neg" | null>(null);
+  const recordedL2 = useRef<string | null>(null);
 
-  const l2Achieved = l2Goal === 'align'
-    ? Math.max(r?.sim_at_8 ?? 0, r?.sim_at_4 ?? 0) > 0.95
-    : l2Goal === 'neg'
-      ? Math.min(r?.sim_at_8 ?? 0, r?.sim_at_4 ?? 0) < 0
-      : false
+  const l2Achieved =
+    l2Goal === "align"
+      ? Math.max(r?.sim_at_8 ?? 0, r?.sim_at_4 ?? 0) > 0.95
+      : l2Goal === "neg"
+        ? Math.min(r?.sim_at_8 ?? 0, r?.sim_at_4 ?? 0) < 0
+        : false;
 
   // Record the achievement into the Journal exactly once per goal.
   useEffect(() => {
     if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
-      recordedL2.current = l2Goal
+      recordedL2.current = l2Goal;
       onRecord?.({
-        question: l2Goal === 'align' ? texts.ui.l2Align : texts.ui.l2Neg,
-        prediction: 'manual tuning',
+        question: l2Goal === "align" ? texts.ui.l2Align : texts.ui.l2Neg,
+        prediction: "manual tuning",
         correct: true,
         evidence: `sim(8)=${r.sim_at_8.toFixed(4)}, sim(4)=${r.sim_at_4.toFixed(4)}`,
         params: { ...params },
-      })
+      });
     }
-  }, [l2Goal, l2Achieved, r, onRecord, texts, params])
+  }, [l2Goal, l2Achieved, r, onRecord, texts, params]);
 
   if (!r) {
-    return <div className="p-10 text-on-surface-variant dark:text-outline">{loading ? texts.ui.computing : texts.ui.adjustControls}</div>
+    return (
+      <div className="p-10 text-on-surface-variant dark:text-outline">
+        {loading ? texts.ui.computing : texts.ui.adjustControls}
+      </div>
+    );
   }
 
   // --- Exploration quests (derived from computed result) -----------------
-  const simMax = Math.max(r.sim_at_8, r.sim_at_4)
-  const simMin = Math.min(r.sim_at_8, r.sim_at_4)
-  const posDist = Math.abs(r.position - r.position_b)
+  const simMax = Math.max(r.sim_at_8, r.sim_at_4);
+  const simMin = Math.min(r.sim_at_8, r.sim_at_4);
+  const posDist = Math.abs(r.position - r.position_b);
   const quests: Quest[] = [
-    { id: 'align', label: texts.quests![0], done: simMax > 0.95 },
-    { id: 'neg', label: texts.quests![1], done: simMin < 0 },
-    { id: 'far', label: texts.quests![2], done: posDist > 2 && simMax > 0.8 },
-  ]
+    { id: "align", label: texts.quests![0], done: simMax > 0.95 },
+    { id: "neg", label: texts.quests![1], done: simMin < 0 },
+    { id: "far", label: texts.quests![2], done: posDist > 2 && simMax > 0.8 },
+  ];
 
   // Challenge verdict from actual computed evidence (deterministic, no LLM).
-  const correct = answer === (r.sim_at_8 > r.sim_at_4 ? 'up' : r.sim_at_8 < r.sim_at_4 ? 'down' : 'same')
-  const curve = r.distance_curve
-  const curDist = Math.abs(r.position - r.position_b)
-  const curveMax = Math.max(...curve.similarities.map(Math.abs), 0.01)
+  const correct =
+    answer ===
+    (r.sim_at_8 > r.sim_at_4
+      ? "up"
+      : r.sim_at_8 < r.sim_at_4
+        ? "down"
+        : "same");
+  const curve = r.distance_curve;
+  const curDist = Math.abs(r.position - r.position_b);
+  const curveMax = Math.max(...curve.similarities.map(Math.abs), 0.01);
 
   return (
     <div className="flex flex-col gap-5">
@@ -219,7 +283,9 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
         <div className="flex items-start gap-3">
           <span className="text-xl mt-0.5">🔍</span>
           <div>
-            <div className="text-caption uppercase tracking-wider font-semibold text-outline mb-1">{texts.ui.question}</div>
+            <div className="text-caption uppercase tracking-wider font-semibold text-outline mb-1">
+              {texts.ui.question}
+            </div>
             <p className="font-headline text-lg text-on-surface dark:text-inverse-on-surface leading-snug">
               {texts.question}
             </p>
@@ -231,16 +297,33 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface inline-flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>rotate_right</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 20 }}
+            >
+              rotate_right
+            </span>
             {texts.ui.title}
           </h3>
           <div className="inline-flex items-center gap-2 text-caption text-on-surface-variant dark:text-outline">
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>schedule</span>
-            {texts.ui.similarityLabel} <span className="font-mono text-primary dark:text-inverse-primary">{r.similarity.toFixed(3)}</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 16 }}
+            >
+              schedule
+            </span>
+            {texts.ui.similarityLabel}{" "}
+            <span className="font-mono text-primary dark:text-inverse-primary">
+              {r.similarity.toFixed(3)}
+            </span>
           </div>
         </div>
         <div className="w-full overflow-x-auto flex justify-center">
-          <canvas ref={canvasRef} className="rounded-2xl" style={{ maxWidth: 640 }} />
+          <canvas
+            ref={canvasRef}
+            className="rounded-2xl"
+            style={{ maxWidth: 640 }}
+          />
         </div>
         {r.distance_mode && (
           <div className="mt-3 text-center text-label-md font-semibold text-primary dark:text-inverse-primary">
@@ -253,32 +336,48 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
       {r.distance_mode && (
         <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
           <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-4 inline-flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>straighten</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 20 }}
+            >
+              straighten
+            </span>
             {texts.ui.findDistance}
           </h3>
           <div className="flex items-end gap-1 h-40">
             {curve.distances.map((d, i) => {
-              const v = curve.similarities[i]
-              const isCurrent = d === curDist
-              const h = (Math.abs(v) / curveMax) * 100
+              const v = curve.similarities[i];
+              const isCurrent = d === curDist;
+              const h = (Math.abs(v) / curveMax) * 100;
               return (
-                <div key={d} className="flex-1 flex flex-col justify-end items-center min-w-0" title={`d=${d} → sim=${v.toFixed(3)}`}>
+                <div
+                  key={d}
+                  className="flex-1 flex flex-col justify-end items-center min-w-0"
+                  title={`d=${d} → sim=${v.toFixed(3)}`}
+                >
                   <div
                     className="w-full rounded-t"
                     style={{
                       height: `${Math.max(h, 1)}%`,
-                      background: v >= 0 ? '#2f6b3e' : '#C8604A',
+                      background: v >= 0 ? "#2f6b3e" : "#C8604A",
                       opacity: isCurrent ? 1 : 0.45,
-                      boxShadow: isCurrent ? '0 0 0 2px rgba(91,107,176,0.7)' : 'none',
+                      boxShadow: isCurrent
+                        ? "0 0 0 2px rgba(91,107,176,0.7)"
+                        : "none",
                     }}
                   />
                 </div>
-              )
+              );
             })}
           </div>
           <div className="flex mt-1">
             {curve.distances.map((d) => (
-              <span key={d} className="flex-1 text-center text-[9px] text-outline">{d % 4 === 0 ? d : ''}</span>
+              <span
+                key={d}
+                className="flex-1 text-center text-[9px] text-outline"
+              >
+                {d % 4 === 0 ? d : ""}
+              </span>
             ))}
           </div>
           <p className="mt-3 text-caption text-on-surface-variant dark:text-outline">
@@ -295,7 +394,9 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
       {/* Frequency lens */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 md:p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
         <h3 className="font-headline text-lg text-on-surface dark:text-inverse-on-surface mb-1 inline-flex items-center gap-2">
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>lens_blur</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
+            lens_blur
+          </span>
           {texts.ui.frequencyLens}
         </h3>
         <p className="text-caption text-on-surface-variant dark:text-outline mb-4">
@@ -304,13 +405,15 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
         <div className="flex flex-col gap-1.5">
           {r.frequency_lens.map((d) => (
             <div key={d.dim} className="flex items-center gap-3">
-              <span className="w-8 text-right text-caption font-mono text-outline">d{d.dim}</span>
+              <span className="w-8 text-right text-caption font-mono text-outline">
+                d{d.dim}
+              </span>
               <div className="flex-1 h-4 bg-surface-container dark:bg-white/5 rounded-md overflow-hidden">
                 <div
                   className="h-full rounded-md"
                   style={{
                     width: `${(d.theta / r.frequency_lens[0].theta) * 100}%`,
-                    background: d.dim % 2 === 0 ? '#5B6BB0' : '#7A5C36',
+                    background: d.dim % 2 === 0 ? "#5B6BB0" : "#7A5C36",
                     opacity: 0.6 + 0.4 * (d.theta / r.frequency_lens[0].theta),
                   }}
                 />
@@ -327,18 +430,25 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">🧪</span>
-          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.makePrediction}</h3>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">
+            {texts.ui.makePrediction}
+          </h3>
         </div>
-        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.challengeQuestion}</p>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">
+          {texts.challengeQuestion}
+        </p>
         <div className="flex flex-wrap gap-2 mb-3">
           {texts.challengeOptions.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => { setAnswer(opt.value); setSubmitted(false) }}
+              onClick={() => {
+                setAnswer(opt.value);
+                setSubmitted(false);
+              }}
               className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
                 answer === opt.value
-                  ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
-                  : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+                  ? "bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface"
+                  : "bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50"
               }`}
             >
               {opt.label}
@@ -348,16 +458,19 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
         <button
           disabled={answer === null}
           onClick={() => {
-            setSubmitted(true)
+            setSubmitted(true);
             if (onRecord && r) {
-              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              const label =
+                texts.challengeOptions.find((o) => o.value === answer)?.label ??
+                answer ??
+                "";
               onRecord({
                 question: texts.challengeQuestion,
                 prediction: label,
                 correct,
                 evidence: `sim(8)=${r.sim_at_8.toFixed(4)}, sim(4)=${r.sim_at_4.toFixed(4)}`,
                 params: { ...params },
-              })
+              });
             }
           }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
@@ -366,19 +479,32 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
         </button>
 
         {submitted && answer !== null && (
-          <div className={`mt-4 rounded-2xl p-4 border ${correct ? 'border-[#2f6b3e]/40' : 'border-[#C8604A]/40'} bg-surface-container dark:bg-white/5`}>
+          <div
+            className={`mt-4 rounded-2xl p-4 border ${correct ? "border-[#2f6b3e]/40" : "border-[#C8604A]/40"} bg-surface-container dark:bg-white/5`}
+          >
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">{correct ? '✅' : '❌'}</span>
-              <span className={`font-label-md font-bold ${correct ? 'text-[#2f6b3e] dark:text-[#9ed0a8]' : 'text-[#C8604A] dark:text-[#f0b3a4]'}`}>
+              <span className="text-lg">{correct ? "✅" : "❌"}</span>
+              <span
+                className={`font-label-md font-bold ${correct ? "text-[#2f6b3e] dark:text-[#9ed0a8]" : "text-[#C8604A] dark:text-[#f0b3a4]"}`}
+              >
                 {correct ? texts.ui.correct : texts.ui.notQuite}
               </span>
               <span className="text-caption text-outline ml-auto font-mono">
-                {fmt(texts.ui.verdictEvidence, { s4: r.sim_at_4.toFixed(3), s8: r.sim_at_8.toFixed(3) })}
+                {fmt(texts.ui.verdictEvidence, {
+                  s4: r.sim_at_4.toFixed(3),
+                  s8: r.sim_at_8.toFixed(3),
+                })}
               </span>
             </div>
             <ul className="text-caption text-on-surface-variant dark:text-outline space-y-1">
               {texts.explanation.map((line) => (
-                <li key={line}>• {fmt(line, { s4: r.sim_at_4.toFixed(3), s8: r.sim_at_8.toFixed(3) })}</li>
+                <li key={line}>
+                  •{" "}
+                  {fmt(line, {
+                    s4: r.sim_at_4.toFixed(3),
+                    s8: r.sim_at_8.toFixed(3),
+                  })}
+                </li>
               ))}
             </ul>
           </div>
@@ -389,27 +515,37 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-lg">🎛️</span>
-          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">
+            {texts.ui.l2Title}
+          </h3>
         </div>
-        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">
+          {texts.ui.l2Tagline}
+        </p>
 
         <div className="flex flex-wrap gap-2 mb-3">
           <button
-            onClick={() => { setL2Goal('align'); recordedL2.current = null }}
+            onClick={() => {
+              setL2Goal("align");
+              recordedL2.current = null;
+            }}
             className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
-              l2Goal === 'align'
-                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
-                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+              l2Goal === "align"
+                ? "bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface"
+                : "bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50"
             }`}
           >
             {texts.ui.l2Align}
           </button>
           <button
-            onClick={() => { setL2Goal('neg'); recordedL2.current = null }}
+            onClick={() => {
+              setL2Goal("neg");
+              recordedL2.current = null;
+            }}
             className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
-              l2Goal === 'neg'
-                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
-                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+              l2Goal === "neg"
+                ? "bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface"
+                : "bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50"
             }`}
           >
             {texts.ui.l2Neg}
@@ -419,23 +555,36 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
         {l2Goal && (
           <div>
             <div className="mb-2 text-caption text-on-surface-variant dark:text-outline">
-              {texts.ui.l2CurSim}: <span className="font-mono text-primary dark:text-inverse-primary">{simMax.toFixed(4)}</span>
+              {texts.ui.l2CurSim}:{" "}
+              <span className="font-mono text-primary dark:text-inverse-primary">
+                {simMax.toFixed(4)}
+              </span>
             </div>
-            <div className={`rounded-2xl p-3 border ${
-              l2Achieved
-                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
-                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
-            }`}>
+            <div
+              className={`rounded-2xl p-3 border ${
+                l2Achieved
+                  ? "border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]"
+                  : "border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline"
+              }`}
+            >
               <div className="text-label-md font-semibold mb-1">
                 {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
               </div>
               <div className="text-caption">{texts.ui.l2Hint}</div>
             </div>
             <button
-              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              onClick={() => {
+                setL2Goal(null);
+                recordedL2.current = null;
+              }}
               className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 15 }}
+              >
+                restart_alt
+              </span>
               {texts.ui.l2Reset}
             </button>
           </div>
@@ -443,7 +592,7 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
       </div>
 
       {/* Knowledge verification — multi-source */}
-      <VerificationPanel entry={verificationData['rotary-observatory']} />
+      <VerificationPanel entry={verificationData["rotary-observatory"]} />
 
       {/* Related notes */}
       <NotesPanel notes={texts.notes} />
@@ -457,19 +606,33 @@ export default function RotaryObservatoryLab({ result, loading, params, onRecord
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
-        <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">📚 {texts.ui.relatedNotes}</h3>
+        <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface mb-3">
+          📚 {texts.ui.relatedNotes}
+        </h3>
         <div className="flex flex-col gap-2">
           {texts.notes.map((n) => (
-            <div key={n.src} className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surface-container dark:bg-white/5 border border-outline-variant/40 dark:border-white/10">
-              <span className="material-symbols-outlined text-outline" style={{ fontSize: 18 }}>menu_book</span>
+            <div
+              key={n.src}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surface-container dark:bg-white/5 border border-outline-variant/40 dark:border-white/10"
+            >
+              <span
+                className="material-symbols-outlined text-outline"
+                style={{ fontSize: 18 }}
+              >
+                menu_book
+              </span>
               <div className="min-w-0">
-                <div className="text-body-md text-on-surface dark:text-dark-on-surface truncate">{n.title}</div>
-                <div className="text-caption text-outline font-mono truncate">{n.src}</div>
+                <div className="text-body-md text-on-surface dark:text-dark-on-surface truncate">
+                  {n.title}
+                </div>
+                <div className="text-caption text-outline font-mono truncate">
+                  {n.src}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }

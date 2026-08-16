@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom'
-import type { Note } from '../types'
-import CategoryBadge from './CategoryBadge'
-import { useI18n } from '../i18n/context'
+import { Link } from "react-router-dom";
+import type { Note } from "../types";
+import CategoryBadge from "./CategoryBadge";
+import { useI18n } from "../i18n/context";
 
 export default function NoteCard({ note }: { note: Note }) {
-  const { t } = useI18n()
+  const { t } = useI18n();
   return (
     <Link
       to={`/note/${note.id}`}
@@ -13,7 +13,9 @@ export default function NoteCard({ note }: { note: Note }) {
       <div className="flex items-center justify-between gap-3 mb-4">
         <CategoryBadge category={note.category} />
         <span className="inline-flex items-center gap-1 text-caption text-on-surface-variant dark:text-outline">
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>schedule</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+            schedule
+          </span>
           {note.readingTime} {t.common.minutes}
         </span>
       </div>
@@ -22,7 +24,7 @@ export default function NoteCard({ note }: { note: Note }) {
         {note.title}
       </h3>
       <p className="text-body-md text-on-surface-variant dark:text-outline line-clamp-3 mb-4 leading-relaxed">
-        {note.description || 'A curated note in this collection.'}
+        {note.description || "A curated note in this collection."}
       </p>
 
       <div className="flex items-center justify-between pt-3 border-t border-outline-variant/50 dark:border-white/10">
@@ -31,21 +33,26 @@ export default function NoteCard({ note }: { note: Note }) {
         </span>
         <span className="inline-flex items-center gap-1 text-label-md text-primary dark:text-inverse-primary font-semibold opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all">
           {t.common.read}
-          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+            arrow_forward
+          </span>
         </span>
       </div>
 
-      {typeof note.score === 'number' && (
+      {typeof note.score === "number" && (
         <div className="mt-3">
           <div className="flex items-center justify-between text-caption text-outline mb-1">
             <span>Relevance</span>
             <span>{Math.round(note.score * 100)}%</span>
           </div>
           <div className="w-full h-1 bg-surface-variant dark:bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-primary dark:bg-inverse-primary rounded-full" style={{ width: `${Math.min(100, note.score * 100)}%` }} />
+            <div
+              className="h-full bg-primary dark:bg-inverse-primary rounded-full"
+              style={{ width: `${Math.min(100, note.score * 100)}%` }}
+            />
           </div>
         </div>
       )}
     </Link>
-  )
+  );
 }

@@ -10,6 +10,7 @@ defined in lab/modules.py.
 """
 
 from typing import Any
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -22,6 +23,7 @@ from . import (
     detective,
     distributions,
     double_descent,
+    engram,
     entropy,
     feature_hunt,
     forge,
@@ -43,6 +45,7 @@ from . import (
     transformer_mri,
 )
 from .modules import MODULES, get_module
+from . import pdf_paper, paper_sections
 
 router = APIRouter(prefix="/api/lab", tags=["lab"])
 
@@ -74,6 +77,25 @@ _COMPUTERS = {
     "mamba-memory-race": mamba.compute,
     "transformer-mri": transformer_mri.compute,
     "feature-hunt": feature_hunt.compute,
+    "paper-engram": engram.compute,
+}
+
+# module_id -> python source file (for the paper ↔ source ↔ run page).
+# Whitelist only — the UI may never read arbitrary paths.
+_SOURCE_FILES: dict[str, str] = {
+    "sampling-machine": "sampling.py",
+    "rotary-observatory": "rope.py",
+    "dangerous-mountain": "double_descent.py",
+    "shooting-range": "bias_variance.py",
+    "weight-freezer": "quantization.py",
+    "representation-river": "residual_river.py",
+    "token-society": "token_society.py",
+    "transformer-detective": "detective.py",
+    "moe-expert-routing": "moe.py",
+    "mamba-memory-race": "mamba.py",
+    "transformer-mri": "transformer_mri.py",
+    "feature-hunt": "feature_hunt.py",
+    "paper-engram": "engram.py",
 }
 
 
@@ -103,3 +125,51 @@ def compute(module_id: str, req: ComputeRequest) -> dict[str, Any]:
         return fn(req.params or {})
     except Exception as exc:  # surface numerical errors cleanly to the UI
         raise HTTPException(status_code=400, detail=f"compute failed: {exc}") from exc
+
+
+@router.get("/source/{module_id}")
+def get_source(module_id: str) -> dict[str, Any]:
+    """Return the python source of a lab module — feeds the middle column of
+    the paper ↔ source ↔ run page."""
+    fname = _SOURCE_FILES.get(module_id)
+    if not fname:
+        raise HTTPException(status_code=404, detail="No source for this module")
+    path = Path(__file__).parent / fname
+    try:
+        code = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise HTTPException(status_code=404, detail="Source file missing") from exc
+    return {"module_id": module_id, "filename": fname, "code": code}
+
+
+# ---- paper ↔ source ↔ run (clickable sections) ----------------------------
+
+@router.get("/paper")
+def get_paper() -> dict[str, Any]:
+    """Parse the paper PDF into clickable sections."""
+    return pdf_paper.get_paper()
+
+
+@router.get("/paper/view")
+def get_paper_view() -> dict[str, Any]:
+    """Rendered PDF pages (PNG) + sections with page/bbox for on-page
+    clicking — the paper appears as itself and sections are clickable."""
+    return pdf_paper.get_paper_view()
+
+
+@router.get("/paper/source/{section_id}")
+def get_paper_source(section_id: str) -> dict[str, Any]:
+    """Numpy implementation for one paper section (middle column)."""
+    src = paper_sections.section_source(section_id)
+    if src is None:
+        raise HTTPException(status_code=404, detail="Unknown paper section")
+    return src
+
+
+@router.post("/paper/run/{section_id}")
+def run_paper_section(section_id: str, req: ComputeRequest) -> dict[str, Any]:
+    """Execute one paper section's implementation (right column)."""
+    out = paper_sections.run_section(section_id, req.params or {})
+    if out is None:
+        raise HTTPException(status_code=404, detail="Unknown paper section")
+    return out

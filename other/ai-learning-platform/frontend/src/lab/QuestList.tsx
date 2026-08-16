@@ -7,36 +7,37 @@
 // is derived by each experiment from its computed result — never guessed.
 // Copy lives here (shared UI) so enabling quests in a new experiment is one
 // <QuestList quests={...} /> line.
-import { useEffect, useRef } from 'react'
-import { useI18n } from '../i18n/context'
-import { fmt } from '../i18n/lab'
-import type { LabParams } from './types'
+import { useEffect, useRef } from "react";
+import { useI18n } from "../i18n/context";
+import { fmt } from "../i18n/lab";
+import type { LabParams } from "./types";
 
 export interface Quest {
-  id: string
-  label: string
-  done: boolean
+  id: string;
+  label: string;
+  done: boolean;
 }
 
 /** localStorage key for the cross-experiment challenge chain. */
-export const QUEST_CHAIN_KEY = 'ailearn-quest-complete'
+export const QUEST_CHAIN_KEY = "ailearn-quest-complete";
 
-const UI: Record<'zh' | 'en', Record<string, string>> = {
+const UI: Record<"zh" | "en", Record<string, string>> = {
   zh: {
-    title: '探索任务',
-    hint: '拖动控件，亲手达成每个目标。',
-    done: '✓',
-    progress: '{n}/{total} 达成',
-    chainUnlocked: '全部达成 — 解锁下一个实验的隐藏挑战！',
+    title: "探索任务",
+    hint: "拖动控件，亲手达成每个目标。",
+    done: "✓",
+    progress: "{n}/{total} 达成",
+    chainUnlocked: "全部达成 — 解锁下一个实验的隐藏挑战！",
   },
   en: {
-    title: 'Exploration Quests',
-    hint: 'Adjust the controls and hit each goal by hand.',
-    done: '✓',
-    progress: '{n}/{total} done',
-    chainUnlocked: 'All done — the next experiment\'s hidden challenge is unlocked!',
+    title: "Exploration Quests",
+    hint: "Adjust the controls and hit each goal by hand.",
+    done: "✓",
+    progress: "{n}/{total} done",
+    chainUnlocked:
+      "All done — the next experiment's hidden challenge is unlocked!",
   },
-}
+};
 
 export function QuestList({
   quests,
@@ -45,107 +46,119 @@ export function QuestList({
   evidence,
   labId,
 }: {
-  quests: Quest[]
+  quests: Quest[];
   onRecord?: (entry: {
-    question: string
-    prediction: string
-    correct: boolean
-    evidence: string
-    params: LabParams
-    insight?: string
-  }) => void
-  params: LabParams
-  evidence: string
+    question: string;
+    prediction: string;
+    correct: boolean;
+    evidence: string;
+    params: LabParams;
+    insight?: string;
+  }) => void;
+  params: LabParams;
+  evidence: string;
   /** Lab id — used for the cross-experiment challenge chain unlock. */
-  labId: string
+  labId: string;
 }) {
-  const { lang } = useI18n()
-  const ui = UI[lang]
-  const doneCount = quests.filter((q) => q.done).length
-  const allDone = quests.length > 0 && doneCount === quests.length
+  const { lang } = useI18n();
+  const ui = UI[lang];
+  const doneCount = quests.filter((q) => q.done).length;
+  const allDone = quests.length > 0 && doneCount === quests.length;
 
   // Record a quest ONLY at the moment it flips from false → true. `prevDone`
   // holds the done-set of the previous render; the first render (null) just
   // establishes the baseline without recording, so remounting the component
   // (e.g. navigating away and back) never re-writes the same quest to the
   // Journal.
-  const prevDone = useRef<Set<string> | null>(null)
+  const prevDone = useRef<Set<string> | null>(null);
 
   useEffect(() => {
-    if (!onRecord) return
-    const nowDone = new Set(quests.filter((q) => q.done).map((q) => q.id))
+    if (!onRecord) return;
+    const nowDone = new Set(quests.filter((q) => q.done).map((q) => q.id));
     if (prevDone.current) {
       for (const id of nowDone) {
         if (!prevDone.current.has(id)) {
-          const q = quests.find((x) => x.id === id)
+          const q = quests.find((x) => x.id === id);
           if (q) {
             onRecord({
               question: q.label,
-              prediction: 'quest completed',
+              prediction: "quest completed",
               correct: true,
               evidence,
               params: { ...params },
-            })
+            });
           }
         }
       }
     }
-    prevDone.current = nowDone
-  }, [quests, onRecord, evidence, params])
+    prevDone.current = nowDone;
+  }, [quests, onRecord, evidence, params]);
 
   // Cross-experiment challenge chain: when ALL quests flip to done, mark this
   // lab as completed (localStorage) and notify LabPage so it can show the
   // next experiment as unlocked. The first render only establishes the
   // baseline — remounting never re-unlocks.
-  const prevAllDone = useRef<boolean | null>(null)
+  const prevAllDone = useRef<boolean | null>(null);
 
   useEffect(() => {
     if (prevAllDone.current === null) {
-      prevAllDone.current = allDone
-      return
+      prevAllDone.current = allDone;
+      return;
     }
     if (allDone && !prevAllDone.current) {
       try {
-        const raw = window.localStorage.getItem(QUEST_CHAIN_KEY)
-        const set = raw ? new Set<string>(JSON.parse(raw)) : new Set<string>()
-        set.add(labId)
-        window.localStorage.setItem(QUEST_CHAIN_KEY, JSON.stringify([...set]))
-        window.dispatchEvent(new CustomEvent('ailearn-quest-complete', { detail: labId }))
+        const raw = window.localStorage.getItem(QUEST_CHAIN_KEY);
+        const set = raw ? new Set<string>(JSON.parse(raw)) : new Set<string>();
+        set.add(labId);
+        window.localStorage.setItem(QUEST_CHAIN_KEY, JSON.stringify([...set]));
+        window.dispatchEvent(
+          new CustomEvent("ailearn-quest-complete", { detail: labId }),
+        );
       } catch {
         /* storage may be unavailable — ignore */
       }
     }
-    prevAllDone.current = allDone
-  }, [allDone, labId])
+    prevAllDone.current = allDone;
+  }, [allDone, labId]);
 
   return (
     <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-lg">🧭</span>
-        <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{ui.title}</h3>
-        <span className="ml-auto text-caption text-outline font-mono">{fmt(ui.progress, { n: doneCount, total: quests.length })}</span>
+        <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">
+          {ui.title}
+        </h3>
+        <span className="ml-auto text-caption text-outline font-mono">
+          {fmt(ui.progress, { n: doneCount, total: quests.length })}
+        </span>
       </div>
-      <p className="text-caption text-on-surface-variant dark:text-outline mb-3">{ui.hint}</p>
+      <p className="text-caption text-on-surface-variant dark:text-outline mb-3">
+        {ui.hint}
+      </p>
       <div className="flex flex-col gap-2">
         {quests.map((q) => (
           <div
             key={q.id}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all ${
               q.done
-                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10'
-                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5'
+                ? "border-[#2f6b3e]/40 bg-[#2f6b3e]/10"
+                : "border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5"
             }`}
           >
             <span
               className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
-                q.done ? 'bg-[#2f6b3e] text-white' : 'bg-surface-variant dark:bg-white/10 text-outline'
+                q.done
+                  ? "bg-[#2f6b3e] text-white"
+                  : "bg-surface-variant dark:bg-white/10 text-outline"
               }`}
             >
-              {q.done ? ui.done : ''}
+              {q.done ? ui.done : ""}
             </span>
             <span
               className={`text-body-md ${
-                q.done ? 'text-[#2f6b3e] dark:text-[#9ed0a8]' : 'text-on-surface dark:text-dark-on-surface'
+                q.done
+                  ? "text-[#2f6b3e] dark:text-[#9ed0a8]"
+                  : "text-on-surface dark:text-dark-on-surface"
               }`}
             >
               {q.label}
@@ -154,5 +167,5 @@ export function QuestList({
         ))}
       </div>
     </div>
-  )
+  );
 }
