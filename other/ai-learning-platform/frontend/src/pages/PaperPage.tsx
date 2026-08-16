@@ -24,6 +24,16 @@ interface PageImage {
   height: number;
 }
 
+/** One heading of the paper, parsed from the PDF by the backend (paperView). */
+interface PaperSection {
+  id: string;
+  level: number;
+  number?: string;
+  title: string;
+  page: number;
+  math?: boolean;
+}
+
 interface FormulaZone {
   id: string;
   page: number;
@@ -112,9 +122,11 @@ const UI: Record<"zh" | "en", Record<string, string>> = {
   zh: {
     title: "可执行论文实验室",
     subtitle:
-      "一篇论文一个可执行世界——点机制看数据流，点可视化元素高亮源码，改参数运行实验。",
+      "一篇论文一个可执行世界——先看大纲，点章节进入它的机制、源码与实验。",
     pickPaper: "选择论文",
     chooseMech: "机制",
+    outline: "大纲",
+    outlineHint: "论文的完整章节索引——点章节看它的实现、可视化与实验。",
     visualize: "可视化（点击元素高亮代码）",
     source: "源码",
     viewPdf: "查看原始 PDF",
@@ -122,7 +134,7 @@ const UI: Record<"zh" | "en", Record<string, string>> = {
     loading: "加载中…",
     attnHint: "点击热力图单元格 → 高亮 softmax/掩码代码",
     flowHint: "点击步骤 → 高亮对应代码",
-    empty: "选择上方一个机制，或点击 PDF 中的公式。",
+    empty: "在上方大纲里选一个章节，看它的实现与实验。",
     noVisual: "该机制暂无可视化——源码与实验仍然可用。",
     experiment: "EXPERIMENT",
     runBtn: "RUN EXPERIMENT",
@@ -139,9 +151,12 @@ const UI: Record<"zh" | "en", Record<string, string>> = {
   en: {
     title: "Executable Paper Lab",
     subtitle:
-      "One paper, one executable world — pick a mechanism, trace its data flow, click a visual element to highlight its code, tweak a parameter and run the experiment.",
+      "One paper, one executable world — read the outline first, then click a section into its mechanism, source and experiment.",
     pickPaper: "Paper",
     chooseMech: "Mechanism",
+    outline: "Outline",
+    outlineHint:
+      "The paper's full section index — click a section to open its implementation, visualization and experiment.",
     visualize: "Visualize (click an element to highlight code)",
     source: "Source",
     viewPdf: "View original PDF",
@@ -149,7 +164,7 @@ const UI: Record<"zh" | "en", Record<string, string>> = {
     loading: "Loading…",
     attnHint: "Click a heatmap cell → highlights the softmax/mask code",
     flowHint: "Click a step → highlights the matching code",
-    empty: "Pick a mechanism above, or click a formula in the PDF.",
+    empty: "Pick a section in the outline above to see its implementation and experiment.",
     noVisual:
       "No visualization for this mechanism — source and experiment still work.",
     experiment: "EXPERIMENT",
@@ -166,23 +181,19 @@ const UI: Record<"zh" | "en", Record<string, string>> = {
   },
 };
 
-const HAS_IMPL = new Set([
-  "s1",
-  "s2",
-  "s4",
-  "s7",
-  "s8",
-  "s9",
-  "s10",
-  "s12",
-  "s15",
-]);
-
 function fmtVal(v: unknown): string {
   if (typeof v === "number")
     return Number.isInteger(v) ? String(v) : v.toFixed(6);
   if (Array.isArray(v)) return `[${v.map(fmtVal).join(", ")}]`;
   if (typeof v === "boolean") return String(v);
+  // plain objects (e.g. the "visual" payload) are not evidence — serialize
+  // them as JSON instead of "[object Object]"
+  if (typeof v === "object" && v !== null)
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
   return String(v ?? "");
 }
 
@@ -418,6 +429,134 @@ function FlowSteps({
   );
 }
 
+// ---- outline component -----------------------------------------------------
+/** The paper's real table of contents (parsed from the PDF by the backend):
+ * hierarchical headings with page numbers, plus markers for sections that
+ * have an implementation / formula / experiment. Clicking loads that section. */
+function OutlinePanel({
+  sections,
+  formulas,
+  activeId,
+  onSelect,
+  lang,
+}: {
+  sections: PaperSection[];
+  formulas: FormulaZone[];
+  activeId: string | null;
+  onSelect: (sid: string) => void;
+  lang: string;
+}) {
+  // per-section markers: does it have an implementation / formula / experiment?
+  const implSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const fm of formulas) {
+      if (fm.section_id && fm.implementation) s.add(fm.section_id);
+    }
+    return s;
+  }, [formulas]);
+  const formulaCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const fm of formulas) {
+      if (fm.section_id) m.set(fm.section_id, (m.get(fm.section_id) ?? 0) + 1);
+    }
+    return m;
+  }, [formulas]);
+  const hasExp = useMemo(() => {
+    const s = new Set<string>();
+    for (const fm of formulas) {
+      if (fm.section_id && fm.experiment) s.add(fm.section_id);
+    }
+    return s;
+  }, [formulas]);
+
+  if (sections.length === 0) {
+    return <div className="text-caption text-outline p-2">—</div>;
+  }
+
+  return (
+    <div className="flex flex-col">
+      {sections.map((sec) => {
+        const impl = implSet.has(sec.id);
+        const nf = formulaCount.get(sec.id) ?? 0;
+        const exp = hasExp.has(sec.id);
+        const active = activeId === sec.id;
+        // backend title keeps the "1.1 " number prefix; show it once in the
+        // number column, not duplicated inside the heading text
+        const label =
+          sec.number && sec.title.startsWith(sec.number)
+            ? sec.title.slice(sec.number.length).trim() || sec.title
+            : sec.title;
+        return (
+          <button
+            key={sec.id}
+            onClick={() => onSelect(sec.id)}
+            className={`group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors ${
+              active
+                ? "bg-[#7A5C36]/15 dark:bg-[#c8a86a]/15"
+                : "hover:bg-surface-container dark:hover:bg-white/5"
+            }`}
+            style={{ paddingLeft: `${0.75 + (sec.level - 1) * 1.1}rem` }}
+          >
+            {/* level indent line */}
+            <span
+              className={`shrink-0 font-mono text-[10px] w-6 text-right select-none ${
+                active
+                  ? "text-[#7A5C36] dark:text-[#c8a86a]"
+                  : "text-outline"
+              }`}
+            >
+              {sec.number ?? sec.id.replace("s", "")}
+            </span>
+            <span
+              className={`truncate text-caption ${
+                sec.level === 1
+                  ? "font-semibold text-on-surface dark:text-dark-on-surface"
+                  : "text-on-surface-variant dark:text-outline"
+              } ${active ? "text-[#7A5C36] dark:text-[#c8a86a]" : ""}`}
+            >
+              {label}
+            </span>
+            {/* markers */}
+            <span className="ml-auto flex items-center gap-1.5 shrink-0">
+              {exp && (
+                <span
+                  className="material-symbols-outlined text-[#2f6b3e] dark:text-[#9ed0a8]"
+                  style={{ fontSize: 13 }}
+                  title={lang === "zh" ? "有实验" : "has experiment"}
+                >
+                  science
+                </span>
+              )}
+              {impl && (
+                <span
+                  className="material-symbols-outlined text-[#5B6BB0] dark:text-[#aab3e8]"
+                  style={{ fontSize: 13 }}
+                  title={lang === "zh" ? "有实现" : "has implementation"}
+                >
+                  code
+                </span>
+              )}
+              {nf > 0 && (
+                <span
+                  className="font-mono text-[10px] text-outline"
+                  title={
+                    lang === "zh" ? `${nf} 个公式` : `${nf} formulas`
+                  }
+                >
+                  {nf}ƒ
+                </span>
+              )}
+              <span className="font-mono text-[10px] text-outline w-7 text-right">
+                p.{sec.page}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ---- page ------------------------------------------------------------------
 export default function PaperPage() {
   const { lang } = useI18n();
@@ -429,8 +568,10 @@ export default function PaperPage() {
     zoom: number;
   } | null>(null);
   const [images, setImages] = useState<PageImage[]>([]);
+  const [sections, setSections] = useState<PaperSection[]>([]);
   const [formulas, setFormulas] = useState<FormulaZone[]>([]);
   const [selected, setSelected] = useState<FormulaZone | null>(null);
+  const [activeSid, setActiveSid] = useState<string | null>(null);
   const [source, setSource] = useState<{ title: string; code: string } | null>(
     null,
   );
@@ -484,6 +625,7 @@ export default function PaperPage() {
     setSource(null);
     setResult(null);
     setHighlight(null);
+    setActiveSid(null);
     setRunning(true);
     try {
       const [v, f] = await Promise.all([
@@ -497,6 +639,7 @@ export default function PaperPage() {
         zoom: v.zoom,
       });
       setImages(v.images);
+      setSections(v.sections ?? []);
       setFormulas(f.formulas);
       const curated = MECHS[pid] ?? [];
       if (curated[0]) {
@@ -504,7 +647,7 @@ export default function PaperPage() {
         await loadSection(curated[0].id, pid, f.formulas);
       } else {
         const first = f.formulas.find(
-          (fm) => fm.section_id && HAS_IMPL.has(fm.section_id),
+          (fm) => fm.section_id && fm.implementation,
         );
         if (first) {
           setMechIdx(-1);
@@ -525,6 +668,7 @@ export default function PaperPage() {
     fs: FormulaZone[],
   ) => {
     stopPlay();
+    setActiveSid(sectionId);
     const fm = fs.find((x) => x.section_id === sectionId) ?? null;
     setSelected(fm);
     setHighlight(null);
@@ -571,6 +715,20 @@ export default function PaperPage() {
     const i = mechs.findIndex((m) => m.id === sid);
     if (i >= 0) setMechIdx(i);
     await loadSection(sid, pid ?? paperId, formulas);
+  };
+
+  /** Outline click: open the section's mechanism (if curated), its formula
+   * zone (if any), and its source + experiment. */
+  const selectOutline = async (sid: string) => {
+    const i = mechs.findIndex((m) => m.id === sid);
+    if (i >= 0) {
+      setMechIdx(i);
+      await loadSection(sid, paperId, formulas);
+      return;
+    }
+    const fm = formulas.find((x) => x.section_id === sid) ?? null;
+    if (fm) await selectFormula(fm);
+    else await loadSection(sid, paperId, formulas);
   };
 
   const run = async () => {
@@ -680,7 +838,7 @@ export default function PaperPage() {
     const width = (((fm.bbox[2] - fm.bbox[0] + pad * 2) * z) / img.width) * 100;
     const height =
       (((fm.bbox[3] - fm.bbox[1] + pad * 2) * z) / img.height) * 100;
-    const impl = fm.section_id !== null && HAS_IMPL.has(fm.section_id);
+    const impl = fm.section_id !== null && !!fm.implementation;
     const active = selected?.id === fm.id;
     return { left, top, width, height, impl, active };
   };
@@ -805,6 +963,29 @@ export default function PaperPage() {
           )}
         </section>
       )}
+
+      {/* OUTLINE — the paper's real table of contents (main navigation) */}
+      <section className="rounded-3xl border border-outline-variant/40 dark:border-white/10 bg-surface-container-lowest dark:bg-dark-surface p-4 min-w-0">
+        <h2 className="font-label-md text-label-md uppercase tracking-wider text-primary dark:text-inverse-primary mb-1 inline-flex items-center gap-2">
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 18 }}
+          >
+            list_alt
+          </span>
+          {ui.outline}
+        </h2>
+        <p className="text-caption text-on-surface-variant dark:text-outline mb-2">
+          {ui.outlineHint}
+        </p>
+        <OutlinePanel
+          sections={sections}
+          formulas={formulas}
+          activeId={activeSid}
+          onSelect={selectOutline}
+          lang={lang}
+        />
+      </section>
 
       {/* mechanism tabs */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-outline-variant/40 dark:border-white/10">
@@ -1095,7 +1276,10 @@ export default function PaperPage() {
                 <div className="text-caption text-outline">{ui.loading}</div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {Object.entries(result).map(([k, v]) => (
+                  {Object.entries(result)
+                    // "visual" drives the diagram, not the evidence grid
+                    .filter(([k]) => k !== "visual")
+                    .map(([k, v]) => (
                     <div
                       key={k}
                       className="rounded-xl border border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 px-3 py-2"

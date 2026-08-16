@@ -137,6 +137,7 @@ export const api = {
         sections: {
           id: string;
           level: number;
+          number?: string;
           title: string;
           text: string;
           math: boolean;

@@ -24,22 +24,22 @@ MAPPINGS: dict[str, dict[str, dict[str, Any]]] = {
     # ---- transformer.pdf ------------------------------------------------
     "transformer": {
         "implementations": {
-            "s1": {"file": _SOURCE_FILE, "symbols": ["run_s1"], "lines": [20, 46]},
-            "s2": {"file": _SOURCE_FILE, "symbols": ["run_s2", "_softmax"], "lines": [49, 73]},
-            "s4": {"file": _SOURCE_FILE, "symbols": ["run_s4", "_softmax"], "lines": [82, 108]},
-            "s7": {"file": _SOURCE_FILE, "symbols": ["run_s7"], "lines": [116, 138]},
-            "s8": {"file": _SOURCE_FILE, "symbols": ["run_s8"], "lines": [142, 166]},
-            "s9": {"file": _SOURCE_FILE, "symbols": ["run_s9", "rope"], "lines": [177, 211]},
-            "s10": {"file": _SOURCE_FILE, "symbols": ["run_s10"], "lines": [214, 241]},
-            "s12": {"file": _SOURCE_FILE, "symbols": ["run_s12", "_softmax"], "lines": [248, 274]},
-            "s15": {"file": _SOURCE_FILE, "symbols": ["run_s15"], "lines": [281, 304]},
-            "s3": {"file": _SOURCE_FILE, "symbols": ["run_s3"], "lines": [324, 355]},
-            "s5": {"file": _SOURCE_FILE, "symbols": ["run_s5"], "lines": [360, 395]},
-            "s6": {"file": _SOURCE_FILE, "symbols": ["run_s6"], "lines": [400, 430]},
-            "s11": {"file": _SOURCE_FILE, "symbols": ["run_s11"], "lines": [435, 465]},
-            "s13": {"file": _SOURCE_FILE, "symbols": ["run_s13"], "lines": [470, 500]},
-            "s14": {"file": _SOURCE_FILE, "symbols": ["run_s14"], "lines": [505, 535]},
-            "s16": {"file": _SOURCE_FILE, "symbols": ["run_s16"], "lines": [540, 570]},
+            "s1": {"file": _SOURCE_FILE, "symbols": ["run_s1"], "lines": [1, 11]},
+            "s2": {"file": _SOURCE_FILE, "symbols": ["run_s2", "_softmax"], "lines": [1, 11]},
+            "s4": {"file": _SOURCE_FILE, "symbols": ["run_s4", "_softmax"], "lines": [1, 11]},
+            "s7": {"file": _SOURCE_FILE, "symbols": ["run_s7"], "lines": [1, 8]},
+            "s8": {"file": _SOURCE_FILE, "symbols": ["run_s8"], "lines": [1, 12]},
+            "s9": {"file": _SOURCE_FILE, "symbols": ["run_s9", "rope"], "lines": [1, 14]},
+            "s10": {"file": _SOURCE_FILE, "symbols": ["run_s10"], "lines": [1, 13]},
+            "s12": {"file": _SOURCE_FILE, "symbols": ["run_s12", "_softmax"], "lines": [1, 11]},
+            "s15": {"file": _SOURCE_FILE, "symbols": ["run_s15"], "lines": [1, 10]},
+            "s3": {"file": _SOURCE_FILE, "symbols": ["run_s3"], "lines": [1, 10]},
+            "s5": {"file": _SOURCE_FILE, "symbols": ["run_s5"], "lines": [1, 11]},
+            "s6": {"file": _SOURCE_FILE, "symbols": ["run_s6"], "lines": [1, 11]},
+            "s11": {"file": _SOURCE_FILE, "symbols": ["run_s11"], "lines": [1, 7]},
+            "s13": {"file": _SOURCE_FILE, "symbols": ["run_s13"], "lines": [1, 10]},
+            "s14": {"file": _SOURCE_FILE, "symbols": ["run_s14"], "lines": [1, 11]},
+            "s16": {"file": _SOURCE_FILE, "symbols": ["run_s16"], "lines": [1, 8]},
         },
         "experiments": {
             "s1": {
@@ -215,13 +215,13 @@ MAPPINGS: dict[str, dict[str, dict[str, Any]]] = {
     # ---- attention_residuals.pdf -----------------------------------------
     "attention-residuals": {
         "implementations": {
-            "s1": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s1"], "lines": [30, 55]},
-            "s2": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s2"], "lines": [60, 85]},
-            "s3": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s3"], "lines": [90, 115]},
-            "s4": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s4"], "lines": [120, 140]},
-            "s5": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s5"], "lines": [145, 170]},
-            "s6": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s6"], "lines": [15, 40]},
-            "s7": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s7"], "lines": [45, 75]},
+            "s1": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s1"], "lines": [1, 11]},
+            "s2": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s2"], "lines": [1, 8]},
+            "s3": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s3"], "lines": [1, 12]},
+            "s4": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s4"], "lines": [1, 9]},
+            "s5": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s5"], "lines": [1, 11]},
+            "s6": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s6"], "lines": [1, 13]},
+            "s7": {"file": _SOURCE_FILE_AR, "symbols": ["run_ar_s7"], "lines": [1, 11]},
         },
         "experiments": {
             "s6": {

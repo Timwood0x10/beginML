@@ -105,7 +105,12 @@ def _split_heading(text: str) -> tuple[int | None, str]:
 def parse_paper(path: Path | None = None) -> dict:
     """Extract sections from the paper PDF.
 
-    Returns {title, author, pages, sections: [{id, level, title, text, math}]}.
+    Returns {title, author, pages, sections: [{id, level, number, title, text, math}]}.
+
+    transformer.pdf / attention_residuals.pdf print each heading as TWO lines:
+    the number ("1.1") then the title text ("single query q") at the same font
+    size. The parser merges the following same-page, same-size, non-numbered
+    text line into the heading's title so the outline shows the real name.
     """
     p = path or PAPER_PATH
     doc = pymupdf.open(p)
@@ -114,6 +119,8 @@ def parse_paper(path: Path | None = None) -> dict:
     author = ""
     sections: list[dict] = []
     current: dict | None = None
+    # heading whose number line was just seen, awaiting its title text line
+    pending_head: tuple[dict, int] | None = None
 
     def push():
         nonlocal current
@@ -136,6 +143,22 @@ def parse_paper(path: Path | None = None) -> dict:
                 if not text:
                     continue
 
+                # Merge the title-text line that follows a number-only heading.
+                # Only on the same page, same heading size, and when the line is
+                # NOT another heading number (e.g. a bare "2" on the next page).
+                if pending_head is not None:
+                    pend_sec, pend_page = pending_head
+                    if pend_page != pno + 1:
+                        pending_head = None
+                    elif (
+                        size >= H2_SIZE
+                        and not text.isdigit()
+                        and _split_heading(text)[0] is None
+                    ):
+                        pend_sec["title"] += " " + text
+                        pending_head = None
+                        continue
+
                 if size >= H1_SIZE:
                     # level-1 heading — first one on page 1 might be the doc title
                     level, rest = _split_heading(text)
@@ -144,6 +167,7 @@ def parse_paper(path: Path | None = None) -> dict:
                         current = {
                             "id": f"s{len(sections) + 1}",
                             "level": 1,
+                            "number": text.split()[0],
                             "title": rest or text,
                             "text": "",
                             "page": pno + 1,
@@ -152,6 +176,8 @@ def parse_paper(path: Path | None = None) -> dict:
                                 for v in line.get("bbox", [0, 0, 0, 0])
                             ],
                         }
+                        if not rest:
+                            pending_head = (current, pno + 1)
                         continue
                     if pno == 0 and not title:
                         title = text
@@ -165,6 +191,7 @@ def parse_paper(path: Path | None = None) -> dict:
                         current = {
                             "id": f"s{len(sections) + 1}",
                             "level": level,
+                            "number": text.split()[0],
                             "title": rest or text,
                             "text": "",
                             "page": pno + 1,
@@ -173,6 +200,8 @@ def parse_paper(path: Path | None = None) -> dict:
                                 for v in line.get("bbox", [0, 0, 0, 0])
                             ],
                         }
+                        if not rest:
+                            pending_head = (current, pno + 1)
                         continue
                     # attention-residuals style: bare level-1 number on its
                     # own line ("1" / "Introduction" on the next line). This
@@ -183,6 +212,7 @@ def parse_paper(path: Path | None = None) -> dict:
                         current = {
                             "id": f"s{len(sections) + 1}",
                             "level": 1,
+                            "number": text,
                             "title": text,
                             "text": "",
                             "page": pno + 1,
@@ -191,6 +221,7 @@ def parse_paper(path: Path | None = None) -> dict:
                                 for v in line.get("bbox", [0, 0, 0, 0])
                             ],
                         }
+                        pending_head = (current, pno + 1)
                         continue
                     if pno == 0 and text and not author:
                         author = text
