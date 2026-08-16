@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 
 interface HeadInfo {
@@ -115,6 +118,7 @@ export default function TokenSocietyLab({ result, loading, onAction, params, onR
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="token-society"
         onRecord={onRecord}
         params={params}
         evidence={`scout avg_dist=${r.heads.reduce((a, b) => (b.avg_dist > a.avg_dist ? b : a)).avg_dist.toFixed(3)}`}
@@ -376,6 +380,12 @@ export default function TokenSocietyLab({ result, loading, onAction, params, onR
           </div>
         )}
       </div>
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['token-society']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox

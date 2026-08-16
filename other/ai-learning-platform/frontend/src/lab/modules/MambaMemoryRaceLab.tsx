@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 
 interface RaceResult extends LabResult {
@@ -112,6 +115,7 @@ export default function MambaMemoryRaceLab({ result, loading, params, onRecord }
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="mamba-memory-race"
         onRecord={onRecord}
         params={params}
         evidence={`FLOPs ${r.transformer_flops_now.toFixed(0)} vs ${r.mamba_flops_now.toFixed(0)} (${r.flops_ratio.toFixed(1)}×)`}
@@ -438,6 +442,12 @@ export default function MambaMemoryRaceLab({ result, loading, params, onRecord }
           </div>
         )}
       </div>
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['mamba-memory-race']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox

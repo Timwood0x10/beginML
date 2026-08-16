@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { QuestList, type Quest } from '../QuestList'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 
 interface SamplingResult extends LabResult {
   tokens: string[]
@@ -114,6 +117,7 @@ export default function SamplingMachineLab({ result, loading, onAction, onRecord
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="sampling-machine"
         onRecord={onRecord}
         params={params}
         evidence={`entropy=${r.entropy.toFixed(2)}bits, T=${r.temperature}`}
@@ -333,6 +337,12 @@ export default function SamplingMachineLab({ result, loading, onAction, onRecord
           </div>
         )}
       </div>
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['sampling-machine']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — independent, learner-owned, never machine-graded */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

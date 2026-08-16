@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 import { ABPanel, type ABShot } from '../ABPanel'
 
@@ -139,6 +142,7 @@ export default function TransformerMRILab({ result, loading, params, setParams, 
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="transformer-mri"
         onRecord={onRecord}
         params={params}
         evidence={`${r.health.label}: ${r.health.detail}`}
@@ -421,6 +425,12 @@ export default function TransformerMRILab({ result, loading, params, setParams, 
         onSwap={() => { setShotA(shotB); setShotB(shotA) }}
         onClear={() => { setShotA(null); setShotB(null) }}
       />
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['transformer-mri']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox

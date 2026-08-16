@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 
 interface LevelInfo {
@@ -122,6 +125,7 @@ export default function WeightFreezerLab({ result, loading, onAction, params, on
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="weight-freezer"
         onRecord={onRecord}
         params={params}
         evidence={`${r.current_label} err=${(r.current_error * 100).toFixed(2)}%`}
@@ -380,6 +384,12 @@ export default function WeightFreezerLab({ result, loading, onAction, params, on
           </div>
         )}
       </div>
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['weight-freezer']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox

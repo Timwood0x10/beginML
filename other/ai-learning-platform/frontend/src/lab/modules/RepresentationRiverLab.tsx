@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 import { ABPanel, type ABShot } from '../ABPanel'
 
@@ -130,6 +133,7 @@ export default function RepresentationRiverLab({ result, loading, params, onReco
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="representation-river"
         onRecord={onRecord}
         params={params}
         evidence={`attn=${lastInj.attention.toFixed(3)}, ffn=${lastInj.ffn.toFixed(3)}`}
@@ -378,6 +382,12 @@ export default function RepresentationRiverLab({ result, loading, params, onReco
         onSwap={() => { setShotA(shotB); setShotB(shotA) }}
         onClear={() => { setShotA(null); setShotB(null) }}
       />
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['representation-river']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox

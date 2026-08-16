@@ -6,6 +6,7 @@ import { ControlRow, defaultParams } from './Controls'
 import { useI18n } from '../i18n/context'
 import { labModulesZh, labModulesEn, labGroupsZh, labGroupsEn, controlLabelsZh, controlLabelsEn } from '../i18n/lab'
 import { useDiscoveries, JournalPanel } from './Journal'
+import { QUEST_CHAIN_KEY } from './QuestList'
 import GradientDescentLab from './modules/GradientDescentLab'
 import AttentionLab from './modules/AttentionLab'
 import TransformerLab from './modules/TransformerLab'
@@ -96,6 +97,29 @@ export default function LabPage() {
   const controlLabels = lang === 'zh' ? controlLabelsZh : controlLabelsEn
   const { entries, addEntry, updateInsight, clear } = useDiscoveries()
 
+  // Cross-experiment challenge chain: which labs have ALL quests done.
+  const [questComplete, setQuestComplete] = useState<Set<string>>(() => {
+    try {
+      const raw = window.localStorage.getItem(QUEST_CHAIN_KEY)
+      return raw ? new Set<string>(JSON.parse(raw)) : new Set<string>()
+    } catch {
+      return new Set<string>()
+    }
+  })
+
+  useEffect(() => {
+    const reload = () => {
+      try {
+        const raw = window.localStorage.getItem(QUEST_CHAIN_KEY)
+        setQuestComplete(raw ? new Set<string>(JSON.parse(raw)) : new Set<string>())
+      } catch {
+        setQuestComplete(new Set<string>())
+      }
+    }
+    window.addEventListener('ailearn-quest-complete', reload)
+    return () => window.removeEventListener('ailearn-quest-complete', reload)
+  }, [])
+
   useEffect(() => {
     let alive = true
     api.lab.modules().then((r) => alive && setModules(r.modules)).catch(() => {})
@@ -178,6 +202,11 @@ export default function LabPage() {
   // mounted module from briefly receiving the previous module's data shape.
   const safeResult = active && resultFor === active.id ? result : null
 
+  // Challenge chain helpers: a lab is "completed" when all its quests are
+  // done; its `next_experiment` then shows as unlocked.
+  const completed = (id: string) => questComplete.has(id)
+  const unlocked = (id: string) => modules.some((m) => m.next_experiment === id && completed(m.id))
+
   // Sidebar sections — the Experiment Lab is organized by "what I want to
   // explore", not by a flat folder list. Modules without a `group` fall into
   // the `classic` bucket (the original math lab).
@@ -228,6 +257,11 @@ export default function LabPage() {
                       }`}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{m.icon}</span>
+                      {completed(m.id) ? (
+                        <span className="material-symbols-outlined shrink-0" style={{ fontSize: 16, color: isActive ? 'inherit' : '#2f6b3e' }}>verified</span>
+                      ) : unlocked(m.id) ? (
+                        <span className="material-symbols-outlined shrink-0" style={{ fontSize: 16 }}>lock_open</span>
+                      ) : null}
                       <span className="flex-1 min-w-0">
                         <span className="block text-body-md truncate">{labMeta[m.id]?.title ?? m.title}</span>
                         <span className={`block text-caption truncate ${isActive ? 'opacity-80' : ''}`}>{labMeta[m.id]?.subtitle ?? m.subtitle}</span>
@@ -304,6 +338,11 @@ export default function LabPage() {
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: 17 }}>{nxt.icon}</span>
                   {labMeta[nxt.id]?.title ?? nxt.title}
+                  {unlocked(nxt.id) ? (
+                    <span className="material-symbols-outlined" style={{ fontSize: 15 }}>lock_open</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-outline" style={{ fontSize: 15 }}>lock</span>
+                  )}
                   <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
                 </button>
               ) : null

@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 
 interface RangeResult extends LabResult {
@@ -127,6 +130,7 @@ export default function ShootingRangeLab({ result, loading, params, setParams, o
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="shooting-range"
         onRecord={onRecord}
         params={params}
         evidence={`Bias²=${r.bias2.toFixed(4)}, Var=${r.variance.toFixed(4)}, Noise²=${r.noise2.toFixed(4)}`}
@@ -371,6 +375,12 @@ export default function ShootingRangeLab({ result, loading, params, setParams, o
           </div>
         )}
       </div>
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['shooting-range']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox

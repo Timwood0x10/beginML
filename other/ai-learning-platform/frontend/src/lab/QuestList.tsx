@@ -18,18 +18,23 @@ export interface Quest {
   done: boolean
 }
 
+/** localStorage key for the cross-experiment challenge chain. */
+export const QUEST_CHAIN_KEY = 'ailearn-quest-complete'
+
 const UI: Record<'zh' | 'en', Record<string, string>> = {
   zh: {
     title: '探索任务',
     hint: '拖动控件，亲手达成每个目标。',
     done: '✓',
     progress: '{n}/{total} 达成',
+    chainUnlocked: '全部达成 — 解锁下一个实验的隐藏挑战！',
   },
   en: {
     title: 'Exploration Quests',
     hint: 'Adjust the controls and hit each goal by hand.',
     done: '✓',
     progress: '{n}/{total} done',
+    chainUnlocked: 'All done — the next experiment\'s hidden challenge is unlocked!',
   },
 }
 
@@ -38,6 +43,7 @@ export function QuestList({
   onRecord,
   params,
   evidence,
+  labId,
 }: {
   quests: Quest[]
   onRecord?: (entry: {
@@ -50,10 +56,13 @@ export function QuestList({
   }) => void
   params: LabParams
   evidence: string
+  /** Lab id — used for the cross-experiment challenge chain unlock. */
+  labId: string
 }) {
   const { lang } = useI18n()
   const ui = UI[lang]
   const doneCount = quests.filter((q) => q.done).length
+  const allDone = quests.length > 0 && doneCount === quests.length
 
   // Record a quest ONLY at the moment it flips from false → true. `prevDone`
   // holds the done-set of the previous render; the first render (null) just
@@ -83,6 +92,31 @@ export function QuestList({
     }
     prevDone.current = nowDone
   }, [quests, onRecord, evidence, params])
+
+  // Cross-experiment challenge chain: when ALL quests flip to done, mark this
+  // lab as completed (localStorage) and notify LabPage so it can show the
+  // next experiment as unlocked. The first render only establishes the
+  // baseline — remounting never re-unlocks.
+  const prevAllDone = useRef<boolean | null>(null)
+
+  useEffect(() => {
+    if (prevAllDone.current === null) {
+      prevAllDone.current = allDone
+      return
+    }
+    if (allDone && !prevAllDone.current) {
+      try {
+        const raw = window.localStorage.getItem(QUEST_CHAIN_KEY)
+        const set = raw ? new Set<string>(JSON.parse(raw)) : new Set<string>()
+        set.add(labId)
+        window.localStorage.setItem(QUEST_CHAIN_KEY, JSON.stringify([...set]))
+        window.dispatchEvent(new CustomEvent('ailearn-quest-complete', { detail: labId }))
+      } catch {
+        /* storage may be unavailable — ignore */
+      }
+    }
+    prevAllDone.current = allDone
+  }, [allDone, labId])
 
   return (
     <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

@@ -3,6 +3,9 @@ import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
 import { ExplainBox } from '../Journal'
+import { VerificationPanel } from '../VerificationPanel'
+import { verificationData } from '../verification'
+import { NotesPanel } from '../NotesPanel'
 import { QuestList, type Quest } from '../QuestList'
 
 interface FeatureInfo {
@@ -113,6 +116,7 @@ export default function FeatureHuntLab({ result, loading, onAction, params, setP
       {/* Exploration quests */}
       <QuestList
         quests={quests}
+        labId="feature-hunt"
         onRecord={onRecord}
         params={params}
         evidence={`true=${r.true_idx.join(',')}`}
@@ -345,6 +349,12 @@ export default function FeatureHuntLab({ result, loading, onAction, params, setP
           </div>
         )}
       </div>
+
+      {/* Knowledge verification — multi-source */}
+      <VerificationPanel entry={verificationData['feature-hunt']} />
+
+      {/* Related notes */}
+      <NotesPanel notes={texts.notes} />
 
       {/* L3 Explain — learner-owned, never machine-graded */}
       <ExplainBox
