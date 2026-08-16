@@ -80,19 +80,24 @@ out = w @ V
 """
 
 
-def run_s2() -> dict:
+def run_s2(params: dict | None = None) -> dict:
     rng = np.random.default_rng(SEED)
-    d_k = 8
+    d_k = int(min(max(int((params or {}).get("d_k", 8)), 2), 128))
     Q = rng.normal(0, 1, (3, d_k))
     K = rng.normal(0, 1, (5, d_k))
     V = rng.normal(0, 1, (5, d_k))
-    scores = Q @ K.T / np.sqrt(d_k)
+    raw = Q @ K.T
+    scores = raw / np.sqrt(d_k)
     w = _softmax(scores)
     out = w @ V
     return {
-        "unscaled_max": round(float((Q @ K.T).max()), 4),
+        "d_k": d_k,
+        "unscaled_max": round(float(raw.max()), 4),
         "scaled_max": round(float(scores.max()), 4),
+        "unscaled_var": round(float(raw.var()), 4),
+        "scaled_var": round(float(scores.var()), 4),
         "rows_sum_1": [round(float(r), 6) for r in w.sum(axis=-1)],
+        "entropy": round(float(-(w * np.log(w + 1e-12)).sum(axis=-1).mean()), 4),
         "out_shape": list(out.shape),
     }
 
@@ -351,7 +356,7 @@ def run_section(
         return None
     fn: Callable[..., dict] = s["run"]
     try:
-        result = fn(params or {}) if section_id in ("s7", "s8") else fn()
+        result = fn(params or {}) if section_id in ("s2", "s7", "s8") else fn()
     except TypeError:
         result = fn()
     return {"id": section_id, "title": s["title"], "result": result}

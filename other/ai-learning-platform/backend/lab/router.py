@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from . import (
     activations,
+    anchors,
     attention,
     bias_variance,
     convolution,
@@ -29,10 +30,12 @@ from . import (
     forge,
     losses,
     mamba,
+    mappings,
     matrix_transform,
     moe,
     neural_net,
     optimizers,
+    paper_formulas,
     paper_sections,
     pca,
     pdf_paper,
@@ -157,6 +160,26 @@ def get_paper_view() -> dict[str, Any]:
     """Rendered PDF pages (PNG) + sections with page/bbox for on-page
     clicking — the paper appears as itself and sections are clickable."""
     return pdf_paper.get_paper_view()
+
+
+@router.get("/paper/formulas")
+def get_paper_formulas() -> dict[str, Any]:
+    """Formula blocks (page + bbox) linked to their sections.
+
+    The backend does all the work: formula detection, fragment merging,
+    section assignment, PLUS the semantic anchor (concept/label) and the
+    manually-authored implementation + experiment mappings. The frontend
+    only renders the highlight regions and fetches source + run output."""
+    formulas = paper_formulas.extract_formulas()
+    counters: dict[str, int] = {}
+    for f in formulas:
+        sid = f["section_id"]
+        counters[sid] = counters.get(sid, 0) + 1
+        f["anchor"] = anchors.build_anchor(f, f"Equation {counters[sid]}")
+        f["implementation"] = mappings.implementation_for(sid)
+        f["experiment"] = mappings.experiment_for(sid)
+        f["code_map"] = mappings.code_map_for(sid)
+    return {"count": len(formulas), "formulas": formulas}
 
 
 @router.get("/paper/source/{section_id}")

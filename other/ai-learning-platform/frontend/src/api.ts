@@ -73,6 +73,20 @@ export const api = {
           math: boolean;
         }[];
       }>("/lab/paper"),
+    /** Formula blocks (page + bbox) linked to their sections — the backend
+     * does detection, merging and section assignment; the frontend only
+     * renders the highlight regions. */
+    paperFormulas: () =>
+      request<{
+        formulas: {
+          id: string;
+          page: number;
+          bbox: number[];
+          text: string;
+          section_id: string | null;
+          section_title: string;
+        }[];
+      }>("/lab/paper/formulas"),
     /** Rendered PDF pages (PNG) + sections with page/bbox for on-page clicking. */
     paperView: () =>
       request<{
