@@ -798,6 +798,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "为什么调高温度会让输出更随机？",
         "next_question": "什么是熵？",
+        "next_experiment": "entropy",
         "controls": [
             {
                 "key": "logits_mode",
@@ -856,6 +857,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "为什么位置信息能被编码成旋转角度？",
         "next_question": "RoPE 如何注入 Transformer？",
+        "next_experiment": "token-society",
         "controls": [
             {
                 "key": "position",
@@ -923,6 +925,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "更大的模型应该过拟合更严重——你信吗？",
         "next_question": "经典 bias-variance 在这里预言了什么？",
+        "next_experiment": "shooting-range",
         "controls": [
             {
                 "key": "capacity",
@@ -966,6 +969,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "模型表现差——是偏差还是方差在捣鬼？",
         "next_question": "正则化如何权衡偏差与方差？",
+        "next_experiment": "regularization",
         "controls": [
             {
                 "key": "complexity",
@@ -1008,6 +1012,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "压缩多少还值得？",
         "next_question": "BitNet 的 1.58 bit 为什么可行？",
+        "next_experiment": "mamba-memory-race",
         "controls": [
             {
                 "key": "bit_width",
@@ -1043,6 +1048,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "一个 token 在模型里逐渐变成了什么？",
         "next_question": "注意力如何决定谁影响谁？",
+        "next_experiment": "token-society",
         "controls": [
             {
                 "key": "tokens",
@@ -1086,6 +1092,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "一个句子里，token 如何互相注视？",
         "next_question": "为什么这个 token 看那个 token？",
+        "next_experiment": "transformer-detective",
         "controls": [
             {
                 "key": "sentence",
@@ -1121,6 +1128,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "为什么模型在这里预测了这个？",
         "next_question": "残差流如何运送这些证据？",
+        "next_experiment": "representation-river",
         "controls": [
             {
                 "key": "case",
@@ -1146,6 +1154,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "一个 token 会被哪些专家接走？",
         "next_question": "路由负载均衡为什么重要？",
+        "next_experiment": "mamba-memory-race",
         "controls": [
             {
                 "key": "experts",
@@ -1202,6 +1211,7 @@ MODULES: list[dict[str, Any]] = [
         ),
         "question": "序列变长时，为什么 Transformer 会比 Mamba 慢这么多？",
         "next_question": "KV Cache 如何缓解 Transformer 的平方开销？",
+        "next_experiment": "weight-freezer",
         "controls": [
             {
                 "key": "length",
@@ -1212,6 +1222,91 @@ MODULES: list[dict[str, Any]] = [
                 "step": 4,
                 "default": 64,
             },
+        ],
+    },
+    {
+        "id": "transformer-mri",
+        "title": "Transformer MRI",
+        "subtitle": "Scan the model's training dynamics",
+        "icon": "monitor_heart",
+        "category": "Model Behavior",
+        "group": "model-behavior",
+        "blurb": (
+            "An MRI scan of the Transformer. Sweep the slice plane across "
+            "training dynamics — loss, representation entropy, gradient norm "
+            "— through layers (the body) and steps (the time axis). Healthy "
+            "signs: loss converging, entropy rising, gradients bounded. A "
+            "vanishing-gradient pathology shows up as near-zero norms in "
+            "deep layers. SIMULATION MODE: synthetic scan, not a real run."
+        ),
+        "question": "扫描仪下，模型内部是健康的吗？",
+        "next_question": "梯度消失时，深层的表示还在演化吗？",
+        "next_experiment": "representation-river",
+        "controls": [
+            {
+                "key": "scan",
+                "label": "Scan channel",
+                "type": "select",
+                "options": ["loss", "entropy", "grad_norm"],
+            },
+            {
+                "key": "layer",
+                "label": "Slice layer",
+                "type": "range",
+                "min": 0,
+                "max": 11,
+                "step": 1,
+                "default": 6,
+            },
+            {
+                "key": "step",
+                "label": "Slice step",
+                "type": "range",
+                "min": 0,
+                "max": 99,
+                "step": 1,
+                "default": 99,
+            },
+        ],
+    },
+    {
+        "id": "feature-hunt",
+        "title": "Feature Hunt",
+        "subtitle": "Find the real features in an activation zoo",
+        "icon": "track_changes",
+        "category": "Model Behavior",
+        "group": "model-behavior",
+        "blurb": (
+            "A feature zoo. N candidate neurons fire over a set of tokens; "
+            "most are noise, a few are REAL features — they fire strongly and "
+            "consistently on one semantic group. Scan the activation heatmap, "
+            "click a neuron to see what it fires on, and bet which ones are "
+            "real. SIMULATION MODE: synthetic sparse activations, not a real "
+            "model."
+        ),
+        "question": "噪声堆里，哪些神经元是真正的特征？",
+        "next_question": "稀疏激活为什么让特征可解释？",
+        "next_experiment": "transformer-mri",
+        "controls": [
+            {
+                "key": "features",
+                "label": "Candidate neurons",
+                "type": "range",
+                "min": 8,
+                "max": 24,
+                "step": 2,
+                "default": 16,
+            },
+            {
+                "key": "tokens",
+                "label": "Tokens",
+                "type": "range",
+                "min": 6,
+                "max": 12,
+                "step": 2,
+                "default": 12,
+            },
+            {"key": "reshuffle", "label": "NEW ZOO", "type": "action"},
         ],
     },
 ]

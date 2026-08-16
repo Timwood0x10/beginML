@@ -23,6 +23,7 @@ from . import (
     distributions,
     double_descent,
     entropy,
+    feature_hunt,
     forge,
     losses,
     mamba,
@@ -39,6 +40,7 @@ from . import (
     svm,
     token_society,
     transformer,
+    transformer_mri,
 )
 from .modules import MODULES, get_module
 
@@ -70,6 +72,8 @@ _COMPUTERS = {
     "transformer-detective": detective.compute,
     "moe-expert-routing": moe.compute,
     "mamba-memory-race": mamba.compute,
+    "transformer-mri": transformer_mri.compute,
+    "feature-hunt": feature_hunt.compute,
 }
 
 

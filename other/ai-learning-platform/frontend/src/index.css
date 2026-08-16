@@ -1084,6 +1084,37 @@ html[data-theme='qingdai'].dark body {
   color: #E4ECE8;
 }
 
+/* ============================================================
+   TLAB SCOPE — Experiment Lab scoped tokens (M1 review item).
+   `data-scope="tlab"` is set on the LabPage container; these
+   --tlab-* tokens give the lab area its own "laboratory
+   material" accent without leaking into the global theme.
+   ============================================================ */
+[data-scope='tlab'] {
+  --tlab-bg: #F2EEE4;
+  --tlab-panel: #FBF8F0;
+  --tlab-accent: #5B6BB0;
+  --tlab-accent-2: #C8604A;
+  --tlab-border: rgba(91, 107, 176, 0.25);
+  --tlab-ink: #3B3023;
+}
+html.dark [data-scope='tlab'] {
+  --tlab-bg: #171A18;
+  --tlab-panel: #1E221F;
+  --tlab-accent: #8FA0D0;
+  --tlab-accent-2: #E0977F;
+  --tlab-border: rgba(143, 160, 208, 0.28);
+  --tlab-ink: #E7E3D8;
+}
+/* Tlab accent line for the experiment header (visible proof the scoped
+   tokens are live — light/dark variants come from the block above). */
+.tlab-header-line {
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--tlab-accent), var(--tlab-accent-2));
+  opacity: 0.8;
+}
+
 html, body, #root {
   height: 100%;
 }

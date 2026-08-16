@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { ExplainBox } from '../Journal'
+import { QuestList, type Quest } from '../QuestList'
 
 interface RangeResult extends LabResult {
   x: number[]
@@ -27,9 +29,10 @@ interface RangeResult extends LabResult {
 
 const GOLDEN_ANGLE = 2.39996323 // golden angle in radians (uniform-ish spread)
 
-export default function ShootingRangeLab({ result, loading, params, setParams }: {
+export default function ShootingRangeLab({ result, loading, params, setParams, onRecord }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['shooting-range']
@@ -45,9 +48,44 @@ export default function ShootingRangeLab({ result, loading, params, setParams }:
     return answer === dom
   }, [r, answer])
 
+  // --- L2 Manipulate Challenge ------------------------------------------
+  // Success is DERIVED from the computed quadrant (bias²/variance/noise²
+  // are results, not controls). The learner must tune complexity / samples
+  // / noise until the model lands in the target quadrant.
+  const [l2Goal, setL2Goal] = useState<'bias' | 'balanced' | null>(null)
+  const recordedL2 = useRef<string | null>(null)
+
+  const l2Achieved = l2Goal === 'bias'
+    ? r?.quadrant === 'bias-dominated'
+    : l2Goal === 'balanced'
+      ? r?.quadrant === 'balanced'
+      : false
+
+  // Record the achievement into the Journal exactly once per goal.
+  useEffect(() => {
+    if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
+      recordedL2.current = l2Goal
+      onRecord?.({
+        question: l2Goal === 'bias' ? texts.ui.l2Bias : texts.ui.l2Balanced,
+        prediction: 'manual tuning',
+        correct: true,
+        evidence: `quadrant=${r.quadrant}, Bias²=${r.bias2.toFixed(3)}, Var=${r.variance.toFixed(3)}`,
+        params: { ...params },
+      })
+    }
+  }, [l2Goal, l2Achieved, r, onRecord, texts, params])
+
   if (!r) {
     return <div className="p-10 text-on-surface-variant dark:text-outline">{loading ? texts.ui.computing : texts.ui.adjustControls}</div>
   }
+
+  // --- Exploration quests (derived from computed result) -----------------
+  const mse = r.bias2 + r.variance + r.noise2
+  const quests: Quest[] = [
+    { id: 'balanced', label: texts.quests![0], done: r.quadrant === 'balanced' },
+    { id: 'bias', label: texts.quests![1], done: r.quadrant === 'bias-dominated' },
+    { id: 'lowmse', label: texts.quests![2], done: mse < 0.05 },
+  ]
 
   // --- target view: shots mapped to a 2D target ------------------------
   const T = 240 // target canvas size
@@ -86,6 +124,14 @@ export default function ShootingRangeLab({ result, loading, params, setParams }:
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`Bias²=${r.bias2.toFixed(4)}, Var=${r.variance.toFixed(4)}, Noise²=${r.noise2.toFixed(4)}`}
+      />
+
       {/* Question layer */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-start gap-3">
@@ -231,7 +277,19 @@ export default function ShootingRangeLab({ result, loading, params, setParams }:
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct,
+                evidence: `Bias²=${r.bias2.toFixed(4)}, Var=${r.variance.toFixed(4)}, Noise²=${r.noise2.toFixed(4)}`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -256,6 +314,70 @@ export default function ShootingRangeLab({ result, loading, params, setParams }:
           </div>
         )}
       </div>
+
+      {/* L2 Manipulate Challenge — independent of Controls, independent of Predict */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎛️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => { setL2Goal('bias'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'bias'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Bias}
+          </button>
+          <button
+            onClick={() => { setL2Goal('balanced'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'balanced'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Balanced}
+          </button>
+        </div>
+
+        {l2Goal && (
+          <div>
+            <div className="mb-2 text-caption text-on-surface-variant dark:text-outline">
+              {texts.ui.l2Quadrant}: <span className="font-mono text-primary dark:text-inverse-primary">{r.quadrant}</span>
+            </div>
+            <div className={`rounded-2xl p-3 border ${
+              l2Achieved
+                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
+                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
+            }`}>
+              <div className="text-label-md font-semibold mb-1">
+                {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
+              </div>
+              <div className="text-caption">{texts.ui.l2Hint}</div>
+            </div>
+            <button
+              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              {texts.ui.l2Reset}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* L3 Explain — learner-owned, never machine-graded */}
+      <ExplainBox
+        onRecord={onRecord}
+        evidence={`Bias²=${r.bias2.toFixed(4)}, Var=${r.variance.toFixed(4)}, Noise²=${r.noise2.toFixed(4)}`}
+        params={params}
+      />
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

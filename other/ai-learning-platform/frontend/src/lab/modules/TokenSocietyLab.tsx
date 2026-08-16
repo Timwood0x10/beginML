@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { ExplainBox } from '../Journal'
+import { QuestList, type Quest } from '../QuestList'
 
 interface HeadInfo {
   head: number
@@ -25,9 +27,10 @@ interface SocietyResult extends LabResult {
 
 const HEAD_COLORS = ['#C8604A', '#5B6BB0', '#2f6b3e', '#7A5C36', '#8a3a35', '#4a6b8a', '#8a6b3a', '#6b5b8a']
 
-export default function TokenSocietyLab({ result, loading, onAction }: {
+export default function TokenSocietyLab({ result, loading, onAction, params, onRecord }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['token-society']
@@ -47,12 +50,52 @@ export default function TokenSocietyLab({ result, loading, onAction }: {
     return answer === ans
   }, [r, answer])
 
+  // --- L2 Manipulate Challenge ------------------------------------------
+  // Success is DERIVED from the selected token's attention row under the
+  // current head (the max weight). The learner switches heads/sentences to
+  // concentrate or spread the attention until it passes.
+  const [l2Goal, setL2Goal] = useState<'focused' | 'spread' | null>(null)
+  const recordedL2 = useRef<string | null>(null)
+
+  const selTokenIdx = selToken === null ? Math.floor((r?.n ?? 2) / 2) : selToken
+  const currentMaxW = r && r.heads[Math.min(headIdx, r.heads.length - 1)]
+    ? Math.max(...r.heads[Math.min(headIdx, r.heads.length - 1)].weights[selTokenIdx])
+    : 0
+
+  const l2Achieved = l2Goal === 'focused'
+    ? currentMaxW >= 0.5
+    : l2Goal === 'spread'
+      ? currentMaxW <= 0.35
+      : false
+
+  // Record the achievement into the Journal exactly once per goal.
+  useEffect(() => {
+    if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
+      recordedL2.current = l2Goal
+      const head = r.heads[Math.min(headIdx, r.heads.length - 1)]
+      onRecord?.({
+        question: l2Goal === 'focused' ? texts.ui.l2Focused : texts.ui.l2Spread,
+        prediction: 'manual tuning',
+        correct: true,
+        evidence: `head=${head.name}, maxW=${currentMaxW.toFixed(3)}`,
+        params: { ...params },
+      })
+    }
+  }, [l2Goal, l2Achieved, r, headIdx, selTokenIdx, currentMaxW, onRecord, texts, params])
+
   if (!r) {
     return <div className="p-10 text-on-surface-variant dark:text-outline">{loading ? texts.ui.computing : texts.ui.adjustControls}</div>
   }
 
   const head = r.heads[Math.min(headIdx, r.heads.length - 1)]
   const sel = selToken === null ? Math.floor(r.n / 2) : selToken
+
+  // --- Exploration quests (derived from computed result) -----------------
+  const quests: Quest[] = [
+    { id: 'scout', label: texts.quests![0], done: head.name === 'The Long-Distance Scout' },
+    { id: 'focused', label: texts.quests![1], done: currentMaxW >= 0.5 },
+    { id: 'spread', label: texts.quests![2], done: currentMaxW <= 0.35 },
+  ]
 
   // society graph geometry
   const N = r.n
@@ -69,6 +112,14 @@ export default function TokenSocietyLab({ result, loading, onAction }: {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`scout avg_dist=${r.heads.reduce((a, b) => (b.avg_dist > a.avg_dist ? b : a)).avg_dist.toFixed(3)}`}
+      />
+
       {/* Question layer */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-start gap-3">
@@ -230,7 +281,20 @@ export default function TokenSocietyLab({ result, loading, onAction }: {
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              const scout = r.heads.reduce((a, b) => (b.avg_dist > a.avg_dist ? b : a))
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct,
+                evidence: `scout avg_dist=${scout.avg_dist.toFixed(3)}`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -255,6 +319,70 @@ export default function TokenSocietyLab({ result, loading, onAction }: {
           </div>
         )}
       </div>
+
+      {/* L2 Manipulate Challenge — independent of Controls, independent of Predict */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎛️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => { setL2Goal('focused'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'focused'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Focused}
+          </button>
+          <button
+            onClick={() => { setL2Goal('spread'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'spread'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Spread}
+          </button>
+        </div>
+
+        {l2Goal && (
+          <div>
+            <div className="mb-2 text-caption text-on-surface-variant dark:text-outline">
+              {texts.ui.l2MaxW}: <span className="font-mono text-primary dark:text-inverse-primary">{currentMaxW.toFixed(3)}</span>
+            </div>
+            <div className={`rounded-2xl p-3 border ${
+              l2Achieved
+                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
+                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
+            }`}>
+              <div className="text-label-md font-semibold mb-1">
+                {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
+              </div>
+              <div className="text-caption">{texts.ui.l2Hint}</div>
+            </div>
+            <button
+              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              {texts.ui.l2Reset}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* L3 Explain — learner-owned, never machine-graded */}
+      <ExplainBox
+        onRecord={onRecord}
+        evidence={`scout avg_dist=${r.heads.reduce((a, b) => (b.avg_dist > a.avg_dist ? b : a)).avg_dist.toFixed(3)}`}
+        params={params}
+      />
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

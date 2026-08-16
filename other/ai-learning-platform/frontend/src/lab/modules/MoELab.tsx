@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { ExplainBox } from '../Journal'
+import { QuestList, type Quest } from '../QuestList'
 
 interface ExpertInfo {
   id: number
@@ -28,9 +30,10 @@ interface MoEResult extends LabResult {
 
 const EXPERT_COLORS = ['#C8604A', '#5B6BB0', '#2f6b3e', '#7A5C36', '#8a3a35', '#4a6b8a', '#8a6b3a', '#6b5b8a']
 
-export default function MoELab({ result, loading, onAction }: {
+export default function MoELab({ result, loading, onAction, params, onRecord }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['moe-expert-routing']
@@ -47,6 +50,37 @@ export default function MoELab({ result, loading, onAction }: {
     return answer === (maxL > minL * 1.5 ? 'busiest' : 'even')
   }, [r, answer])
 
+  // --- L2 Manipulate Challenge ------------------------------------------
+  // Success is DERIVED from the computed loads (a result, not a control).
+  // The learner tunes experts / top-k / temperature until the load is
+  // extremely unbalanced or well balanced.
+  // Hooks must live ABOVE the `if (!r) return` early exit.
+  const [l2Goal, setL2Goal] = useState<'unbalanced' | 'balanced' | null>(null)
+  const recordedL2 = useRef<string | null>(null)
+
+  const l2Loads = r?.loads ?? []
+  const l2LoadMin = l2Loads.length ? Math.min(...l2Loads) : 1
+  const l2LoadMax = l2Loads.length ? Math.max(...l2Loads) : 1
+  const l2Achieved = l2Goal === 'unbalanced'
+    ? l2LoadMax / l2LoadMin > 3
+    : l2Goal === 'balanced'
+      ? l2LoadMax / l2LoadMin < 1.5
+      : false
+
+  // Record the achievement into the Journal exactly once per goal.
+  useEffect(() => {
+    if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
+      recordedL2.current = l2Goal
+      onRecord?.({
+        question: l2Goal === 'unbalanced' ? texts.ui.l2Unbalanced : texts.ui.l2Balanced,
+        prediction: 'manual tuning',
+        correct: true,
+        evidence: `max load ${l2LoadMax.toFixed(2)}, min load ${l2LoadMin.toFixed(2)}`,
+        params: { ...params },
+      })
+    }
+  }, [l2Goal, l2Achieved, r, onRecord, texts, params])
+
   if (!r) {
     return <div className="p-10 text-on-surface-variant dark:text-outline">{loading ? texts.ui.computing : texts.ui.adjustControls}</div>
   }
@@ -57,8 +91,25 @@ export default function MoELab({ result, loading, onAction }: {
   const maxRow = Math.max(...row, 1e-9)
   const maxLoadPct = Math.max(...r.experts.map((e) => e.load_pct), 1e-9)
 
+  // --- Exploration quests (derived from computed result) -----------------
+  const loadMin = Math.min(...r.loads)
+  const loadMax = Math.max(...r.loads)
+  const quests: Quest[] = [
+    { id: 'unbalanced', label: texts.quests![0], done: loadMax / loadMin > 3 },
+    { id: 'balanced', label: texts.quests![1], done: loadMax / loadMin < 1.5 },
+    { id: 'sparse', label: texts.quests![2], done: r.top_k === 1 },
+  ]
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`max load ${Math.max(...r.loads).toFixed(2)}, min load ${Math.min(...r.loads).toFixed(2)}`}
+      />
+
       {/* Question layer */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-start gap-3">
@@ -224,7 +275,19 @@ export default function MoELab({ result, loading, onAction }: {
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct,
+                evidence: `max load ${Math.max(...r.loads).toFixed(2)}`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -249,6 +312,70 @@ export default function MoELab({ result, loading, onAction }: {
           </div>
         )}
       </div>
+
+      {/* L2 Manipulate Challenge — independent of Controls, independent of Predict */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎛️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => { setL2Goal('unbalanced'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'unbalanced'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Unbalanced}
+          </button>
+          <button
+            onClick={() => { setL2Goal('balanced'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'balanced'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Balanced}
+          </button>
+        </div>
+
+        {l2Goal && (
+          <div>
+            <div className="mb-2 text-caption text-on-surface-variant dark:text-outline">
+              {texts.ui.l2CurRatio}: <span className="font-mono text-primary dark:text-inverse-primary">{(loadMax / loadMin).toFixed(2)}</span>
+            </div>
+            <div className={`rounded-2xl p-3 border ${
+              l2Achieved
+                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
+                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
+            }`}>
+              <div className="text-label-md font-semibold mb-1">
+                {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
+              </div>
+              <div className="text-caption">{texts.ui.l2Hint}</div>
+            </div>
+            <button
+              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              {texts.ui.l2Reset}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* L3 Explain — learner-owned, never machine-graded */}
+      <ExplainBox
+        onRecord={onRecord}
+        evidence={`max load ${Math.max(...r.loads).toFixed(2)}`}
+        params={params}
+      />
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

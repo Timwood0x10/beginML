@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { ExplainBox } from '../Journal'
+import { QuestList, type Quest } from '../QuestList'
 
 interface Prediction {
   token: string
@@ -38,9 +40,10 @@ interface DetectiveResult extends LabResult {
   provenance: string
 }
 
-export default function DetectiveLab({ result, loading }: {
+export default function DetectiveLab({ result, loading, params, onRecord }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['transformer-detective']
@@ -82,6 +85,13 @@ export default function DetectiveLab({ result, loading }: {
       : null
 
   const allCollected = collected.size >= r.ranking.length
+
+  // --- Exploration quests (derived from computed result + investigation) --
+  const quests: Quest[] = [
+    { id: 'collect', label: texts.quests![0], done: allCollected },
+    { id: 'close', label: texts.quests![1], done: allCollected && submitted && correct },
+    { id: 'trace', label: texts.quests![2], done: (trace?.length ?? 0) >= 2 },
+  ]
   const collect = (i: number) => {
     setSuspectIdx(i)
     setCollected((prev) => new Set(prev).add(i))
@@ -93,6 +103,14 @@ export default function DetectiveLab({ result, loading }: {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`top suspect ${r.ranking[0].name} (${r.ranking[0].score.toFixed(2)})`}
+      />
+
       {/* Question layer */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-start gap-3">
@@ -358,7 +376,20 @@ export default function DetectiveLab({ result, loading }: {
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              const top = r.ranking[0]
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct,
+                evidence: `top suspect ${top.name} (${top.score.toFixed(2)})`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -383,6 +414,13 @@ export default function DetectiveLab({ result, loading }: {
           </div>
         )}
       </div>
+
+      {/* L3 Explain — learner-owned, never machine-graded */}
+      <ExplainBox
+        onRecord={onRecord}
+        evidence={`top suspect ${r.ranking[0].name} (${r.ranking[0].score.toFixed(2)})`}
+        params={params}
+      />
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

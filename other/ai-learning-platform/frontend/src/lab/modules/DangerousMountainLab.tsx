@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { ExplainBox } from '../Journal'
+import { QuestList, type Quest } from '../QuestList'
+import { ABPanel, type ABShot } from '../ABPanel'
 
 interface MountainResult extends LabResult {
   caps: number[]
@@ -23,9 +26,10 @@ interface MountainResult extends LabResult {
   provenance: string
 }
 
-export default function DangerousMountainLab({ result, loading }: {
+export default function DangerousMountainLab({ result, loading, params, onRecord }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['dangerous-mountain']
@@ -46,9 +50,59 @@ export default function DangerousMountainLab({ result, loading }: {
     return answer === (overMin < underMin ? 'down' : 'up')
   }, [r, answer])
 
+  // --- L2 Manipulate Challenge ------------------------------------------
+  // Success is DERIVED from the computed curve (a result, not a control).
+  // The learner tunes capacity / samples / noise until the model lands in
+  // the overparameterized valley or right on the double-descent peak.
+  // Hooks must live ABOVE the `if (!r) return` early exit.
+  const [l2Goal, setL2Goal] = useState<'valley' | 'peak' | null>(null)
+  const recordedL2 = useRef<string | null>(null)
+
+  const l2UnderfitMin = r ? Math.min(...r.test.filter((_, i) => r.caps[i] < 0.75 * r.n)) : Infinity
+  const l2Achieved = l2Goal === 'valley'
+    ? (r?.state ?? '') === 'overparam' && (r?.test_error ?? Infinity) < l2UnderfitMin
+    : l2Goal === 'peak'
+      ? r?.capacity === r?.peak_cap
+      : false
+
+  // Record the achievement into the Journal exactly once per goal.
+  useEffect(() => {
+    if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
+      recordedL2.current = l2Goal
+      onRecord?.({
+        question: l2Goal === 'valley' ? texts.ui.l2Valley : texts.ui.l2Peak,
+        prediction: 'manual tuning',
+        correct: true,
+        evidence: `state=${r.state}, test=${r.test_error.toFixed(4)}`,
+        params: { ...params },
+      })
+    }
+  }, [l2Goal, l2Achieved, r, onRecord, texts, params])
+
+  // --- A/B snapshots (hooks above the early exit too) --------------------
+  const [shotA, setShotA] = useState<ABShot | null>(null)
+  const [shotB, setShotB] = useState<ABShot | null>(null)
+
   if (!r) {
     return <div className="p-10 text-on-surface-variant dark:text-outline">{loading ? texts.ui.computing : texts.ui.adjustControls}</div>
   }
+
+  // --- Exploration quests (derived from computed result) -----------------
+  const underfitMin = Math.min(...r.test.filter((_, i) => r.caps[i] < 0.75 * r.n))
+  const quests: Quest[] = [
+    { id: 'valley', label: texts.quests![0], done: r.state === 'overparam' && r.test_error < underfitMin },
+    { id: 'peak', label: texts.quests![1], done: r.capacity === r.peak_cap },
+    { id: 'min', label: texts.quests![2], done: r.test_error === Math.min(...r.test) },
+  ]
+
+  const makeShot = (name: string): ABShot => ({
+    name,
+    metrics: [
+      { key: 'capacity', label: 'capacity', value: r.capacity },
+      { key: 'test', label: 'test err', value: r.test_error, higherBetter: false },
+      { key: 'train', label: 'train err', value: r.train_error, higherBetter: false },
+    ],
+  })
 
   const { caps, train, test, classic } = r
   const underfit = test.filter((_, i) => caps[i] < 0.75 * r.n)
@@ -83,6 +137,14 @@ export default function DangerousMountainLab({ result, loading }: {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`state=${r.state}, test=${r.test_error.toFixed(4)}`}
+      />
+
       {/* Question layer */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-start gap-3">
@@ -221,7 +283,19 @@ export default function DangerousMountainLab({ result, loading }: {
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct,
+                evidence: `state=${r.state}, test=${r.test_error.toFixed(4)}`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -247,6 +321,81 @@ export default function DangerousMountainLab({ result, loading }: {
           </div>
         )}
       </div>
+
+      {/* L2 Manipulate Challenge — independent of Controls, independent of Predict */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎛️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => { setL2Goal('valley'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'valley'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Valley}
+          </button>
+          <button
+            onClick={() => { setL2Goal('peak'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'peak'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Peak}
+          </button>
+        </div>
+
+        {l2Goal && (
+          <div>
+            <div className="mb-2 text-caption text-on-surface-variant dark:text-outline">
+              {texts.ui.l2CurState}: <span className="font-mono text-primary dark:text-inverse-primary">{r.state}</span>
+              {' · '}test <span className="font-mono">{r.test_error.toFixed(4)}</span>
+            </div>
+            <div className={`rounded-2xl p-3 border ${
+              l2Achieved
+                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
+                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
+            }`}>
+              <div className="text-label-md font-semibold mb-1">
+                {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
+              </div>
+              <div className="text-caption">{texts.ui.l2Hint}</div>
+            </div>
+            <button
+              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              {texts.ui.l2Reset}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* A/B compare */}
+      <ABPanel
+        a={shotA}
+        b={shotB}
+        onSnapA={() => setShotA(makeShot(`A: cap=${r.capacity}`))}
+        onSnapB={() => setShotB(makeShot(`B: cap=${r.capacity}`))}
+        onSwap={() => { setShotA(shotB); setShotB(shotA) }}
+        onClear={() => { setShotA(null); setShotB(null) }}
+      />
+
+      {/* L3 Explain — learner-owned, never machine-graded */}
+      <ExplainBox
+        onRecord={onRecord}
+        evidence={`state=${r.state}, test=${r.test_error.toFixed(4)}`}
+        params={params}
+      />
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

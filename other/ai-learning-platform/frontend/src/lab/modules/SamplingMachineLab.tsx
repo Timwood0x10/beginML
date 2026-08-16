@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LabResult, LabParams } from '../types'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { QuestList, type Quest } from '../QuestList'
 
 interface SamplingResult extends LabResult {
   tokens: string[]
@@ -37,7 +38,7 @@ const CHALLENGE_CORRECT = 'diverse'
 export default function SamplingMachineLab({ result, loading, onAction, onRecord, params }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
-  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams; insight?: string }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['sampling-machine']
@@ -53,11 +54,25 @@ export default function SamplingMachineLab({ result, loading, onAction, onRecord
   const [l2Goal, setL2Goal] = useState<'diverse' | 'concentrated' | null>(null)
   const recordedL2 = useRef<string | null>(null)
 
+  // --- L3 Explain: learner's own words (No-LLM, no auto-judgment) --------
+  const [l3Draft, setL3Draft] = useState('')
+  const [l3Saved, setL3Saved] = useState(false)
+
   const l2Achieved = l2Goal === 'diverse'
     ? (r?.entropy ?? 0) >= 0.8 * (r?.max_entropy ?? 1)
     : l2Goal === 'concentrated'
       ? (r?.entropy ?? 0) <= 0.25 * (r?.max_entropy ?? 1)
       : false
+
+  // --- Exploration quests (derived from computed result + L2 state) ------
+  const quests = useMemo<Quest[]>(() => {
+    if (!r) return []
+    return [
+      { id: 'diverse', label: texts.quests![0], done: r.entropy >= 0.8 * r.max_entropy },
+      { id: 'peaked', label: texts.quests![1], done: r.entropy <= 0.3 * r.max_entropy },
+      { id: 'l2', label: texts.quests![2], done: l2Goal !== null && l2Achieved },
+    ]
+  }, [r, texts, l2Goal, l2Achieved])
 
   // Record the achievement into the Journal exactly once per goal.
   useEffect(() => {
@@ -95,6 +110,14 @@ export default function SamplingMachineLab({ result, loading, onAction, onRecord
           </div>
         </div>
       </div>
+
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`entropy=${r.entropy.toFixed(2)}bits, T=${r.temperature}`}
+      />
 
       {/* Pipeline */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
@@ -309,6 +332,45 @@ export default function SamplingMachineLab({ result, loading, onAction, onRecord
             </button>
           </div>
         )}
+      </div>
+
+      {/* L3 Explain — independent, learner-owned, never machine-graded */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">✍️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l3Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l3Placeholder}</p>
+        <textarea
+          value={l3Draft}
+          onChange={(ev) => { setL3Draft(ev.target.value); setL3Saved(false) }}
+          rows={3}
+          placeholder={texts.ui.l3Placeholder}
+          className="w-full rounded-2xl px-4 py-3 bg-surface-container dark:bg-white/5 border border-outline-variant/50 dark:border-white/15 text-body-md text-on-surface dark:text-dark-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 resize-none"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            disabled={l3Draft.trim() === ''}
+            onClick={() => {
+              if (onRecord && r) {
+                onRecord({
+                  question: texts.ui.l3Title,
+                  prediction: '',
+                  correct: true,
+                  evidence: `entropy=${r.entropy.toFixed(2)}bits, T=${r.temperature}`,
+                  params: { ...params },
+                  insight: l3Draft.trim(),
+                })
+                setL3Saved(true)
+              }
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>save</span>
+            {texts.ui.l3Save}
+          </button>
+          {l3Saved && <span className="text-caption text-[#2f6b3e] dark:text-[#9ed0a8]">{texts.ui.l3Saved}</span>}
+        </div>
       </div>
 
       {/* Related Notes */}

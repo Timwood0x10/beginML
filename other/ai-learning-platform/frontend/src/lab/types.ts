@@ -23,6 +23,7 @@ export interface LabModule {
   group?: string
   question?: string
   next_question?: string
+  next_experiment?: string
   controls: LabControl[]
 }
 

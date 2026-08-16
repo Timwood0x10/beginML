@@ -30,6 +30,8 @@ import TokenSocietyLab from './modules/TokenSocietyLab'
 import DetectiveLab from './modules/DetectiveLab'
 import MoELab from './modules/MoELab'
 import MambaMemoryRaceLab from './modules/MambaMemoryRaceLab'
+import TransformerMRILab from './modules/TransformerMRILab'
+import FeatureHuntLab from './modules/FeatureHuntLab'
 
 interface LabComponentProps {
   result: LabResult | null
@@ -45,6 +47,7 @@ interface LabComponentProps {
     correct: boolean
     evidence: string
     params: LabParams
+    insight?: string
   }) => void
 }
 
@@ -73,6 +76,8 @@ const LAB_COMPONENTS: Record<string, React.ComponentType<LabComponentProps>> = {
   'transformer-detective': DetectiveLab,
   'moe-expert-routing': MoELab,
   'mamba-memory-race': MambaMemoryRaceLab,
+  'transformer-mri': TransformerMRILab,
+  'feature-hunt': FeatureHuntLab,
 }
 
 export default function LabPage() {
@@ -89,7 +94,7 @@ export default function LabPage() {
 
   const labMeta = lang === 'zh' ? labModulesZh : labModulesEn
   const controlLabels = lang === 'zh' ? controlLabelsZh : controlLabelsEn
-  const { entries, addEntry, clear } = useDiscoveries()
+  const { entries, addEntry, updateInsight, clear } = useDiscoveries()
 
   useEffect(() => {
     let alive = true
@@ -108,6 +113,7 @@ export default function LabPage() {
     correct: boolean
     evidence: string
     params: LabParams
+    insight?: string
   }) => {
     if (!active) return
     addEntry({
@@ -187,8 +193,11 @@ export default function LabPage() {
   const labGroups = lang === 'zh' ? labGroupsZh : labGroupsEn
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
-      <aside className="hidden md:flex flex-col w-72 shrink-0 bg-surface-container dark:bg-dark-surface-elevated rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
+    <div data-scope="tlab" className="flex flex-col md:flex-row gap-6 pt-2 -mx-margin-mobile md:mx-0">
+      <aside
+        className="hidden md:flex flex-col w-72 shrink-0 rounded-3xl p-5 shadow-ambient dark:shadow-dark-ambient border sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto"
+        style={{ background: 'var(--tlab-panel)', borderColor: 'var(--tlab-border)' }}
+      >
         <div className="px-2 mb-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full bg-primary dark:bg-inverse-primary text-on-primary dark:text-inverse-surface flex items-center justify-center">
@@ -273,10 +282,32 @@ export default function LabPage() {
 
       <main className="flex-1 min-w-0 flex flex-col gap-5">
         {active && (
-          <header className="bg-surface-container-low dark:bg-dark-surface rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border border-outline-variant/40 dark:border-white/10">
+          <header
+            className="rounded-3xl p-6 shadow-ambient dark:shadow-dark-ambient border"
+            style={{ background: 'var(--tlab-panel)', borderColor: 'var(--tlab-border)' }}
+          >
+            {/* Scoped --tlab-* accent: the experiment area's own material line */}
+            <div className="tlab-header-line mb-4" />
             <span className="text-caption uppercase tracking-wider font-semibold text-primary dark:text-inverse-primary">{t.home.categoryNames[active.category] ?? active.category}</span>
             <h1 className="font-headline text-headline-lg-mobile md:text-headline-xl text-on-surface dark:text-inverse-on-surface mt-1">{labMeta[active.id]?.title ?? active.title}</h1>
             <p className="text-body-md text-on-surface-variant dark:text-outline mt-2 max-w-3xl leading-relaxed">{labMeta[active.id]?.blurb ?? active.blurb}</p>
+
+            {/* Cross-experiment link (Discovery Graph edge): the next
+                experiment this one points to, shown as a jump chip */}
+            {active.next_experiment && (() => {
+              const nxt = modules.find((m) => m.id === active.next_experiment)
+              return nxt ? (
+                <button
+                  onClick={() => navigate(`/lab/${nxt.id}`)}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/40 dark:border-inverse-primary/40 bg-primary/10 dark:bg-inverse-primary/10 text-on-surface dark:text-inverse-on-surface font-label-md text-label-md hover:opacity-90 transition"
+                  title={nxt.subtitle}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 17 }}>{nxt.icon}</span>
+                  {labMeta[nxt.id]?.title ?? nxt.title}
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
+                </button>
+              ) : null
+            })()}
           </header>
         )}
 
@@ -304,7 +335,9 @@ export default function LabPage() {
         <JournalPanel
           entries={entries}
           onClear={clear}
+          onUpdateInsight={updateInsight}
           nextQuestion={active?.next_question}
+          onExplore={active?.next_experiment ? () => navigate(`/lab/${active.next_experiment!}`) : undefined}
         />
       </main>
     </div>

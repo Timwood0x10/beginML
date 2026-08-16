@@ -4,6 +4,8 @@ import { setupCanvas, makeScale, themeVar, type Scale } from '../canvas'
 import { useTheme } from '../../hooks/useTheme'
 import { useI18n } from '../../i18n/context'
 import { labTextsZh, labTextsEn, fmt } from '../../i18n/lab'
+import { ExplainBox } from '../Journal'
+import { QuestList, type Quest } from '../QuestList'
 
 interface RopeResult extends LabResult {
   position: number
@@ -128,9 +130,10 @@ function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number
   ctx.restore()
 }
 
-export default function RotaryObservatoryLab({ result, loading }: {
+export default function RotaryObservatoryLab({ result, loading, params, onRecord }: {
   result: LabResult | null; loading: boolean; error: string | null
   onAction: (k: string) => void; params: LabParams; setParams: (p: LabParams) => void
+  onRecord?: (entry: { question: string; prediction: string; correct: boolean; evidence: string; params: LabParams }) => void
 }) {
   const { lang } = useI18n()
   const texts = (lang === 'zh' ? labTextsZh : labTextsEn)['rotary-observatory']
@@ -149,9 +152,47 @@ export default function RotaryObservatoryLab({ result, loading }: {
     }
   }, [r, theme, palette])
 
+  // --- L2 Manipulate Challenge ------------------------------------------
+  // Success is DERIVED from the computed similarity (a result, not a
+  // control). The learner tunes position / frequency until the two
+  // positions align or the similarity turns negative. Hooks must live
+  // ABOVE the `if (!r) return` early exit.
+  const [l2Goal, setL2Goal] = useState<'align' | 'neg' | null>(null)
+  const recordedL2 = useRef<string | null>(null)
+
+  const l2Achieved = l2Goal === 'align'
+    ? Math.max(r?.sim_at_8 ?? 0, r?.sim_at_4 ?? 0) > 0.95
+    : l2Goal === 'neg'
+      ? Math.min(r?.sim_at_8 ?? 0, r?.sim_at_4 ?? 0) < 0
+      : false
+
+  // Record the achievement into the Journal exactly once per goal.
+  useEffect(() => {
+    if (r && l2Goal && l2Achieved && recordedL2.current !== l2Goal) {
+      recordedL2.current = l2Goal
+      onRecord?.({
+        question: l2Goal === 'align' ? texts.ui.l2Align : texts.ui.l2Neg,
+        prediction: 'manual tuning',
+        correct: true,
+        evidence: `sim(8)=${r.sim_at_8.toFixed(4)}, sim(4)=${r.sim_at_4.toFixed(4)}`,
+        params: { ...params },
+      })
+    }
+  }, [l2Goal, l2Achieved, r, onRecord, texts, params])
+
   if (!r) {
     return <div className="p-10 text-on-surface-variant dark:text-outline">{loading ? texts.ui.computing : texts.ui.adjustControls}</div>
   }
+
+  // --- Exploration quests (derived from computed result) -----------------
+  const simMax = Math.max(r.sim_at_8, r.sim_at_4)
+  const simMin = Math.min(r.sim_at_8, r.sim_at_4)
+  const posDist = Math.abs(r.position - r.position_b)
+  const quests: Quest[] = [
+    { id: 'align', label: texts.quests![0], done: simMax > 0.95 },
+    { id: 'neg', label: texts.quests![1], done: simMin < 0 },
+    { id: 'far', label: texts.quests![2], done: posDist > 2 && simMax > 0.8 },
+  ]
 
   // Challenge verdict from actual computed evidence (deterministic, no LLM).
   const correct = answer === (r.sim_at_8 > r.sim_at_4 ? 'up' : r.sim_at_8 < r.sim_at_4 ? 'down' : 'same')
@@ -161,6 +202,14 @@ export default function RotaryObservatoryLab({ result, loading }: {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Exploration quests */}
+      <QuestList
+        quests={quests}
+        onRecord={onRecord}
+        params={params}
+        evidence={`sim(8)=${r.sim_at_8.toFixed(4)}, sim(4)=${r.sim_at_4.toFixed(4)}`}
+      />
+
       {/* Question layer */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
         <div className="flex items-start gap-3">
@@ -294,7 +343,19 @@ export default function RotaryObservatoryLab({ result, loading }: {
         </div>
         <button
           disabled={answer === null}
-          onClick={() => setSubmitted(true)}
+          onClick={() => {
+            setSubmitted(true)
+            if (onRecord && r) {
+              const label = texts.challengeOptions.find((o) => o.value === answer)?.label ?? answer ?? ''
+              onRecord({
+                question: texts.challengeQuestion,
+                prediction: label,
+                correct,
+                evidence: `sim(8)=${r.sim_at_8.toFixed(4)}, sim(4)=${r.sim_at_4.toFixed(4)}`,
+                params: { ...params },
+              })
+            }
+          }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-on-surface text-on-primary dark:bg-inverse-surface dark:text-inverse-surface font-label-md text-label-md hover:opacity-90 transition disabled:opacity-40"
         >
           {texts.ui.runExperiment}
@@ -319,6 +380,70 @@ export default function RotaryObservatoryLab({ result, loading }: {
           </div>
         )}
       </div>
+
+      {/* L2 Manipulate Challenge — independent of Controls, independent of Predict */}
+      <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎛️</span>
+          <h3 className="font-label-md text-label-md uppercase tracking-wider text-on-surface dark:text-dark-on-surface">{texts.ui.l2Title}</h3>
+        </div>
+        <p className="text-body-md text-on-surface dark:text-inverse-on-surface mb-3">{texts.ui.l2Tagline}</p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => { setL2Goal('align'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'align'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Align}
+          </button>
+          <button
+            onClick={() => { setL2Goal('neg'); recordedL2.current = null }}
+            className={`px-4 py-2 rounded-xl text-label-md font-semibold border transition-all ${
+              l2Goal === 'neg'
+                ? 'bg-primary text-on-primary border-primary dark:bg-inverse-primary dark:text-inverse-surface'
+                : 'bg-surface-container-lowest dark:bg-dark-surface text-on-surface-variant dark:text-outline border-outline-variant/60 dark:border-white/10 hover:border-primary/50'
+            }`}
+          >
+            {texts.ui.l2Neg}
+          </button>
+        </div>
+
+        {l2Goal && (
+          <div>
+            <div className="mb-2 text-caption text-on-surface-variant dark:text-outline">
+              {texts.ui.l2CurSim}: <span className="font-mono text-primary dark:text-inverse-primary">{simMax.toFixed(4)}</span>
+            </div>
+            <div className={`rounded-2xl p-3 border ${
+              l2Achieved
+                ? 'border-[#2f6b3e]/40 bg-[#2f6b3e]/10 text-[#2f6b3e] dark:text-[#9ed0a8]'
+                : 'border-outline-variant/40 dark:border-white/10 bg-surface-container dark:bg-white/5 text-on-surface-variant dark:text-outline'
+            }`}>
+              <div className="text-label-md font-semibold mb-1">
+                {l2Achieved ? texts.ui.l2Success : texts.ui.l2NotYet}
+              </div>
+              <div className="text-caption">{texts.ui.l2Hint}</div>
+            </div>
+            <button
+              onClick={() => { setL2Goal(null); recordedL2.current = null }}
+              className="mt-3 inline-flex items-center gap-1.5 text-caption text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary transition"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>restart_alt</span>
+              {texts.ui.l2Reset}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* L3 Explain — learner-owned, never machine-graded */}
+      <ExplainBox
+        onRecord={onRecord}
+        evidence={`sim(8)=${r.sim_at_8.toFixed(4)}, sim(4)=${r.sim_at_4.toFixed(4)}`}
+        params={params}
+      />
 
       {/* Related Notes */}
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-5 border border-outline-variant/40 dark:border-white/10">

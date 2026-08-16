@@ -70,6 +70,21 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
             cross = l
             break
 
+    # "Memory race" walk: per-token lookback cost as the learner steps
+    # through the sequence. A Transformer token i must look back at ALL i
+    # previous tokens; a Mamba token only touches the fixed-size state once.
+    walk_trans = [float(i) for i in range(L)]
+    walk_mamba = [1.0] * L
+    cum_trans = []
+    cum_mamba = []
+    acc_t = 0.0
+    acc_m = 0.0
+    for i in range(L):
+        acc_t += walk_trans[i]
+        acc_m += walk_mamba[i]
+        cum_trans.append(acc_t)
+        cum_mamba.append(acc_m)
+
     return {
         "length": L,
         "d": D,
@@ -86,5 +101,9 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         "mamba_mem_now": round(mm, 3),
         "mem_ratio": round(mem_ratio, 3),
         "cross_point": cross,
+        "walk_trans": [round(v, 3) for v in walk_trans],
+        "walk_mamba": [round(v, 3) for v in walk_mamba],
+        "cum_trans": [round(v, 3) for v in cum_trans],
+        "cum_mamba": [round(v, 3) for v in cum_mamba],
         "provenance": "realtime(complexity model)",
     }
