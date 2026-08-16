@@ -48,6 +48,11 @@ export const api = {
   health: () => request<{ status: string; notes: number }>("/health"),
   lab: {
     modules: () => request<{ modules: LabModule[] }>("/lab/modules"),
+    /** Registry of available papers for the paper picker. */
+    papers: () =>
+      request<{ papers: { id: string; title: string; author: string }[] }>(
+        "/lab/papers",
+      ),
     compute: (moduleId: string, params: LabParams) =>
       request<LabResult>(`/lab/compute/${moduleId}`, {
         method: "POST",
@@ -76,7 +81,7 @@ export const api = {
     /** Formula blocks (page + bbox) linked to their sections — the backend
      * does detection, merging and section assignment; the frontend only
      * renders the highlight regions. */
-    paperFormulas: () =>
+    paperFormulas: (paperId: string) =>
       request<{
         formulas: {
           id: string;
@@ -85,11 +90,40 @@ export const api = {
           text: string;
           section_id: string | null;
           section_title: string;
+          anchor?: {
+            type: string;
+            section: string;
+            label: string;
+            concept: string;
+            concept_zh?: string;
+          };
+          implementation?: {
+            file: string;
+            symbols: string[];
+            lines: number[];
+          };
+          experiment?: {
+            runner: string;
+            inputs: Record<
+              string,
+              {
+                label: string;
+                min: number;
+                max: number;
+                step: number;
+                default: number;
+              }
+            >;
+            observation_zh: string;
+            observation_en: string;
+          };
+          code_map?: { paper: string; code: string }[];
         }[];
-      }>("/lab/paper/formulas"),
+      }>(`/lab/paper/formulas?paper_id=${paperId}`),
     /** Rendered PDF pages (PNG) + sections with page/bbox for on-page clicking. */
-    paperView: () =>
+    paperView: (paperId: string) =>
       request<{
+        paper_id: string;
         title: string;
         author: string;
         pages: number;
@@ -109,21 +143,22 @@ export const api = {
           page: number;
           bbox: number[];
         }[];
-      }>("/lab/paper/view"),
+      }>(`/lab/paper/view?paper_id=${paperId}`),
     /** Numpy implementation for one paper section. */
-    paperSource: (sectionId: string) =>
+    paperSource: (sectionId: string, paperId: string) =>
       request<{ id: string; title: string; code: string }>(
-        `/lab/paper/source/${sectionId}`,
+        `/lab/paper/source/${sectionId}?paper_id=${paperId}`,
       ),
     /** Execute one paper section's implementation. */
-    paperRun: (sectionId: string, params: LabParams) =>
-      request<{ id: string; title: string; result: Record<string, unknown> }>(
-        `/lab/paper/run/${sectionId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ params }),
-        } as RequestInit,
-      ),
+    paperRun: (sectionId: string, params: LabParams, paperId: string) =>
+      request<{
+        id: string;
+        title: string;
+        result: Record<string, unknown> | null;
+      }>(`/lab/paper/run/${sectionId}?paper_id=${paperId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ params }),
+      } as RequestInit),
   },
 };

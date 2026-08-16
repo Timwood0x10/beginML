@@ -138,7 +138,10 @@ export default function FeatureHuntLab({
     if (onRecord) {
       onRecord({
         question: texts.ui.hunt,
-        prediction: `${tp}/${r.n_true} 真特征命中`,
+        prediction:
+          lang === "zh"
+            ? `${tp}/${r.n_true} 真特征命中`
+            : `${tp}/${r.n_true} real features hit`,
         correct: precision >= 0.75,
         evidence: `precision=${precision.toFixed(2)}, recall=${recall.toFixed(2)}`,
         params: { ...params },
@@ -358,7 +361,8 @@ export default function FeatureHuntLab({
             {texts.ui.hunt}
           </h3>
           <p className="text-caption text-on-surface-variant dark:text-outline mb-3">
-            {texts.ui.mark}（{r.n_true} 个是真）
+            {texts.ui.mark}
+            {lang === "zh" ? `（${r.n_true} 个是真）` : ` (${r.n_true} real)`}
           </p>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {r.features.map((f) => (

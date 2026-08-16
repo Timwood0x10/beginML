@@ -90,7 +90,7 @@ export default function AgentPage() {
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
             science
           </span>
-          可交互实验室
+          {lang === "zh" ? "可交互实验室" : "Interactive Labs"}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {INTERACTIVES.map((item) => (
@@ -122,12 +122,13 @@ export default function AgentPage() {
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
             menu_book
           </span>
-          笔记
+          {lang === "zh" ? "笔记" : "Notes"}
         </h2>
         <div className="rounded-2xl bg-surface-container-low dark:bg-dark-surface-elevated border border-outline-variant/40 dark:border-white/10 p-5">
           <p className="text-body-md text-on-surface-variant dark:text-outline leading-relaxed mb-4">
-            goagent（ares 框架）架构拆解系列与融合改写笔记，从零到一构建 Agent
-            的完整工程脉络。
+            {lang === "zh"
+              ? "goagent（ares 框架）架构拆解系列与融合改写笔记，从零到一构建 Agent 的完整工程脉络。"
+              : "A series of goagent (ARES framework) architecture breakdowns and merge-rewrite notes — the full engineering path from zero to a working Agent."}
           </p>
           <Link
             to="/browse?category=agent"
@@ -139,7 +140,7 @@ export default function AgentPage() {
             >
               arrow_forward
             </span>
-            进入 Agent 笔记库
+            {lang === "zh" ? "进入 Agent 笔记库" : "Open the Agent note library"}
           </Link>
         </div>
       </section>

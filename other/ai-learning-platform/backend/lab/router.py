@@ -37,6 +37,7 @@ from . import (
     optimizers,
     paper_formulas,
     paper_sections,
+    paper_sections_ar,
     pca,
     pdf_paper,
     quantization,
@@ -50,6 +51,12 @@ from . import (
     transformer_mri,
 )
 from .modules import MODULES, get_module
+
+# section implementation runners, per paper
+_SECTION_RUNNERS: dict[str, Any] = {
+    "transformer": paper_sections,
+    "attention-residuals": paper_sections_ar,
+}
 
 router = APIRouter(prefix="/api/lab", tags=["lab"])
 
@@ -149,52 +156,79 @@ def get_source(module_id: str) -> dict[str, Any]:
 # ---- paper ↔ source ↔ run (clickable sections) ----------------------------
 
 
+@router.get("/papers")
+def get_papers() -> dict[str, Any]:
+    """Registry of available papers for the paper picker."""
+    return pdf_paper.list_papers()
+
+
 @router.get("/paper")
-def get_paper() -> dict[str, Any]:
-    """Parse the paper PDF into clickable sections."""
-    return pdf_paper.get_paper()
+def get_paper(paper_id: str = "transformer") -> dict[str, Any]:
+    """Parse a paper PDF into clickable sections."""
+    try:
+        return pdf_paper.get_paper(paper_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Unknown paper: {paper_id}") from None
 
 
 @router.get("/paper/view")
-def get_paper_view() -> dict[str, Any]:
+def get_paper_view(paper_id: str = "transformer") -> dict[str, Any]:
     """Rendered PDF pages (PNG) + sections with page/bbox for on-page
     clicking — the paper appears as itself and sections are clickable."""
-    return pdf_paper.get_paper_view()
+    try:
+        return pdf_paper.get_paper_view(paper_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Unknown paper: {paper_id}") from None
 
 
 @router.get("/paper/formulas")
-def get_paper_formulas() -> dict[str, Any]:
+def get_paper_formulas(paper_id: str = "transformer") -> dict[str, Any]:
     """Formula blocks (page + bbox) linked to their sections.
 
     The backend does all the work: formula detection, fragment merging,
     section assignment, PLUS the semantic anchor (concept/label) and the
     manually-authored implementation + experiment mappings. The frontend
     only renders the highlight regions and fetches source + run output."""
-    formulas = paper_formulas.extract_formulas()
+    try:
+        formulas = paper_formulas.extract_formulas(paper_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Unknown paper: {paper_id}") from None
     counters: dict[str, int] = {}
     for f in formulas:
-        sid = f["section_id"]
+        # formulas before the first heading (title/abstract) belong to the
+        # virtual "cover" section so they are clickable too
+        sid = f["section_id"] or "cover"
+        f["section_id"] = sid
         counters[sid] = counters.get(sid, 0) + 1
-        f["anchor"] = anchors.build_anchor(f, f"Equation {counters[sid]}")
-        f["implementation"] = mappings.implementation_for(sid)
-        f["experiment"] = mappings.experiment_for(sid)
-        f["code_map"] = mappings.code_map_for(sid)
-    return {"count": len(formulas), "formulas": formulas}
+        f["anchor"] = anchors.build_anchor(paper_id, f, f"Equation {counters[sid]}")
+        f["implementation"] = mappings.implementation_for(paper_id, sid)
+        f["experiment"] = mappings.experiment_for(paper_id, sid)
+        f["code_map"] = mappings.code_map_for(paper_id, sid)
+    return {"paper_id": paper_id, "count": len(formulas), "formulas": formulas}
 
 
 @router.get("/paper/source/{section_id}")
-def get_paper_source(section_id: str) -> dict[str, Any]:
-    """Numpy implementation for one paper section (middle column)."""
-    src = paper_sections.section_source(section_id)
+def get_paper_source(section_id: str, paper_id: str = "transformer") -> dict[str, Any]:
+    """Numpy implementation for one paper section (middle column).
+
+    Sections without a hand-authored implementation return 200 with empty
+    code so the UI shows "暂无实现" instead of a 404 resource error."""
+    runner = _SECTION_RUNNERS.get(paper_id)
+    if runner is None:
+        raise HTTPException(status_code=404, detail=f"Unknown paper: {paper_id}")
+    src = runner.section_source(section_id)
     if src is None:
-        raise HTTPException(status_code=404, detail="Unknown paper section")
+        return {"id": section_id, "title": "", "code": ""}
     return src
 
 
 @router.post("/paper/run/{section_id}")
-def run_paper_section(section_id: str, req: ComputeRequest) -> dict[str, Any]:
+def run_paper_section(section_id: str, req: ComputeRequest, paper_id: str = "transformer") -> dict[str, Any]:
     """Execute one paper section's implementation (right column)."""
-    out = paper_sections.run_section(section_id, req.params or {})
+    runner = _SECTION_RUNNERS.get(paper_id)
+    if runner is None:
+        raise HTTPException(status_code=404, detail=f"Unknown paper: {paper_id}")
+    out = runner.run_section(section_id, req.params or {})
     if out is None:
-        raise HTTPException(status_code=404, detail="Unknown paper section")
+        return {"id": section_id, "title": "", "result": None}
     return out

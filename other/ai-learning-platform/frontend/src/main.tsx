@@ -11,7 +11,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>
       <I18nProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
           <App />
         </BrowserRouter>
       </I18nProvider>

@@ -99,6 +99,12 @@ def run_s2(params: dict | None = None) -> dict:
         "rows_sum_1": [round(float(r), 6) for r in w.sum(axis=-1)],
         "entropy": round(float(-(w * np.log(w + 1e-12)).sum(axis=-1).mean()), 4),
         "out_shape": list(out.shape),
+        "visual": {
+            "type": "attn",
+            "matrix": [[round(float(v), 4) for v in row] for row in w.tolist()],
+            "rows": 3,
+            "cols": 5,
+        },
     }
 
 
@@ -224,7 +230,19 @@ def run_s9() -> dict:
     q4 = rope(x, 4)
     q8 = rope(x, 8)
     sim = float(q4 @ q8 / (np.linalg.norm(q4) * np.linalg.norm(q8)))
-    return {"sim_4_8": round(sim, 4), "norm": round(float(np.linalg.norm(q4)), 4)}
+    return {
+        "sim_4_8": round(sim, 4),
+        "norm": round(float(np.linalg.norm(q4)), 4),
+        "visual": {
+            "type": "flow",
+            "steps": [
+                {"label": "input x", "shape": "4", "value": [round(float(v), 3) for v in x]},
+                {"label": "rope(x, 4)", "shape": "4", "value": [round(float(v), 3) for v in q4]},
+                {"label": "rope(x, 8)", "shape": "4", "value": [round(float(v), 3) for v in q8]},
+                {"label": "cos sim(4, 8)", "shape": "1", "value": round(sim, 4)},
+            ],
+        },
+    }
 
 
 # ---- s10: 3.4 Decoupled RoPE ----------------------------------------------
@@ -319,6 +337,234 @@ def run_s15() -> dict:
         "x_norm": round(float(np.linalg.norm(x)), 4),
         "x_next_norm": round(float(np.linalg.norm(x_next)), 4),
         "ratio": round(float(np.linalg.norm(x_next) / np.linalg.norm(x)), 4),
+        "visual": {
+            "type": "flow",
+            "steps": [
+                {"label": "x", "shape": "8", "value": [round(float(v), 3) for v in x]},
+                {"label": "F(x) = tanh(x·W)", "shape": "8", "value": [round(float(v), 3) for v in F]},
+                {"label": "x + F(x)", "shape": "8", "value": [round(float(v), 3) for v in x_next]},
+            ],
+        },
+    }
+
+
+# ---- s3: 1.3 seq2seq attention ---------------------------------------------
+S3_CODE = """
+import numpy as np
+rng = np.random.default_rng(7)
+d = 6
+q = rng.normal(0, 1, d)            # decoder hidden state (query)
+K = rng.normal(0, 1, (8, d))       # encoder keys (source tokens)
+V = rng.normal(0, 1, (8, d))       # encoder values
+scores = K @ q
+w = np.exp(scores) / np.exp(scores).sum()
+context = w @ V                    # context vector fed to the decoder
+"""
+
+
+def run_s3() -> dict:
+    rng = np.random.default_rng(SEED)
+    d = 6
+    q = rng.normal(0, 1, d)
+    K = rng.normal(0, 1, (8, d))
+    V = rng.normal(0, 1, (8, d))
+    scores = K @ q
+    w = np.exp(scores) / np.exp(scores).sum()
+    context = w @ V
+    return {
+        "top_key": int(np.argmax(w)),
+        "top_weight": round(float(w.max()), 4),
+        "weights_sum": round(float(w.sum()), 4),
+        "context_norm": round(float(np.linalg.norm(context)), 4),
+    }
+
+
+# ---- s5: 2.1 causal self-attention ------------------------------------------
+S5_CODE = """
+import numpy as np
+rng = np.random.default_rng(7)
+n, d = 6, 8
+X = rng.normal(0, 1, (n, d))
+Wq, Wk, Wv = (rng.normal(0, 1, (d, d)) for _ in range(3))
+Q, K, V = X @ Wq, X @ Wk, X @ Wv
+scores = Q @ K.T / np.sqrt(d)
+mask = np.triu(np.full((n, n), -1e9), k=1)   # hide future tokens
+w = np.exp(scores + mask) / np.exp(scores + mask).sum(axis=-1, keepdims=True)
+out = w @ V
+"""
+
+
+def run_s5() -> dict:
+    rng = np.random.default_rng(SEED)
+    n, d = 6, 8
+    X = rng.normal(0, 1, (n, d))
+    Wq, Wk, Wv = (rng.normal(0, 1, (d, d)) for _ in range(3))
+    Q, K, V = X @ Wq, X @ Wk, X @ Wv
+    scores = Q @ K.T / np.sqrt(d)
+    mask = np.triu(np.full((n, n), -1e9), k=1)
+    w = np.exp(scores + mask) / np.exp(scores + mask).sum(axis=-1, keepdims=True)
+    return {
+        "row0_supports": int((w[0] > 1e-6).sum()),  # only itself
+        "rowN_supports": int((w[-1] > 1e-6).sum()),  # all past
+        "row0_top": int(np.argmax(w[0])),
+        "rowN_top": int(np.argmax(w[-1])),
+        "visual": {
+            "type": "attn",
+            "matrix": [[round(float(v), 4) for v in row] for row in w.tolist()],
+            "rows": n,
+            "cols": n,
+        },
+    }
+
+
+# ---- s6: 2.2 cross-attention ------------------------------------------------
+S6_CODE = """
+# Cross-attention: Q comes from the target sequence, K/V from the source.
+import numpy as np
+rng = np.random.default_rng(7)
+d = 6
+Q = rng.normal(0, 1, (4, d))    # target (decoder)
+K = rng.normal(0, 1, (7, d))    # source (encoder)
+V = rng.normal(0, 1, (7, d))
+A = Q @ K.T / np.sqrt(d)
+P = np.exp(A) / np.exp(A).sum(axis=-1, keepdims=True)
+Y = P @ V
+"""
+
+
+def run_s6() -> dict:
+    rng = np.random.default_rng(SEED)
+    d = 6
+    Q = rng.normal(0, 1, (4, d))
+    K = rng.normal(0, 1, (7, d))
+    V = rng.normal(0, 1, (7, d))
+    A = Q @ K.T / np.sqrt(d)
+    P = np.exp(A) / np.exp(A).sum(axis=-1, keepdims=True)
+    Y = P @ V
+    return {
+        "attn_shape": list(A.shape),
+        "rows_sum_1": [round(float(r), 6) for r in P.sum(axis=-1)],
+        "y_norm": round(float(np.linalg.norm(Y)), 4),
+    }
+
+
+# ---- s11: 3.5 KV cache extension --------------------------------------------
+S11_CODE = """
+# KV cache extension: decode k new tokens in ONE batch.
+t = 10   # tokens already cached
+k = 4    # new tokens decoded together
+d = 64
+no_cache = (t + k) * (t + k) * d      # recompute all pairs
+with_cache = (t + k) * d              # only the new rows
+"""
+
+
+def run_s11(params: dict | None = None) -> dict:
+    t = int(min(max(int((params or {}).get("tokens", 10)), 2), 512))
+    k = int(min(max(int((params or {}).get("batch", 4)), 1), 64))
+    d = int(min(max(int((params or {}).get("d", 64)), 8), 1024))
+    no_cache = (t + k) * (t + k) * d
+    with_cache = (t + k) * d
+    return {
+        "t": t,
+        "k": k,
+        "flops_no_cache": no_cache,
+        "flops_with_cache": with_cache,
+        "saved_pct": round((1 - with_cache / no_cache) * 100, 2),
+    }
+
+
+# ---- s13: 4.2 online softmax loop -------------------------------------------
+S13_CODE = """
+# Online softmax, LOOP form: update (m, l) chunk by chunk.
+import numpy as np
+chunks = [np.array([2.0, 1.0]), np.array([3.0, 0.5]), np.array([2.5])]
+m, l = -np.inf, 0.0
+for x in chunks:
+    m_new = max(m, x.max())
+    l = l * np.exp(m - m_new) + np.exp(x - m_new).sum()
+    m = m_new
+w = np.exp(np.concatenate(chunks) - m) / l
+"""
+
+
+def run_s13() -> dict:
+    chunks = [np.array([2.0, 1.0]), np.array([3.0, 0.5]), np.array([2.5])]
+    m, l = -np.inf, 0.0
+    for x in chunks:
+        m_new = max(m, x.max())
+        l = l * np.exp(m - m_new) + np.exp(x - m_new).sum()
+        m = m_new
+    all_scores = np.concatenate(chunks)
+    w = np.exp(all_scores - m) / l
+    ref = _softmax(all_scores.reshape(1, -1))[0]
+    return {
+        "weights": [round(float(x), 4) for x in w],
+        "max_err_vs_full": round(float(np.abs(w - ref).max()), 8),
+        "exp_sum": round(float(l), 4),
+    }
+
+
+# ---- s14: 4.3 single-query row form -----------------------------------------
+S14_CODE = """
+# Single-query row form: one query q scores against the whole key matrix.
+import numpy as np
+rng = np.random.default_rng(7)
+d = 8
+q = rng.normal(0, 1, d)
+K = rng.normal(0, 1, (5, d))
+V = rng.normal(0, 1, (5, d))
+row = (q @ K.T) / np.sqrt(d)    # 1 x m score row
+w = np.exp(row) / np.exp(row).sum()
+out = w @ V
+"""
+
+
+def run_s14() -> dict:
+    rng = np.random.default_rng(SEED)
+    d = 8
+    q = rng.normal(0, 1, d)
+    K = rng.normal(0, 1, (5, d))
+    V = rng.normal(0, 1, (5, d))
+    row = (q @ K.T) / np.sqrt(d)
+    w = np.exp(row) / np.exp(row).sum()
+    out = w @ V
+    return {
+        "row_shape": list(row.shape),
+        "weights": [round(float(x), 4) for x in w],
+        "weights_sum": round(float(w.sum()), 4),
+        "out_norm": round(float(np.linalg.norm(out)), 4),
+        "visual": {
+            "type": "attn",
+            "matrix": [[round(float(v), 4) for v in w.tolist()]],
+            "rows": 1,
+            "cols": 5,
+        },
+    }
+
+
+# ---- s16: 5.2 residual gradient ---------------------------------------------
+S16_CODE = """
+# Residual gradient: dy/dx = I + dF/dx. The identity path keeps gradients
+# O(1) across depth, where a plain chain would vanish.
+import numpy as np
+dFdx = 0.05            # a "small" block Jacobian
+L = 50
+plain = dFdx ** L      # without identity: vanishes
+resid = (1.0 + dFdx) ** L
+"""
+
+
+def run_s16() -> dict:
+    dFdx = 0.05
+    L = 50
+    plain = dFdx**L
+    resid = (1.0 + dFdx) ** L
+    return {
+        "depth": L,
+        "plain_chain_grad": f"{plain:.2e}",
+        "residual_grad": round(float(resid), 4),
+        "plain_vs_residual": f"{resid / max(plain, 1e-300):.2e}x",
     }
 
 
@@ -327,13 +573,20 @@ def run_s15() -> dict:
 _SECTIONS: dict[str, dict[str, Any]] = {
     "s1": {"title": "1.1 single query", "code": S1_CODE, "run": run_s1},
     "s2": {"title": "1.2 Scaled Dot-Product Attention", "code": S2_CODE, "run": run_s2},
+    "s3": {"title": "1.3 seq2seq attention", "code": S3_CODE, "run": run_s3},
     "s4": {"title": "1.4 multiple queries", "code": S4_CODE, "run": run_s4},
+    "s5": {"title": "2.1 causal self-attention", "code": S5_CODE, "run": run_s5},
+    "s6": {"title": "2.2 cross-attention", "code": S6_CODE, "run": run_s6},
     "s7": {"title": "3.1 K-V cache motivation", "code": S7_CODE, "run": run_s7},
     "s8": {"title": "3.2 Multi-head Latent Attention", "code": S8_CODE, "run": run_s8},
     "s9": {"title": "3.3 RoPE", "code": S9_CODE, "run": run_s9},
     "s10": {"title": "3.4 Decoupled RoPE", "code": S10_CODE, "run": run_s10},
+    "s11": {"title": "3.5 KV cache extension", "code": S11_CODE, "run": run_s11},
     "s12": {"title": "4.1 online softmax", "code": S12_CODE, "run": run_s12},
+    "s13": {"title": "4.2 online softmax loop", "code": S13_CODE, "run": run_s13},
+    "s14": {"title": "4.3 single-query row form", "code": S14_CODE, "run": run_s14},
     "s15": {"title": "5.1 residual connection", "code": S15_CODE, "run": run_s15},
+    "s16": {"title": "5.2 residual gradient", "code": S16_CODE, "run": run_s16},
 }
 
 

@@ -283,8 +283,10 @@ export default function ShootingRangeLab({
             <span>🔴 {texts.ui.shots}</span>
             <span>
               🟢 {texts.ui.meanShot} ={" "}
-              <span className="font-mono">{r.mean_shot.toFixed(3)}</span>（偏差
-              = {(r.mean_shot - r.true_at_star).toFixed(3)}）
+              <span className="font-mono">{r.mean_shot.toFixed(3)}</span>
+              {lang === "zh"
+                ? `（偏差 = ${(r.mean_shot - r.true_at_star).toFixed(3)}）`
+                : ` (bias = ${(r.mean_shot - r.true_at_star).toFixed(3)})`}
             </span>
           </div>
         </div>
@@ -435,7 +437,7 @@ export default function ShootingRangeLab({
       <div className="bg-surface-container-lowest dark:bg-dark-surface rounded-3xl p-4 border border-outline-variant/40 dark:border-white/10 flex flex-wrap items-center gap-3">
         <span className="text-lg">📦</span>
         <span className="text-body-md text-on-surface dark:text-inverse-on-surface">
-          样本 {r.samples} → 500：
+          {lang === "zh" ? `样本 ${r.samples} → 500：` : `samples ${r.samples} → 500: `}
           <span className="font-mono text-primary dark:text-inverse-primary">
             variance {r.variance.toFixed(3)}
           </span>
