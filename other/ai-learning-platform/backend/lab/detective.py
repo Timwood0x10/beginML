@@ -18,9 +18,8 @@ No-LLM principle: predictions, evidence and rankings are all computed; the
 explanation text is authored by a human in the case library.
 """
 
-from typing import Any
-
 import hashlib
+from typing import Any
 
 import numpy as np
 
@@ -43,10 +42,18 @@ CASES: list[dict[str, Any]] = [
             "Head 7 (H7)": {"cat": 0.35, "mat": 0.28, "sat": 0.11},
         },
         "features": [
-            {"name": "Feature 821", "activated": ["sat", "on"], "strength": 0.55,
-             "hypothesis": "spatial-completion pattern"},
-            {"name": "Feature 1842", "activated": ["mat"], "strength": 0.34,
-             "hypothesis": "noun-slot pattern"},
+            {
+                "name": "Feature 821",
+                "activated": ["sat", "on"],
+                "strength": 0.55,
+                "hypothesis": "spatial-completion pattern",
+            },
+            {
+                "name": "Feature 1842",
+                "activated": ["mat"],
+                "strength": 0.34,
+                "hypothesis": "noun-slot pattern",
+            },
         ],
         "explanation": "sat/on 的注意力把「mat」抬进候选池；Feature 821 的空间补全模式最终选中它。",
         "explanation_en": "Attention from sat/on lifts 'mat' into the candidate pool; the spatial-completion feature finalizes it.",
@@ -68,10 +75,18 @@ CASES: list[dict[str, Any]] = [
             "Head 1 (H1)": {"is": 0.31, "france": 0.27},
         },
         "features": [
-            {"name": "Feature 1842", "activated": ["capital", "france"], "strength": 0.68,
-             "hypothesis": "capital-city relation"},
-            {"name": "Feature 77", "activated": ["paris"], "strength": 0.29,
-             "hypothesis": "country-capital lookup"},
+            {
+                "name": "Feature 1842",
+                "activated": ["capital", "france"],
+                "strength": 0.68,
+                "hypothesis": "capital-city relation",
+            },
+            {
+                "name": "Feature 77",
+                "activated": ["paris"],
+                "strength": 0.29,
+                "hypothesis": "country-capital lookup",
+            },
         ],
         "explanation": "capital/france 激活 capital-city 关系特征，把「paris」提到榜首。",
         "explanation_en": "capital/france fire the capital-city relation feature, pushing 'paris' to the top.",
@@ -93,10 +108,18 @@ CASES: list[dict[str, Any]] = [
             "Head 9 (H9)": {"store": 0.29, "raining": 0.25},
         },
         "features": [
-            {"name": "Feature 421", "activated": ["walked", "raining"], "strength": 0.6,
-             "hypothesis": "cause-effect bridge"},
-            {"name": "Feature 15", "activated": ["because"], "strength": 0.31,
-             "hypothesis": "conjunction slot"},
+            {
+                "name": "Feature 421",
+                "activated": ["walked", "raining"],
+                "strength": 0.6,
+                "hypothesis": "cause-effect bridge",
+            },
+            {
+                "name": "Feature 15",
+                "activated": ["because"],
+                "strength": 0.31,
+                "hypothesis": "conjunction slot",
+            },
         ],
         "explanation": "walked/raining 激活因果桥特征，衔接词槽落定「because」。",
         "explanation_en": "walked/raining fire the cause-effect bridge; the conjunction slot lands on 'because'.",
@@ -111,19 +134,23 @@ def _influence_rank(case: dict[str, Any]) -> list[dict[str, Any]]:
     for name, rows in case["head_rows"].items():
         total = sum(rows.values())
         top_src = max(rows, key=rows.get)  # type: ignore[arg-type]
-        suspects.append({
-            "type": "head",
-            "name": name,
-            "score": round(total, 3),
-            "detail": f"{top_src} → {case['target']} ({rows[top_src]:.2f})",
-        })
+        suspects.append(
+            {
+                "type": "head",
+                "name": name,
+                "score": round(total, 3),
+                "detail": f"{top_src} → {case['target']} ({rows[top_src]:.2f})",
+            }
+        )
     for feat in case["features"]:
-        suspects.append({
-            "type": "feature",
-            "name": feat["name"],
-            "score": round(feat["strength"], 3),
-            "detail": f"activates on {', '.join(feat['activated'])}",
-        })
+        suspects.append(
+            {
+                "type": "feature",
+                "name": feat["name"],
+                "score": round(feat["strength"], 3),
+                "detail": f"activates on {', '.join(feat['activated'])}",
+            }
+        )
 
     suspects.sort(key=lambda s: s["score"], reverse=True)
     return suspects

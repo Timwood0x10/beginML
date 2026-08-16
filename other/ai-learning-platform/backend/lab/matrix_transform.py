@@ -12,6 +12,7 @@ each of the four entries directly. All math runs here in numpy.
 """
 
 from typing import Any
+
 import numpy as np
 
 

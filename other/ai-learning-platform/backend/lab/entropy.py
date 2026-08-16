@@ -10,6 +10,7 @@ All math runs here in numpy; the frontend only renders.
 """
 
 from typing import Any
+
 import numpy as np
 
 
@@ -92,7 +93,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "mode": "categorical",
-        "categories": [f"c{i+1}" for i in range(k)],
+        "categories": [f"c{i + 1}" for i in range(k)],
         "p": p_dist.round(4).tolist(),
         "q": q_dist.round(4).tolist(),
         "domain": {"x": [0, 1], "y": [0, 1]},

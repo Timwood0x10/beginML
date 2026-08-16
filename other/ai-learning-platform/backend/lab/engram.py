@@ -56,7 +56,9 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     rhos = list(range(0, 101, 5))
     # loss rises away from the optimum (squared penalty, plus base + noise)
     loss = [
-        round(1.40 + 0.55 * ((r - OPT_RHO) / 100.0) ** 2 + float(rng.normal(0, 0.004)), 4)
+        round(
+            1.40 + 0.55 * ((r - OPT_RHO) / 100.0) ** 2 + float(rng.normal(0, 0.004)), 4
+        )
         for r in rhos
     ]
     rho_now = int(round(rho / 5) * 5)

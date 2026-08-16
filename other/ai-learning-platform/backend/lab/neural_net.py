@@ -5,6 +5,7 @@ numpy; the frontend only renders.
 """
 
 from typing import Any
+
 import numpy as np
 
 

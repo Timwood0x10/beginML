@@ -6,6 +6,7 @@ eigenvectors is visible) plus an optional sklearn PCA for the projection.
 """
 
 from typing import Any
+
 import numpy as np
 from sklearn.decomposition import PCA as SklearnPCA
 
@@ -86,7 +87,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         "eigenvalues": [round(float(e), 4) for e in eigvals],
         "eigenvectors": [
             {
-                "name": f"PC{i+1}",
+                "name": f"PC{i + 1}",
                 "segment": vec(eigvecs[:, i], float(np.sqrt(eigvals[i])) * 2.0),
                 "variance": round(float(explained[i]), 4),
             }

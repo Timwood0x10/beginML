@@ -14,7 +14,7 @@ from __future__ import annotations
 import hashlib
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import latex2mathml.converter as latex_converter
 import numpy as np
@@ -114,7 +114,7 @@ _PATH_SEGMENT_TO_CATEGORY = {
 # Application
 # ---------------------------------------------------------------------------
 
-from lab.router import router as lab_router  # noqa: E402
+from lab.router import router as lab_router
 
 app = FastAPI(title="AI Learning Platform", version="0.2.0")
 
@@ -151,7 +151,7 @@ def _iter_non_code_lines(content: str):
     in_code = False
     for line in content.split("\n"):
         stripped = line.strip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
+        if stripped.startswith(("```", "~~~")):
             in_code = not in_code
             continue
         if in_code:
@@ -257,7 +257,7 @@ def normalize_math(content: str) -> str:
     in_code = False
     for li, line in enumerate(lines):
         stripped_line = line.strip()
-        if stripped_line.startswith("```") or stripped_line.startswith("~~~"):
+        if stripped_line.startswith(("```", "~~~")):
             in_code = not in_code
             continue
         if in_code:
@@ -298,7 +298,7 @@ def mathml_from_tex(tex: str, display: bool) -> str:
     try:
         mode = "block" if display else "inline"
         return latex_converter.convert(tex, display=mode)
-    except Exception:
+    except Exception:  # noqa: BLE001 - fallback so content never vanishes
         # Fall back to a safe inline wrapper so content never vanishes.
         tag = "div" if display else "span"
         return f'<{tag} class="ailearn-math-error">\\[{tex}\\]</{tag}>'
@@ -308,7 +308,7 @@ def render_math_to_mathml(html: str) -> str:
     """Replace arithmatex wrappers with server-rendered MathML."""
 
     def repl(match: re.Match) -> str:
-        tag, left, tex, right = (
+        tag, left, tex, _right = (
             match.group(1),
             match.group(2),
             match.group(3),
@@ -371,7 +371,7 @@ class NoteIndex:
     def __init__(self) -> None:
         self.notes: list[dict[str, Any]] = []
         self.by_id: dict[str, dict[str, Any]] = {}
-        self.vectorizer: Optional[TfidfVectorizer] = None
+        self.vectorizer: TfidfVectorizer | None = None
         self.tfidf_matrix = None
         self.similarity = None
         self.map_points: list[dict[str, Any]] = []
@@ -389,8 +389,7 @@ class NoteIndex:
 
         # Loose notes at the language roots (not inside a category dir)
         for lang in ("zh", "en"):
-            for md in sorted((NOTES_ROOT / lang).glob("*.md")):
-                md_files.append(md)
+            md_files.extend(sorted((NOTES_ROOT / lang).glob("*.md")))
 
         seen: set[Path] = set()
         for file_path in md_files:
@@ -694,8 +693,8 @@ def stats(lang: str = Query("zh")) -> dict[str, Any]:
 
 @app.get("/api/notes")
 def list_notes(
-    category: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    search: str | None = Query(None),
     lang: str = Query("zh"),
     limit: int = Query(200, ge=1, le=500),
 ) -> dict[str, Any]:
@@ -808,7 +807,7 @@ def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
 
 @app.get("/api/map")
 def knowledge_map(
-    category: Optional[str] = Query(None), lang: str = Query("zh")
+    category: str | None = Query(None), lang: str = Query("zh")
 ) -> dict[str, Any]:
     prefix = f"{lang}/"
     # map_points carry ids but not paths; resolve each point's owning note.

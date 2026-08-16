@@ -7,6 +7,7 @@ separable demo set so the module is populated on first load.
 """
 
 from typing import Any
+
 import numpy as np
 from sklearn.svm import SVC
 

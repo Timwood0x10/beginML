@@ -4,6 +4,7 @@ The frontend renders the curves; no formula is duplicated client-side.
 """
 
 from typing import Any
+
 import numpy as np
 
 

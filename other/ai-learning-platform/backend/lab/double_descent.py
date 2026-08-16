@@ -15,8 +15,8 @@ slider move. Provenance records the grid cell.
 No-LLM principle: every number below is computed; nothing is generated.
 """
 
-from typing import Any
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import numpy as np
 
@@ -130,7 +130,9 @@ def _state(capacity: int, n: int, train_e: float, test_e: float) -> str:
 def compute(params: dict[str, Any]) -> dict[str, Any]:
     # snap to the precomputed grid
     n = int(min(SAMPLES_GRID, key=lambda v: abs(v - int(params.get("samples", 64)))))
-    noise = float(min(NOISE_GRID, key=lambda v: abs(v - float(params.get("noise", 0.4)))))
+    noise = float(
+        min(NOISE_GRID, key=lambda v: abs(v - float(params.get("noise", 0.4))))
+    )
     capacity = int(params.get("capacity", n))
 
     curve = _get_curve(n, noise)
@@ -166,6 +168,6 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         "peak_cap": peak_cap,
         "peak_error": round(peak_err, 4),
         "interpolation_threshold": n,
-        "danger_zone": [int(round(0.75 * n)), int(round(1.5 * n))],
+        "danger_zone": [round(0.75 * n), round(1.5 * n)],
         "provenance": f"cached({n} samples, noise {noise})",
     }

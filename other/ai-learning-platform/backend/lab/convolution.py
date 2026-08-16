@@ -4,6 +4,7 @@ resulting output. The frontend animates the kernel across the input.
 """
 
 from typing import Any
+
 import numpy as np
 
 KERNELS: dict[str, list[float]] = {

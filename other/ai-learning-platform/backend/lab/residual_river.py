@@ -46,10 +46,12 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     angles = np.linspace(0, 2 * np.pi, n_tokens, endpoint=False)
     # token embeddings start spread on a circle so the 2D projection is
     # meaningful from layer 0
-    H = np.hstack([
-        np.stack([np.cos(angles), np.sin(angles)], axis=1),
-        rng.normal(0, 0.25, size=(n_tokens, DIM - 2)),
-    ])
+    H = np.hstack(
+        [
+            np.stack([np.cos(angles), np.sin(angles)], axis=1),
+            rng.normal(0, 0.25, size=(n_tokens, DIM - 2)),
+        ]
+    )
 
     attn = _attention_pattern(n_tokens)
     W_ffn = rng.normal(0, 1.0 / np.sqrt(DIM), size=(DIM, DIM))
@@ -77,11 +79,15 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
             h = h + f_strength * ffn_out
 
         traj[l] = h[:, :2]
-        injections.append({
-            "layer": l,
-            "attention": round(float(np.mean(np.linalg.norm(attn_out - h_prev, axis=1))), 4),
-            "ffn": round(float(np.mean(np.linalg.norm(ffn_out, axis=1))), 4),
-        })
+        injections.append(
+            {
+                "layer": l,
+                "attention": round(
+                    float(np.mean(np.linalg.norm(attn_out - h_prev, axis=1))), 4
+                ),
+                "ffn": round(float(np.mean(np.linalg.norm(ffn_out, axis=1))), 4),
+            }
+        )
 
     return {
         "tokens": [f"t{i}" for i in range(n_tokens)],

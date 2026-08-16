@@ -14,6 +14,7 @@ file <= 1000 lines, all comments in English.
 """
 
 from typing import Any
+
 import numpy as np
 
 D_MODEL = 16  # embedding / model width. Each head gets dk = D_MODEL // heads,
@@ -313,7 +314,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     losses = _train(model, rng, epochs=epochs, lr=lr, causal=causal, n=n)
 
     # Final attention pattern per layer and head (H, n, n).
-    x, y, ignore = _make_batch(rng, n)
+    x, _y, _ignore = _make_batch(rng, n)
     _, cache = model.forward(x, causal)
     attn = [np.round(a, 4).tolist() for a in cache["attn"]]
 

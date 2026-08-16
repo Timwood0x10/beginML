@@ -58,7 +58,7 @@ def _channel_scan(channel: str, seed: int) -> np.ndarray:
 
 def _health(channel: str, scan: np.ndarray) -> dict[str, Any]:
     first_half = scan[:, : N_STEPS // 2].mean()
-    second_half = scan[:, N_STEPS // 2:].mean()
+    second_half = scan[:, N_STEPS // 2 :].mean()
     deep = scan[-3:].mean()
     shallow = scan[:3].mean()
 

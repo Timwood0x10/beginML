@@ -30,7 +30,7 @@ def _rot2(angle: float) -> np.ndarray:
 def compute(params: dict[str, Any]) -> dict[str, Any]:
     m = int(params.get("position", 8))
     n = int(params.get("position_b", 4))
-    freq = float(params.get("frequency", 1.0))          # 0.25 .. 4 (low..high)
+    freq = float(params.get("frequency", 1.0))  # 0.25 .. 4 (low..high)
     dims = int(params.get("dims", 8))
     pair = bool(params.get("pair", False))
     distance_mode = bool(params.get("distance_mode", False))
@@ -53,7 +53,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     sim_at_8 = float(np.cos(8 * theta0))
 
     # Similarity vs distance curve (the FIND THE DISTANCE plot).
-    distances = list(range(0, MAX_DIST + 1))
+    distances = list(range(MAX_DIST + 1))
     similarities = [round(float(np.cos(d * theta0)), 4) for d in distances]
 
     # Frequency lens: dim k rotates at theta0 * rate^(-k), so high-index dims
@@ -61,13 +61,15 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
     rate = 1.6
     lens = []
     for k in range(dims):
-        theta_k = theta0 * (rate ** -k)
-        lens.append({
-            "dim": k,
-            "theta": round(float(theta_k), 5),
-            "angle_at_m": round(float(m * theta_k), 4),
-            "angle_at_n": round(float(n * theta_k), 4),
-        })
+        theta_k = theta0 * (rate**-k)
+        lens.append(
+            {
+                "dim": k,
+                "theta": round(float(theta_k), 5),
+                "angle_at_m": round(float(m * theta_k), 4),
+                "angle_at_n": round(float(n * theta_k), 4),
+            }
+        )
 
     return {
         "position": m,

@@ -27,10 +27,29 @@ import numpy as np
 N_TOKENS = 12
 N_FEATURES = 16
 N_TRUE = 4  # how many neurons are real features
-SPARSE = ["bias", "position", "gender", "tense", "topic", "sentiment", "case", "negation"]
+SPARSE = [
+    "bias",
+    "position",
+    "gender",
+    "tense",
+    "topic",
+    "sentiment",
+    "case",
+    "negation",
+]
 TOKENS = [
-    "the", "cat", "sat", "on", "the", "mat",
-    "she", "ran", "fast", "through", "the", "park",
+    "the",
+    "cat",
+    "sat",
+    "on",
+    "the",
+    "mat",
+    "she",
+    "ran",
+    "fast",
+    "through",
+    "the",
+    "park",
 ]
 
 
@@ -63,16 +82,20 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         col = act[:, fi]
         active = [t for t in range(n_tokens) if col[t] > 0.5]
         is_true = fi in true_idx
-        features.append({
-            "idx": fi,
-            "name": f"neuron_{fi}",
-            "max": round(float(col.max()), 4),
-            "mean": round(float(col.mean()), 4),
-            "sparsity": round(float(np.mean(col > 0.05)), 4),
-            "active_tokens": active,
-            "is_true": is_true,
-            "true_semantic": SPARSE[true_idx.index(fi) % len(SPARSE)] if is_true else None,
-        })
+        features.append(
+            {
+                "idx": fi,
+                "name": f"neuron_{fi}",
+                "max": round(float(col.max()), 4),
+                "mean": round(float(col.mean()), 4),
+                "sparsity": round(float(np.mean(col > 0.05)), 4),
+                "active_tokens": active,
+                "is_true": is_true,
+                "true_semantic": SPARSE[true_idx.index(fi) % len(SPARSE)]
+                if is_true
+                else None,
+            }
+        )
 
     return {
         "tokens": tokens,

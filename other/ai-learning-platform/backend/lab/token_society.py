@@ -39,7 +39,7 @@ def _stable_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
 def _name_head(fingerprint: dict[str, float]) -> str:
     """Deterministic naming from the observed fingerprint (rules, not labels)."""
     if fingerprint["diag_ratio"] > 0.35:
-        return "The Repeater"          # strong one-step-back look (induction-ish)
+        return "The Repeater"  # strong one-step-back look (induction-ish)
     if fingerprint["avg_dist"] > 3.0:
         return "The Long-Distance Scout"
     if fingerprint["local_ratio"] > 0.55:
@@ -107,7 +107,13 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
 
         fp = {
             "head": h,
-            "name": _name_head({"avg_dist": avg_dist, "local_ratio": local_ratio, "diag_ratio": diag_ratio}),
+            "name": _name_head(
+                {
+                    "avg_dist": avg_dist,
+                    "local_ratio": local_ratio,
+                    "diag_ratio": diag_ratio,
+                }
+            ),
             "avg_dist": round(avg_dist, 3),
             "local_ratio": round(local_ratio, 3),
             "diag_ratio": round(diag_ratio, 3),

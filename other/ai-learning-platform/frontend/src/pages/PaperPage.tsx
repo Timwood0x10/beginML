@@ -31,25 +31,29 @@ const UI: Record<"zh" | "en", Record<string, string>> = {
     title: "论文 ↔ 源码 ↔ 运行",
     subtitle:
       "论文 PDF 原样呈现——点击论文上的任意标题，查看该部分的源码实现与运行结果。",
-    clickHint: "把鼠标移到 PDF 上高亮的标题区域，点击即可。",
     source: "该部分源码实现",
     run: "运行结果",
     runBtn: "▶ 重新运行",
     loading: "加载中…",
-    empty: "点击左侧 PDF 中的高亮标题查看实现。",
+    empty: "点击左侧 PDF 中的高亮标题行查看实现。",
     formula: "公式",
+    noImpl: "暂无实现",
+    clickHint:
+      "PDF 上每个高亮标题都是一整条可点击区域：悬停变亮，点击右侧立即显示该部分的源码与运行结果。试试 1.2 SDPA、3.3 RoPE 或 3.1 K-V Cache。",
   },
   en: {
     title: "Paper ↔ Source ↔ Run",
     subtitle:
-      "The paper PDF as itself — click any highlighted heading to see that section's implementation and output.",
-    clickHint: "Hover the highlighted heading regions in the PDF and click.",
+      "The paper PDF as itself — hover the highlighted heading rows and click to see that section's implementation and output.",
+    clickHint:
+      "Every highlighted heading is a full-row clickable area: hover to light it up, click to see that section's source and output. Try 1.2 SDPA, 3.3 RoPE or 3.1 K-V Cache.",
     source: "Section implementation",
     run: "Run output",
     runBtn: "▶ Re-run",
     loading: "Loading…",
-    empty: "Click a highlighted heading in the PDF on the left.",
+    empty: "Click a highlighted heading row in the PDF on the left.",
     formula: "formula",
+    noImpl: "no implementation",
   },
 };
 
@@ -163,16 +167,17 @@ export default function PaperPage() {
   };
 
   const zone = (s: ViewSection, img: PageImage) => {
-    // bbox is in PDF points; zoom maps it to rendered pixels; % keeps it
-    // aligned no matter how the image is scaled by CSS.
+    // Whole-row highlight bar: full page width at the heading line's height,
+    // with a little extra hit-area above/below so it is easy to click. The
+    // `top`/`height` come from the heading bbox (PDF points) → zoom → %.
     const z = meta?.zoom ?? 2;
-    const left = ((s.bbox[0] * z) / img.width) * 100;
-    const top = ((s.bbox[1] * z) / img.height) * 100;
-    const width = (((s.bbox[2] - s.bbox[0]) * z) / img.width) * 100;
-    const height = (((s.bbox[3] - s.bbox[1]) * z) / img.height) * 100;
+    const padPt = 4; // extra clickable padding around the heading line
+    const top = (((s.bbox[1] - padPt) * z) / img.height) * 100;
+    const height =
+      (((s.bbox[3] - s.bbox[1] + padPt * 2) * z) / img.height) * 100;
     const impl = HAS_IMPL.has(s.id);
     const active = selected === s.id;
-    return { left, top, width, height, impl, active };
+    return { top, height, impl, active };
   };
 
   return (
@@ -221,24 +226,42 @@ export default function PaperPage() {
                     />
                     {zones.map((s) => {
                       const z = zone(s, img);
-                      if (!z.impl) return null;
                       return (
                         <button
                           key={s.id}
                           onClick={() => click(s.id)}
-                          title={`${s.id} ${s.title}`}
-                          className={`absolute rounded-sm border transition-all ${
+                          title={`${s.id} ${s.title}${z.impl ? "" : ` — ${ui.noImpl}`}`}
+                          className={`group absolute left-0 flex items-center gap-1 rounded-sm px-1 transition-all ${
                             z.active
-                              ? "border-primary bg-primary/25 dark:bg-inverse-primary/25 ring-2 ring-primary/40"
-                              : "border-primary/50 bg-primary/10 hover:bg-primary/20 dark:bg-inverse-primary/15 dark:hover:bg-inverse-primary/25"
+                              ? "bg-primary/30 dark:bg-inverse-primary/30 ring-2 ring-primary/60"
+                              : z.impl
+                                ? "bg-primary/10 hover:bg-primary/25 dark:bg-inverse-primary/10 dark:hover:bg-inverse-primary/25"
+                                : "bg-outline-variant/10 hover:bg-outline-variant/25 dark:bg-white/5 dark:hover:bg-white/15"
                           }`}
                           style={{
-                            left: `${z.left}%`,
                             top: `${z.top}%`,
-                            width: `${z.width}%`,
+                            width: "100%",
                             height: `${z.height}%`,
                           }}
-                        />
+                        >
+                          {z.impl && (
+                            <span
+                              className="material-symbols-outlined text-primary dark:text-inverse-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                              style={{ fontSize: 12 }}
+                            >
+                              play_arrow
+                            </span>
+                          )}
+                          <span
+                            className={`text-[10px] font-bold truncate ${
+                              z.impl
+                                ? "text-primary dark:text-inverse-primary"
+                                : "text-outline"
+                            }`}
+                          >
+                            {s.id} {s.title}
+                          </span>
+                        </button>
                       );
                     })}
                   </div>

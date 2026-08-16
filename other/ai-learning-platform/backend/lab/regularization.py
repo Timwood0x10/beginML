@@ -9,6 +9,7 @@ a vertex for a tilted quadratic, illustrating sparsity).
 """
 
 from typing import Any
+
 import numpy as np
 
 

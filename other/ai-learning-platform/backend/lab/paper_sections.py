@@ -19,7 +19,8 @@ Sections map to pdf_paper.parse_paper() ids by order:
   s15 5.1 residual connection     -> x_L = x_{L-1} + F(x_{L-1})
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -33,7 +34,7 @@ def _softmax(z: np.ndarray) -> np.ndarray:
 
 
 # ---- s1: 1.1 single query attention --------------------------------------
-S1_CODE = '''
+S1_CODE = """
 import numpy as np
 rng = np.random.default_rng(7)
 d = 4
@@ -44,7 +45,7 @@ V = rng.normal(0, 1, (5, d))     # five values
 scores = K @ q                   # query-key dot products
 w = np.exp(scores) / np.exp(scores).sum()
 out = w @ V                      # weighted sum of values
-'''
+"""
 
 
 def run_s1() -> dict:
@@ -56,12 +57,16 @@ def run_s1() -> dict:
     scores = K @ q
     w = np.exp(scores) / np.exp(scores).sum()
     out = w @ V
-    return {"scores": [round(float(x), 4) for x in scores], "weights": [round(float(x), 4) for x in w],
-            "out": [round(float(x), 4) for x in out], "weights_sum": round(float(w.sum()), 4)}
+    return {
+        "scores": [round(float(x), 4) for x in scores],
+        "weights": [round(float(x), 4) for x in w],
+        "out": [round(float(x), 4) for x in out],
+        "weights_sum": round(float(w.sum()), 4),
+    }
 
 
 # ---- s2: 1.2 Scaled Dot-Product Attention ---------------------------------
-S2_CODE = '''
+S2_CODE = """
 import numpy as np
 rng = np.random.default_rng(7)
 d_k = 8
@@ -72,7 +77,7 @@ V = rng.normal(0, 1, (5, d_k))
 scores = Q @ K.T / np.sqrt(d_k)   # scaled by 1/sqrt(d_k)
 w = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)
 out = w @ V
-'''
+"""
 
 
 def run_s2() -> dict:
@@ -84,13 +89,16 @@ def run_s2() -> dict:
     scores = Q @ K.T / np.sqrt(d_k)
     w = _softmax(scores)
     out = w @ V
-    return {"unscaled_max": round(float((Q @ K.T).max()), 4), "scaled_max": round(float(scores.max()), 4),
-            "rows_sum_1": [round(float(r), 6) for r in w.sum(axis=-1)],
-            "out_shape": list(out.shape)}
+    return {
+        "unscaled_max": round(float((Q @ K.T).max()), 4),
+        "scaled_max": round(float(scores.max()), 4),
+        "rows_sum_1": [round(float(r), 6) for r in w.sum(axis=-1)],
+        "out_shape": list(out.shape),
+    }
 
 
 # ---- s4: 1.4 multiple queries (matrix form) -------------------------------
-S4_CODE = '''
+S4_CODE = """
 import numpy as np
 rng = np.random.default_rng(7)
 n, d = 4, 6
@@ -101,7 +109,7 @@ Q, K, V = X @ Wq, X @ Wk, X @ Wv
 A = Q @ K.T / np.sqrt(d)
 P = np.exp(A) / np.exp(A).sum(axis=-1, keepdims=True)
 Y = P @ V                       # n x d output
-'''
+"""
 
 
 def run_s4() -> dict:
@@ -113,12 +121,15 @@ def run_s4() -> dict:
     A = Q @ K.T / np.sqrt(d)
     P = _softmax(A)
     Y = P @ V
-    return {"attn_shape": list(A.shape), "row_entropy": round(float(-(P * np.log(P + 1e-12)).sum(axis=-1).mean()), 4),
-            "y_norm": round(float(np.linalg.norm(Y)), 4)}
+    return {
+        "attn_shape": list(A.shape),
+        "row_entropy": round(float(-(P * np.log(P + 1e-12)).sum(axis=-1).mean()), 4),
+        "y_norm": round(float(np.linalg.norm(Y)), 4),
+    }
 
 
 # ---- s7: 3.1 K-V cache motivation (FLOPs saved) ---------------------------
-S7_CODE = '''
+S7_CODE = """
 # decoding token t: without KV cache we recompute ALL past attention;
 # with a cache we only touch the new token.
 t = 10            # tokens already decoded
@@ -126,7 +137,7 @@ d = 64
 no_cache = (t + 1) * (t + 1) * d   # attention over all pairs
 with_cache = (t + 1) * d           # only the new row
 print("saved", (1 - with_cache / no_cache) * 100, "%")
-'''
+"""
 
 
 def run_s7(params: dict) -> dict:
@@ -134,12 +145,17 @@ def run_s7(params: dict) -> dict:
     d = int(min(max(int(params.get("d", 64)), 8), 1024))
     no_cache = (t + 1) * (t + 1) * d
     with_cache = (t + 1) * d
-    return {"t": t, "d": d, "flops_no_cache": no_cache, "flops_with_cache": with_cache,
-            "saved_pct": round((1 - with_cache / no_cache) * 100, 2)}
+    return {
+        "t": t,
+        "d": d,
+        "flops_no_cache": no_cache,
+        "flops_with_cache": with_cache,
+        "saved_pct": round((1 - with_cache / no_cache) * 100, 2),
+    }
 
 
 # ---- s8: 3.2 Multi-head Latent Attention (MLA) ----------------------------
-S8_CODE = '''
+S8_CODE = """
 # MLA compresses K/V into a small latent z before the cache,
 # so the KV cache stores z (tiny) instead of the full K,V.
 import numpy as np
@@ -151,7 +167,7 @@ W_down = rng.normal(0, 1, (d, d_c)) / np.sqrt(d)
 z = X @ W_down                # latent: n x d_c  (compressed)
 kv_cache_full = n * 2 * d     # classic KV cache size
 kv_cache_mla = n * d_c        # MLA cache size
-'''
+"""
 
 
 def run_s8(params: dict) -> dict:
@@ -164,12 +180,16 @@ def run_s8(params: dict) -> dict:
     z = X @ W_down
     full = n * 2 * d
     mla = n * d_c
-    return {"z_shape": list(z.shape), "kv_full": full, "kv_mla": mla,
-            "compression": round(full / mla, 2)}
+    return {
+        "z_shape": list(z.shape),
+        "kv_full": full,
+        "kv_mla": mla,
+        "compression": round(full / mla, 2),
+    }
 
 
 # ---- s9: 3.3 RoPE ---------------------------------------------------------
-S9_CODE = '''
+S9_CODE = """
 import numpy as np
 def rope(x, m, theta=10000.0):
     d = x.shape[-1]
@@ -183,7 +203,7 @@ x = np.array([1.0, 0.0, 1.0, 0.0])
 q4 = rope(x, 4)
 q8 = rope(x, 8)
 print("sim(4,8) =", q4 @ q8 / (np.linalg.norm(q4) * np.linalg.norm(q8)))
-'''
+"""
 
 
 def run_s9() -> dict:
@@ -203,7 +223,7 @@ def run_s9() -> dict:
 
 
 # ---- s10: 3.4 Decoupled RoPE ----------------------------------------------
-S10_CODE = '''
+S10_CODE = """
 # Decoupled RoPE (DeepSeek): rotate ONLY the query and part of the key,
 # keep the value (and most of the key) unrotated for cache-friendliness.
 import numpy as np
@@ -216,7 +236,7 @@ rot = lambda v: np.array([v[0]*np.cos(theta) - v[1]*np.sin(theta),
                           v[0]*np.sin(theta) + v[1]*np.cos(theta)])
 q_rope_r, k_rope_r = rot(q_rope), rot(k_rope)
 score = (q_half @ k_half + q_rope_r @ k_rope_r) / np.sqrt(len(q))
-'''
+"""
 
 
 def run_s10() -> dict:
@@ -225,15 +245,22 @@ def run_s10() -> dict:
     q_half, q_rope = q[:2], q[2:]
     k_half, k_rope = k[:2], k[2:]
     theta = 0.5
-    rot = lambda v: np.array([v[0] * np.cos(theta) - v[1] * np.sin(theta),
-                              v[0] * np.sin(theta) + v[1] * np.cos(theta)])
+    rot = lambda v: np.array(
+        [
+            v[0] * np.cos(theta) - v[1] * np.sin(theta),
+            v[0] * np.sin(theta) + v[1] * np.cos(theta),
+        ]
+    )
     q_rope_r, k_rope_r = rot(q_rope), rot(k_rope)
     score = float((q_half @ k_half + q_rope_r @ k_rope_r) / np.sqrt(len(q)))
-    return {"score": round(score, 4), "rotated_q": [round(float(x), 4) for x in q_rope_r]}
+    return {
+        "score": round(score, 4),
+        "rotated_q": [round(float(x), 4) for x in q_rope_r],
+    }
 
 
 # ---- s12: 4.1 online softmax (flash-attention style) ----------------------
-S12_CODE = '''
+S12_CODE = """
 # Online softmax: run max & exp-sum incrementally over chunks, so we never
 # materialize the full QK^T matrix (flash-attention's core trick).
 import numpy as np
@@ -244,7 +271,7 @@ for x in scores:                       # one pass, chunk = one element
     l = l * np.exp(m - m_new) + np.exp(x - m_new)
     m = m_new
 w = np.exp(scores - m) / l
-'''
+"""
 
 
 def run_s12() -> dict:
@@ -256,13 +283,15 @@ def run_s12() -> dict:
         m = m_new
     w = np.exp(scores - m) / l
     ref = _softmax(scores.reshape(1, -1))[0]
-    return {"weights": [round(float(x), 4) for x in w],
-            "max_err_vs_full": round(float(np.abs(w - ref).max()), 8),
-            "exp_sum": round(float(l), 4)}
+    return {
+        "weights": [round(float(x), 4) for x in w],
+        "max_err_vs_full": round(float(np.abs(w - ref).max()), 8),
+        "exp_sum": round(float(l), 4),
+    }
 
 
 # ---- s15: 5.1 residual connection -----------------------------------------
-S15_CODE = '''
+S15_CODE = """
 # Residual stream: x_L = x_{L-1} + F(x_{L-1}) — the block learns a
 # correction F, so gradients flow through the identity path.
 import numpy as np
@@ -272,7 +301,7 @@ W = rng.normal(0, 1, (8, 8)) / 4
 F = np.tanh(x @ W)          # a tiny "transformer block"
 x_next = x + F              # residual add
 print("residual norm kept:", np.linalg.norm(x_next) / np.linalg.norm(x))
-'''
+"""
 
 
 def run_s15() -> dict:
@@ -281,9 +310,11 @@ def run_s15() -> dict:
     W = rng.normal(0, 1, (8, 8)) / 4
     F = np.tanh(x @ W)
     x_next = x + F
-    return {"x_norm": round(float(np.linalg.norm(x)), 4),
-            "x_next_norm": round(float(np.linalg.norm(x_next)), 4),
-            "ratio": round(float(np.linalg.norm(x_next) / np.linalg.norm(x)), 4)}
+    return {
+        "x_norm": round(float(np.linalg.norm(x)), 4),
+        "x_next_norm": round(float(np.linalg.norm(x_next)), 4),
+        "ratio": round(float(np.linalg.norm(x_next) / np.linalg.norm(x)), 4),
+    }
 
 
 # ---- section registry ------------------------------------------------------
@@ -312,7 +343,9 @@ def section_source(section_id: str) -> dict[str, Any] | None:
     return {"id": section_id, "title": s["title"], "code": s["code"]}
 
 
-def run_section(section_id: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
+def run_section(
+    section_id: str, params: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
     s = _SECTIONS.get(section_id)
     if s is None:
         return None

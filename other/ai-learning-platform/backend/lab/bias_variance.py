@@ -127,7 +127,9 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
 
     # subsample fits for the wireframe (keep them ordered by index)
     step = max(1, len(fits) // FIT_N)
-    fits_out = [np.round(fits[i], 4).tolist() for i in range(0, len(fits), step)][:FIT_N]
+    fits_out = [np.round(fits[i], 4).tolist() for i in range(0, len(fits), step)][
+        :FIT_N
+    ]
 
     return {
         "x": np.round(grid, 4).tolist(),

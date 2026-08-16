@@ -12,8 +12,8 @@ source <- > run page: clicking a section shows that section's numpy
 implementation and its computed output.
 """
 
-from pathlib import Path
 import base64
+from pathlib import Path
 
 import pymupdf
 
@@ -24,7 +24,27 @@ H2_SIZE = 11.8  # >= this (and numbered) is a level-2 heading
 VIEW_ZOOM = 2.0  # pixmap zoom for the on-page clickable view
 
 # characters that strongly suggest math content in a line
-_MATH_HINTS = ("$", "\\", "∑", "∂", "√", "π", "θ", "α", "β", "λ", "μ", "σ", "φ", "∇", "∈", "≤", "≥", "·", "×")
+_MATH_HINTS = (
+    "$",
+    "\\",
+    "∑",
+    "∂",
+    "√",
+    "π",
+    "θ",
+    "α",
+    "β",
+    "λ",
+    "μ",
+    "σ",
+    "φ",
+    "∇",
+    "∈",
+    "≤",
+    "≥",
+    "·",
+    "×",
+)
 
 
 def _line_is_math(line: str) -> bool:
@@ -92,7 +112,10 @@ def parse_paper(path: Path | None = None) -> dict:
                             "title": rest or text,
                             "text": "",
                             "page": pno + 1,
-                            "bbox": [round(float(v), 2) for v in line.get("bbox", [0, 0, 0, 0])],
+                            "bbox": [
+                                round(float(v), 2)
+                                for v in line.get("bbox", [0, 0, 0, 0])
+                            ],
                         }
                         continue
                     if pno == 0 and not title:
@@ -110,7 +133,10 @@ def parse_paper(path: Path | None = None) -> dict:
                             "title": rest or text,
                             "text": "",
                             "page": pno + 1,
-                            "bbox": [round(float(v), 2) for v in line.get("bbox", [0, 0, 0, 0])],
+                            "bbox": [
+                                round(float(v), 2)
+                                for v in line.get("bbox", [0, 0, 0, 0])
+                            ],
                         }
                         continue
                     if pno == 0 and text and not author:

@@ -23,8 +23,14 @@ import numpy as np
 D = 8  # embedding dim
 
 SPECIALTIES = [
-    "Syntax", "Semantics", "Math", "Common-Sense",
-    "World-Knowledge", "Coding", "Translation", "Reasoning",
+    "Syntax",
+    "Semantics",
+    "Math",
+    "Common-Sense",
+    "World-Knowledge",
+    "Coding",
+    "Translation",
+    "Reasoning",
 ]
 
 
@@ -74,13 +80,15 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
 
     experts = []
     for e in range(n_experts):
-        experts.append({
-            "id": e,
-            "name": specialties[e],
-            "load": round(float(loads[e]), 3),
-            "load_pct": round(100.0 * float(loads[e]) / total, 1),
-            "tokens": [i for i in range(n_tokens) if routed[i, e] > 0.05],
-        })
+        experts.append(
+            {
+                "id": e,
+                "name": specialties[e],
+                "load": round(float(loads[e]), 3),
+                "load_pct": round(100.0 * float(loads[e]) / total, 1),
+                "tokens": [i for i in range(n_tokens) if routed[i, e] > 0.05],
+            }
+        )
 
     return {
         "tokens": tokens,

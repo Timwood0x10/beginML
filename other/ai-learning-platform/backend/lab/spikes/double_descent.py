@@ -56,7 +56,8 @@ def run_sweep(
         if fourier:
             W = rng.normal(0, gamma, size=(d, p))
             b = rng.uniform(0, 2 * np.pi, size=p)
-            phi = lambda X: np.sqrt(2.0 / p) * np.cos(X @ W + b)
+            # bind loop vars as defaults so the closure is correct
+            phi = lambda X, p=p, W=W, b=b: np.sqrt(2.0 / p) * np.cos(X @ W + b)
             Phi_tr = phi(X_tr)
             Phi_te = phi(X_te)
         else:
@@ -89,20 +90,23 @@ def main() -> None:
         for noise in (0.1, 0.2, 0.4):
             for lam in (1e-5, 1e-4, 1e-3):
                 for fourier in (True, False):
-                    caps, tr, te, peak, peak_cap = run_sweep(
+                    caps, tr, te, _peak, peak_cap = run_sweep(
                         n=n, noise=noise, lam=lam, fourier=fourier, seed=3
                     )
                     # success criteria:
                     # 1) a distinct peak exists near/interpolation: peak_cap >= 0.6*n
                     # 2) peak is meaningfully higher than both sides
                     i_peak = int(np.argmax(te))
-                    left = float(np.mean(te[max(0, i_peak - 4):i_peak]))
-                    right = float(np.mean(te[i_peak + 1:i_peak + 5]))
-                    ok = (te[i_peak] > 1.5 * left) and (te[i_peak] > 1.5 * right) and (caps[i_peak] >= 0.5 * n)
+                    left = float(np.mean(te[max(0, i_peak - 4) : i_peak]))
+                    right = float(np.mean(te[i_peak + 1 : i_peak + 5]))
+                    ok = (
+                        (te[i_peak] > 1.5 * left)
+                        and (te[i_peak] > 1.5 * right)
+                        and (caps[i_peak] >= 0.5 * n)
+                    )
                     if ok:
                         ratio = te[i_peak] / max(float(te[-1]), 1e-9)
-                        score = ratio
-                        cfg = dict(n=n, noise=noise, lam=lam, fourier=fourier)
+                        cfg = {"n": n, "noise": noise, "lam": lam, "fourier": fourier}
                         print(
                             f"n={n:3d} noise={noise:.1f} lam={lam:.0e} "
                             f"{'fourier' if fourier else 'gauss ':8s} "
@@ -121,8 +125,10 @@ def main() -> None:
 
     # print the winning curve
     caps, tr, te, _, _ = run_sweep(**cfg, seed=7)
-    print(f"\nwinning curve (seed=7): n={cfg['n']} noise={cfg['noise']} lam={cfg['lam']} "
-          f"{'fourier' if cfg['fourier'] else 'gauss'}")
+    print(
+        f"\nwinning curve (seed=7): n={cfg['n']} noise={cfg['noise']} lam={cfg['lam']} "
+        f"{'fourier' if cfg['fourier'] else 'gauss'}"
+    )
     for c, e_tr, e_te in zip(caps, tr, te):
         marker = " <== peak" if c == peak_cap else ""
         print(f"  cap={c:3d}  train={e_tr:.4f}  test={e_te:.4f}{marker}")

@@ -45,7 +45,7 @@ def _quantize(cloud: np.ndarray, bits: int) -> np.ndarray:
         if hi - lo < 1e-9:
             out[:, d] = col
             continue
-        n_levels = max(2, 2 ** bits)
+        n_levels = max(2, 2**bits)
         step = (hi - lo) / (n_levels - 1)
         q = np.round((col - lo) / step) * step + lo
         out[:, d] = q
@@ -96,7 +96,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         cur_label = f"int{bit_width}"
         cur_bits = float(bit_width)
 
-    cur_err, cur_mse = _metrics(cloud, cur)
+    cur_err, _cur_mse = _metrics(cloud, cur)
 
     # full Pareto curve across levels
     levels = []
@@ -106,13 +106,15 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         else:
             q = _quantize(cloud, b)
         rel, mse = _metrics(cloud, q)
-        levels.append({
-            "label": label,
-            "bits": mem,
-            "error": round(rel, 5),
-            "mse": round(mse, 5),
-            "memory_mb": round(mem * N_POINTS * DIMS / 8 / 1e6, 6),
-        })
+        levels.append(
+            {
+                "label": label,
+                "bits": mem,
+                "error": round(rel, 5),
+                "mse": round(mse, 5),
+                "memory_mb": round(mem * N_POINTS * DIMS / 8 / 1e6, 6),
+            }
+        )
 
     return {
         "points": np.round(cloud, 4).tolist(),

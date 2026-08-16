@@ -4,6 +4,7 @@ The frontend only renders the returned arrays; all math runs here.
 """
 
 from typing import Any
+
 import numpy as np
 
 
@@ -30,7 +31,7 @@ def _binomial(k: np.ndarray, n: int, p: float) -> np.ndarray:
 
 
 def _poisson(k: np.ndarray, rate: float) -> np.ndarray:
-    from math import exp, lgamma
+    from math import lgamma
 
     return np.array(
         [float(np.exp(-rate + ki * np.log(rate) - lgamma(ki + 1))) for ki in k]
@@ -124,7 +125,7 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
             "stats": {
                 "mean": round(float(samples.mean()), 3),
                 "std": round(float(samples.std()), 3),
-                "samples": int(len(samples)),
+                "samples": len(samples),
             },
         }
 
@@ -154,6 +155,6 @@ def compute(params: dict[str, Any]) -> dict[str, Any]:
         "stats": {
             "mean": round(float(samples.mean()), 3),
             "std": round(float(samples.std()), 3),
-            "samples": int(len(samples)),
+            "samples": len(samples),
         },
     }

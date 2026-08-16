@@ -9,8 +9,8 @@ The compute body is a free-form dict of control values (sliders/toggles/selects)
 defined in lab/modules.py.
 """
 
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -33,7 +33,9 @@ from . import (
     moe,
     neural_net,
     optimizers,
+    paper_sections,
     pca,
+    pdf_paper,
     quantization,
     regularization,
     residual_river,
@@ -45,7 +47,6 @@ from . import (
     transformer_mri,
 )
 from .modules import MODULES, get_module
-from . import pdf_paper, paper_sections
 
 router = APIRouter(prefix="/api/lab", tags=["lab"])
 
@@ -143,6 +144,7 @@ def get_source(module_id: str) -> dict[str, Any]:
 
 
 # ---- paper ↔ source ↔ run (clickable sections) ----------------------------
+
 
 @router.get("/paper")
 def get_paper() -> dict[str, Any]:
