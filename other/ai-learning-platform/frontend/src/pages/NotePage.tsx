@@ -403,17 +403,60 @@ export default function NotePage() {
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                {pages.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      if (i === pageIndex) return;
-                      pageFlipRef.current?.flip(i);
-                    }}
-                    aria-label={`Page ${i + 1}`}
-                    className={`page-dot ${i === pageIndex ? "active" : ""}`}
-                  />
-                ))}
+                {(() => {
+                  const totalPages = pages.length;
+                  const maxVisible = 8;
+                  if (totalPages <= maxVisible) {
+                    return pages.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (i === pageIndex) return;
+                          pageFlipRef.current?.flip(i);
+                        }}
+                        aria-label={`Page ${i + 1}`}
+                        className={`page-dot ${i === pageIndex ? "active" : ""}`}
+                      />
+                    ));
+                  }
+                  const pagesToShow: (number | "...")[] = [];
+                  const half = Math.floor(maxVisible / 2);
+                  let start = Math.max(1, pageIndex - half);
+                  let end = Math.min(totalPages - 2, start + maxVisible - 3);
+                  if (end < totalPages - 2) {
+                    start = Math.max(1, end - maxVisible + 3);
+                  }
+                  if (start > 1) {
+                    pagesToShow.push(0);
+                  }
+                  if (start > 2) {
+                    pagesToShow.push("...");
+                  }
+                  for (let i = start; i <= end; i++) {
+                    pagesToShow.push(i);
+                  }
+                  if (end < totalPages - 2) {
+                    pagesToShow.push("...");
+                  }
+                  if (end < totalPages - 1) {
+                    pagesToShow.push(totalPages - 1);
+                  }
+                  return pagesToShow.map((p, idx) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${idx}`} className="page-dot-ellipsis">...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => {
+                          if (p === pageIndex) return;
+                          pageFlipRef.current?.flip(p);
+                        }}
+                        aria-label={`Page ${p + 1}`}
+                        className={`page-dot ${p === pageIndex ? "active" : ""}`}
+                      />
+                    )
+                  );
+                })()}
               </div>
             </div>
           )}

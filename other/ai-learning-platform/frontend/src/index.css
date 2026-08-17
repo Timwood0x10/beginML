@@ -1600,6 +1600,15 @@ html.dark .page-dot.active {
   box-shadow: 0 0 6px rgba(201, 68, 54, 0.4);
 }
 
+.page-dot-ellipsis {
+  width: 12px;
+  text-align: center;
+  color: #8C7A6B;
+  font-size: 12px;
+  line-height: 1;
+}
+html.dark .page-dot-ellipsis { color: #54483A; }
+
 /* TOC sidebar links */
 .toc-link {
   display: block;
