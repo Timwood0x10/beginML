@@ -126,6 +126,11 @@ ml/
 │   ├── 📄 dpl_tensorflow.py    # 深度学习项目
 │   └── 📄 requirement.txt      # 依赖包列表
 ├── 📁 images/                   # 视觉辅助与图表 (8个图片)
+├── 📁 other/ai-learning-platform/ # AI学习平台 (交互式可视化+论文实验室)
+│   ├── 📁 backend/              # FastAPI后端 (笔记/地图/论文API)
+│   ├── 📁 frontend/             # React前端 (可执行论文页面)
+│   ├── 📄 start.sh              # 一键启动脚本
+│   └── 📄 README.md             # 项目说明
 ├── 📄 neural-network.md         # 神经网络基础指南
 ├── 📄 LEARNING_PATH.md          # 结构化学习路径
 └── 📄 DOCUMENTATION_CODE_INDEX.md  # 文档代码索引
@@ -254,6 +259,14 @@ ml/
 - 🎨 **13个交互式可视化主题**: 包含梯度下降、优化器、SVM、VC维等
 - 🌍 **双语支持**: 中英文文档
 - 🔄 **持续更新**: 定期添加新内容和前沿技术
+
+### 🎓 **AI学习平台** ([ai-learning-platform](./other/ai-learning-platform/))
+- **可执行论文实验室**: PDF解析出真实章节，点章节看实现、改参数跑实验
+- **公式↔源码联动**: 点击公式自动高亮对应源码行
+- **数学实验室**: 交互式数学实验，支持参数调整和实时可视化
+- **知识地图**: 基于TF-IDF的语义相似度笔记地图
+- **技术栈**: FastAPI / React / TypeScript / Vite / Tailwind
+- **开发说明**: 由 mimo 2.5 辅助开发完成，UI由作者独立设计
 
 ---
 

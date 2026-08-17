@@ -72,3 +72,13 @@ make format  # 格式化前后端
 - 后端：FastAPI / numpy / scikit-learn / pymupdf（PDF 解析）
 - 前端：React 18 / TypeScript / Vite / Tailwind
 - 无 LLM 参与：所有数字、公式、章节全部由确定性代码计算/解析
+
+## 🤖 开发说明
+
+本项目由 [mimo 2.5](https://github.com/mimo) 辅助开发完成，UI 由作者独立设计。
+
+## 📄 许可证
+
+本项目采用 Apache License 2.0 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
+
+**English**: [English Version](README_EN.md)
