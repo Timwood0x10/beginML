@@ -1,84 +1,141 @@
-# AIScope — AI 学习平台
+# AIScope — AI 交互式学习平台
 
-面向 AI 学习的交互式平台：笔记库、知识地图、**可执行论文实验室**（Paper Lab）与数学实验实验室（Math Lab）。核心卖点是「论文 → 机制 → 源码 → 实验」的可执行论文：每篇论文解析出真实章节大纲，点章节看实现、改参数跑实验、亲手观察结果。
+> **论文读不懂？公式看不懂？模型跑不起来？**
+> AIScope 把 AI 知识变成可交互的实验室：动手实验、亲眼观察、深刻理解。
 
-## ✨ 亮点：可执行论文（Paper Lab）
+## 这是什么？
 
-| 能力 | 说明 |
+一个让 AI 概念「活起来」的学习平台。不再是静态文档，而是：
+
+```
+理论知识 → 交互实验 → 参数调整 → 实时可视化 → 深刻理解
+```
+
+## 核心特色
+
+### 1. 25+ 交互式实验室
+
+| 分类 | 实验室 | 学什么 |
+|---|---|---|
+| **经典数学** | 梯度下降、激活函数、损失函数、卷积、矩阵变换、概率分布、熵、神经网络、PCA、正则化、SVM | ML 基础概念 |
+| **模型行为** | 采样机、旋转观测台、Token社会、Transformer侦探 | 模型如何思考 |
+| **学习动力学** | 危险之山、射击靶场、表示之河、Transformer MRI | 训练过程揭秘 |
+| **模型效率** | 权重冷冻室、Mamba记忆赛道、专家分诊室、特征狩猎 | 压缩与加速 |
+| **论文实验室** | Transformer、Attention Residuals | 论文 → 代码 → 实验 |
+| **Agent 实验室** | ARES Agent Lab | 搭建、破坏、进化 Agent |
+
+### 2. 可执行论文（Paper Lab）
+
+| 传统阅读 | AIScope |
 |---|---|
-| **真实大纲** | PDF 解析出论文完整章节（编号 + 标题 + 页码），不靠 LLM 猜测 |
-| **公式 ↔ 源码联动** | 点击公式/热力图/数据流步骤，右侧源码行自动高亮并滚动 |
-| **机制导航** | 每篇论文精选核心机制（注意力、RoPE、残差…），一键切入 |
-| **可运行实现** | 每个章节带独立可运行的 numpy 实现 + 参数实验 + 观察/证据 |
+| 读 PDF，看公式，猜含义 | 点击公式，右侧源码自动高亮 |
+| 看代码，不知道对应论文哪部分 | 点击章节，直接跳转实现 |
+| 想跑实验？从零搭环境 | 改个参数，立即看结果 |
+| 读完就忘 | 动手实验，理解深刻 |
 
-目前内置两篇论文：`transformer.pdf`（16 节 / 231 公式）、`attention_residuals.pdf`（7 节）。
+**内置论文**：
+- `transformer.pdf`：16 个章节 / 231 个公式 / 完整可运行实现
+- `attention_residuals.pdf`：7 个章节 / 残差连接机制详解
 
-## 🚀 快速开始
+### 3. 公式 ↔ 源码双向联动
 
-**依赖**：`uv`（Python 包管理）、`node`/`npm`、`lsof`（可选，用于端口检查）。
+```
+点击注意力公式 → 右侧源码自动滚动到 softmax 实现
+修改 num_heads 参数 → 热力图实时更新
+点击因果掩码 → 看到掩码矩阵可视化
+```
+
+### 4. 机制导航
+
+每篇论文精选核心机制，一键切入：
+- 注意力机制 (Multi-Head Attention)
+- 位置编码 (RoPE)
+- 残差连接 (Residual Connection)
+- 层归一化 (Layer Norm)
+- ...
+
+### 5. 实验挑战系统
+
+每个实验室都有挑战任务：
+- **预测 → 运行 → 验证**：先猜结果，再看证据
+- **操纵挑战**：达成特定目标（如"让分布更发散"）
+- **探索链**：完成一个实验解锁下一个
+
+### 6. 知识地图
+
+基于 TF-IDF 的语义相似度笔记地图，帮你发现相关主题。
+
+### 7. ARES Agent Lab
+
+像乐高一样搭建 Agent：
+- 拖拽认知积木
+- 吸附语义端口
+- 展开 Skill 积木盒
+- 接入恢复积木
+- RUN 观察思考 → BREAK 破坏 → 看自愈
+
+## 快速开始
 
 ```bash
-./start.sh        # 一键启动：安装依赖 + 启动后端(:8000) + 前端(:5173)
-./start.sh --stop # 停止
+# 一键启动
+./start.sh
+
+# 打开浏览器
+# 前端：http://localhost:5173
+# 后端：http://127.0.0.1:8000/api/health
 ```
 
-启动后自动打开浏览器：
+**依赖**：`uv`（Python）、`node`/`npm`
 
-- 前端：<http://localhost:5173>
-- 后端健康检查：<http://127.0.0.1:8000/api/health>
-- 日志：`backend.log` / `frontend.log`
+## 技术亮点
 
-**手动启动**（可选）：
+- **无 LLM**：所有数字、公式、章节全部由确定性代码计算/解析
+- **PDF 解析**：真实章节提取，不靠 LLM 猜测
+- **公式提取**：基于字体特征的精确识别
+- **实时计算**：numpy 实现，参数改了立即出结果
+- **双语支持**：中英文界面
 
-```bash
-# 后端
-cd backend && uv sync && uv run uvicorn app:app --host 127.0.0.1 --port 8000
-# 前端（另一终端）
-cd frontend && npm install && npm run dev
-```
-
-## 🧰 开发命令
-
-```bash
-make start   # 等同 ./start.sh
-make stop    # 停止服务
-make check   # 前端 prettier+tsc，后端 ruff+compile
-make format  # 格式化前后端
-```
-
-## 📁 目录结构
+## 项目结构
 
 ```
-├── start.sh            # 一键启动脚本
-├── Makefile            # 启动/停止/检查/格式化
+ai-learning-platform/
 ├── backend/
-│   ├── app.py          # FastAPI 入口（笔记/地图/论文 API）
-│   └── lab/            # 数学实验室模块 + 论文解析器
-│       ├── pdf_paper.py        # PDF → 章节（含标题合并）
-│       ├── paper_formulas.py   # 公式提取（CM 字体法）
-│       ├── mappings.py         # 公式→实现→实验 人工映射
-│       ├── paper_sections.py   # transformer 可运行实现
-│       └── paper_sections_ar.py# attention-residuals 实现
-└── frontend/
-    └── src/pages/PaperPage.tsx # 可执行论文页面（大纲+可视化+源码+实验）
+│   ├── app.py              # FastAPI 入口
+│   └── lab/
+│       ├── pdf_paper.py    # PDF → 章节解析
+│       ├── paper_formulas.py # 公式提取
+│       ├── paper_sections.py # 论文实现
+│       ├── attention.py    # 注意力实验
+│       ├── transformer.py  # Transformer 实验
+│       ├── moe.py          # MoE 实验
+│       ├── mamba.py        # Mamba 实验
+│       └── ...             # 更多实验模块
+├── frontend/
+│   └── src/
+│       ├── pages/
+│       │   └── PaperPage.tsx # 可执行论文页面
+│       └── lab/
+│           └── modules/      # 25+ 实验室组件
+├── start.sh                # 一键启动
+└── README.md
 ```
 
-## ⚠️ 笔记数据位置
+## 适合谁？
 
-后端笔记库的根目录是**仓库的父目录**（`backend/app.py` 中 `NOTES_ROOT = parents[2]`），笔记按 `zh/`、`en/`、`images/` 组织。**克隆仓库后笔记库为空是正常的**——本地演示请在父目录放置笔记数据；Paper Lab 与 Math Lab 完全自包含（PDF 与实现都在仓库内），不受影响。
+- **AI 学习者**：读论文太痛苦？试试交互式阅读
+- **研究者**：想快速验证论文想法？改参数跑实验
+- **开发者**：想理解论文实现？直接看可运行代码
+- **教学者**：想让学生动手实验？这就是现成的实验环境
+- **Agent 开发者**：想搭建 Agent？拖拽积木即可
 
-## 🛠 技术栈
+## 开发说明
 
-- 后端：FastAPI / numpy / scikit-learn / pymupdf（PDF 解析）
-- 前端：React 18 / TypeScript / Vite / Tailwind
-- 无 LLM 参与：所有数字、公式、章节全部由确定性代码计算/解析
+本项目由 mimo 2.5 辅助开发完成，UI 由作者独立设计。
 
-## 🤖 开发说明
+## 许可证
 
-本项目由 [mimo 2.5](https://github.com/mimo) 辅助开发完成，UI 由作者独立设计。
+Apache License 2.0
 
-## 📄 许可证
-
-本项目采用 Apache License 2.0 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
+---
 
 **English**: [English Version](README_EN.md)
