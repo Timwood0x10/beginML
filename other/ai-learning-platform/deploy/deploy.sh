@@ -96,18 +96,40 @@ fi
 log "Using $PKG_MGR to install system packages"
 $UPDATE_CMD
 
-# Packages we need on every platform
+# Choose the correct package names for the detected distro
 if [ "$PKG_MGR" = "apk" ]; then
+    # Alpine – package names already match
     PKGS="git curl wget build-base nginx ca-certificates \
           python3 py3-pip py3-virtualenv \
           openssl-dev libffi-dev \
           certbot certbot-nginx"
 else
-    PKGS="git curl wget build-essential \
-          python3 python3-venv python3-pip \
-          nginx ca-certificates \
-          libssl-dev libffi-dev \
-          certbot python3-certbot-nginx"
+    # Detect Amazon Linux (ID=amzn or ID=alinux) to override generic names
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        IS_AMZN=0
+        case "$ID" in
+        amzn | alinux) IS_AMZN=1 ;;
+        esac
+    else
+        IS_AMZN=0
+    fi
+
+    if [ "$IS_AMZN" -eq 1 ] && [ "$PKG_MGR" = "dnf" ]; then
+        # Amazon Linux 2023 – dnf package names differ from Debian
+        PKGS="git curl wget gcc gcc-c++ make \
+              python3 python3-pip python3-virtualenv \
+              nginx ca-certificates \
+              openssl-devel libffi-devel \
+              certbot python3-certbot-nginx"
+    else
+        # Default list for Ubuntu/Debian/Fedora/RHEL/etc.
+        PKGS="git curl wget build-essential \
+              python3 python3-venv python3-pip \
+              nginx ca-certificates \
+              libssl-dev libffi-dev \
+              certbot python3-certbot-nginx"
+    fi
 fi
 
 $INSTALL_CMD $PKGS || error "Failed to install required system packages with $PKG_MGR"
