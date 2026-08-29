@@ -14,11 +14,12 @@ from __future__ import annotations
 import hashlib
 import re
 from pathlib import Path
+import os
 from typing import Any
 
-import latex2mathml.converter as latex_converter
+import latex2mathml.converter as latex_converter  # type: ignore
 import numpy as np
-import pymdownx.superfences
+import pymdownx.superfences  # type: ignore
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -27,18 +28,20 @@ from markdown import markdown as render_markdown
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import MDS
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-# backend/ lives at <notes>/ai-learning-platform/backend  → notes root is parents[2]
-NOTES_ROOT = Path(__file__).resolve().parents[2]
+# backend/ resides under <notes>/ai-learning-platform/backend; notes root is two levels up
+NOTES_ROOT = Path(
+    os.getenv("NOTES_ROOT", Path(__file__).resolve().parents[2])
+).resolve()
 
-# Directories that contain notes (relative to NOTES_ROOT). Notes are split by
-# language: Chinese originals live under zh/, English versions under en/. We do
-# NOT scan the frontend / backend / templates folders.
+# Directories containing notes (relative to NOTES_ROOT). Notes are split by
+# language: Original Chinese notes under zh/, English translations under en/
+# Do NOT scan the frontend/backend/templates directories.
 SCAN_DIRS = [
     NOTES_ROOT / "zh" / "math",
     NOTES_ROOT / "zh" / "Self-Attention",
@@ -120,7 +123,9 @@ app = FastAPI(title="AI Learning Platform", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "").split(",")
+    if os.getenv("ALLOWED_ORIGINS")
+    else [],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -479,7 +484,7 @@ class NoteIndex:
         # Build the word matrix, then augment with CJK char-bigrams so Chinese
         # notes (which have no whitespace word boundaries) still get meaningful
         # features for similarity / search.
-        word_matrix = self.vectorizer.fit_transform(corpus)
+        word_matrix = self.vectorizer.fit_transform(corpus)  # type: ignore
         cjk = TfidfVectorizer(
             analyzer="char_wb",
             ngram_range=(2, 3),
@@ -491,7 +496,7 @@ class NoteIndex:
         cjk_corpus = [" ".join(re.findall(r"[一-鿿]+", t)) for t in corpus]
         cjk_matrix = cjk.fit_transform(cjk_corpus)
 
-        from scipy.sparse import hstack
+        from scipy.sparse import hstack  # type: ignore
 
         self.tfidf_matrix = hstack([word_matrix, cjk_matrix]).tocsr()
         # Keep both vectorizers only for debugging; feature names for topics
@@ -559,17 +564,24 @@ class NoteIndex:
         span[span == 0] = 1.0
         normalized = (coords - mins) / span * 2.0 - 1.0
 
-        self.map_points = [
-            {
-                "id": note["id"],
-                "title": note["title"],
-                "category": note["category"]["id"],
-                "x": float(normalized[i, 0]),
-                "y": float(normalized[i, 1]),
-                "readingTime": note["readingTime"],
-            }
-            for i, note in enumerate(self.notes)
-        ]
+        points = []
+        for i, note in enumerate(self.notes):
+            try:
+                x = float(normalized[i, 0])
+                y = float(normalized[i, 1])
+            except Exception:
+                x = y = 0.0
+            points.append(
+                {
+                    "id": note["id"],
+                    "title": note["title"],
+                    "category": note["category"]["id"],
+                    "x": x,
+                    "y": y,
+                    "readingTime": note["readingTime"],
+                }
+            )
+        self.map_points = points
 
     def _build_topics(self) -> None:
         """Top keywords per category — used as chips / topic clouds."""
@@ -591,20 +603,23 @@ class NoteIndex:
                 self.tfidf_matrix[indices, :n_word_features].mean(axis=0)
             ).ravel()
             top_idx = scores.argsort()[::-1][:12]
-            keywords = [
-                {"word": str(feature_names[j]), "weight": float(round(scores[j], 4))}
-                for j in top_idx
-                if scores[j] > 0
-            ]
+            keywords = []
+            for j in top_idx:
+                if scores[j] > 0:
+                    try:
+                        weight = float(np.round(scores[j], 4))
+                    except Exception:
+                        weight = 0.0
+                    keywords.append({"word": str(feature_names[j]), "weight": weight})
             topics.append({"category": cat_id, "keywords": keywords})
         self.topic_keywords = topics
 
     # -- queries ------------------------------------------------------------
 
     def _transform_query(self, query: str):
-        from scipy.sparse import hstack
+        from scipy.sparse import hstack  # type: ignore
 
-        wv = self.vectorizer.transform([query])
+        wv = self.vectorizer.transform([query])  # type: ignore
         cjk_text = " ".join(re.findall(r"[一-鿿]+", query))
         cv = (
             self._cjk_vectorizer.transform([cjk_text])
@@ -624,7 +639,10 @@ class NoteIndex:
             if score <= 0.01:
                 continue
             note = dict(self.notes[idx])
-            note["score"] = round(float(score), 4)
+            try:
+                note["score"] = round(float(score), 4)
+            except Exception:
+                note["score"] = 0.0
             out.append(note)
         return out
 
@@ -642,7 +660,10 @@ class NoteIndex:
             if score <= 0.05:
                 continue
             item = dict(other)
-            item["score"] = round(float(score), 4)
+            try:
+                item["score"] = round(float(score), 4)
+            except Exception:
+                item["score"] = 0.0
             out.append(item)
             if len(out) >= top_k:
                 break
@@ -776,7 +797,7 @@ def get_note(note_id: str, lang: str = Query("zh")) -> dict[str, Any]:
         content,
         extensions=MARKDOWN_EXTENSIONS,
         extension_configs=MARKDOWN_EXTENSION_CONFIGS,
-        output_format="html5",
+        output_format="html5",  # type: ignore
     )
     html = render_math_to_mathml(html)
     # The frontend renders the note title in its own header; drop the first

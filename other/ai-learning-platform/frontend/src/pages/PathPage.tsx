@@ -29,7 +29,7 @@ function pathKey(note: Note): string {
 }
 
 export default function PathPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [data, setData] = useState<NotesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export default function PathPage() {
   useEffect(() => {
     let alive = true;
     api
-      .notes()
+      .notes({ lang })
       .then((res) => alive && setData(res))
       .catch(
         (e) => alive && setError(e instanceof Error ? e.message : String(e)),

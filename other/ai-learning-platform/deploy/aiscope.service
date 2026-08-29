@@ -1,0 +1,21 @@
+[Unit]
+Description=AI Learning Platform Backend (FastAPI)
+After=network.target
+
+[Service]
+# Working directory (project root)
+WorkingDirectory=/opt/aiscope/backend
+# Use uv to run uvicorn; --host 0.0.0.0 makes it externally reachable
+ExecStart=/usr/local/bin/uv run uvicorn app:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+# Environment variables can be set via deployment script or `Environment=`
+# Recommended defaults; adjust paths as needed
+Environment=NOTES_ROOT=/opt/aiscope
+
+# Optional resource limits (uncomment to enable)
+# MemoryLimit=200M
+# CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
