@@ -31,14 +31,86 @@ error() {
 }
 
 # ---------- 1️⃣ Install OS packages ----------
-log "Updating apt cache and installing required packages…"
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    git curl wget build-essential \
-    python3 python3-venv python3-pip \
-    nginx ca-certificates \
-    libssl-dev libffi-dev \
-    certbot python3-certbot-nginx || error "apt install failed"
+log "Detecting operating system and installing required packages…"
+
+# Helper: run a command with sudo if we are not root
+run_as_root() {
+    if [ "$(id -u)" -eq 0 ]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
+# ------------------------------------------------------------
+# 1️⃣ Detect OS (Linux, macOS, or unsupported)
+# ------------------------------------------------------------
+OS_TYPE="$(uname -s)"
+case "$OS_TYPE" in
+Linux*) OS="linux" ;;
+Darwin*) OS="macos" ;;
+*) OS="unknown" ;;
+esac
+
+if [ "$OS" = "unknown" ]; then
+    error "Unsupported operating system: $OS_TYPE. This installer only works on Linux or macOS."
+fi
+
+# ------------------------------------------------------------
+# 2️⃣ Detect package manager for the current OS
+# ------------------------------------------------------------
+if [ "$OS" = "linux" ]; then
+    if command -v apt-get >/dev/null 2>&1; then
+        PKG_MGR="apt-get"
+        UPDATE_CMD="run_as_root $PKG_MGR update -y"
+        INSTALL_CMD="run_as_root $PKG_MGR install -y"
+    elif command -v apt >/dev/null 2>&1; then
+        PKG_MGR="apt"
+        UPDATE_CMD="run_as_root $PKG_MGR update -y"
+        INSTALL_CMD="run_as_root $PKG_MGR install -y"
+    elif command -v dnf >/dev/null 2>&1; then
+        PKG_MGR="dnf"
+        UPDATE_CMD="run_as_root $PKG_MGR check-update -y"
+        INSTALL_CMD="run_as_root $PKG_MGR install -y"
+    elif command -v yum >/dev/null 2>&1; then
+        PKG_MGR="yum"
+        UPDATE_CMD="run_as_root $PKG_MGR check-update -y"
+        INSTALL_CMD="run_as_root $PKG_MGR install -y"
+    elif command -v apk >/dev/null 2>&1; then
+        PKG_MGR="apk"
+        UPDATE_CMD="run_as_root $PKG_MGR update"
+        INSTALL_CMD="run_as_root $PKG_MGR add"
+    else
+        error "No supported package manager found on this Linux system (apt, dnf, yum, apk). Install required packages manually and re‑run the script."
+    fi
+elif [ "$OS" = "macos" ]; then
+    if command -v brew >/dev/null 2>&1; then
+        PKG_MGR="brew"
+        UPDATE_CMD="run_as_root $PKG_MGR update"
+        INSTALL_CMD="run_as_root $PKG_MGR install"
+    else
+        error "Homebrew not found on macOS. Install Homebrew first: https://brew.sh/"
+    fi
+fi
+
+log "Using $PKG_MGR to install system packages"
+$UPDATE_CMD
+
+# Packages we need on every platform
+if [ "$PKG_MGR" = "apk" ]; then
+    PKGS="git curl wget build-base nginx ca-certificates \
+          python3 py3-pip py3-virtualenv \
+          openssl-dev libffi-dev \
+          certbot certbot-nginx"
+else
+    PKGS="git curl wget build-essential \
+          python3 python3-venv python3-pip \
+          nginx ca-certificates \
+          libssl-dev libffi-dev \
+          certbot python3-certbot-nginx"
+fi
+
+$INSTALL_CMD $PKGS || error "Failed to install required system packages with $PKG_MGR"
 
 # ---------- 2️⃣ Install uv (Python package manager) ----------
 if ! command -v uv >/dev/null 2>&1; then
@@ -55,13 +127,20 @@ fi
 
 # ---------- 3️⃣ Install Node.js LTS ----------
 if ! command -v node >/dev/null 2>&1; then
-    log "Installing Node.js LTS…"
-    tmp_node=$(mktemp)
-    log "Downloading Node.js setup script…"
-    curl -fsSL https://deb.nodesource.com/setup_lts.x -o "$tmp_node"
-    bash "$tmp_node"
-    rm -f "$tmp_node"
-    apt-get install -y nodejs
+    log "Node.js not found – installing…"
+    if [ "$OS" = "linux" ]; then
+        tmp_node=$(mktemp)
+        log "Downloading Node.js setup script…"
+        curl -fsSL https://deb.nodesource.com/setup_lts.x -o "$tmp_node"
+        bash "$tmp_node"
+        rm -f "$tmp_node"
+        $INSTALL_CMD nodejs
+    elif [ "$OS" = "macos" ]; then
+        # Homebrew already installed the 'node' package in the generic PKGS list
+        error "Node.js not found on macOS and automatic installation is not supported – please install it via Homebrew (brew install node) and re‑run the script."
+    else
+        error "Unsupported OS for automatic Node.js installation. Install Node.js manually and re‑run the script."
+    fi
 else
     log "Node.js already present (v$(node -v))"
 fi
