@@ -389,13 +389,16 @@ else
 fi
 
 # ---------- 🎉 Finished ----------
-# Best-effort public IP: try a few local sources, then external fallback
-PUB_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+# Best-effort public IP: try local sources, then an external fallback.
+# Each probe is wrapped with `|| true` so a missing/failing command can never
+# abort the script under `set -euo pipefail` (e.g. `hostname -I` = exit 127 on
+# minimal images). Worst case we print a placeholder instead of the real IP.
+PUB_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
 if [ -z "$PUB_IP" ]; then
-    PUB_IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") print $(i+1); exit}')"
+    PUB_IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") print $(i+1); exit}' || true)"
 fi
 if [ -z "$PUB_IP" ]; then
-    PUB_IP="$(ip -4 -o addr show 2>/dev/null | awk 'NR==1 {print $4}' | cut -d/ -f1)"
+    PUB_IP="$(ip -4 -o addr show 2>/dev/null | awk 'NR==1 {print $4}' | cut -d/ -f1 || true)"
 fi
 if [ -z "$PUB_IP" ]; then
     PUB_IP="$(curl -sSf -m 3 -4 ifconfig.me 2>/dev/null || true)"
