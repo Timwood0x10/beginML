@@ -224,14 +224,18 @@ log "Building React front‑end…"
 npm run build || error "Frontend build failed"
 
 # ---------- 🔟 Deploy static assets ----------
-if [[ ! -d "$PROJECT_ROOT/frontend/dist" ]]; then
-    error "Frontend build output not found at $PROJECT_ROOT/frontend/dist — 'npm run build' must produce it."
+DIST_DIR="$PROJECT_ROOT/frontend/dist"
+if [[ ! -d "$DIST_DIR" ]]; then
+    error "Frontend build output not found at $DIST_DIR — 'npm run build' must produce it."
+fi
+if [[ ! -f "$DIST_DIR/index.html" ]]; then
+    error "Frontend build produced no index.html in $DIST_DIR — check 'npm run build' output."
 fi
 
 WWW_ROOT="/var/www/$PROJECT_NAME"
 log "Creating web root at $WWW_ROOT/frontend …"
 run_as_root mkdir -p "$WWW_ROOT/frontend"
-rsync -a --delete "$PROJECT_ROOT/frontend/dist/" "$WWW_ROOT/frontend/"
+rsync -a --delete "$DIST_DIR/" "$WWW_ROOT/frontend/"
 
 # ---------- 1️⃣1️⃣ Create systemd service (if systemd available) ----------
 if [ "$HAS_SYSTEMD" -eq 1 ]; then
@@ -252,7 +256,8 @@ WorkingDirectory=$PROJECT_ROOT/backend
 ExecStart=$UV_PATH run uvicorn app:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=5
-Environment=NOTES_ROOT=$PROJECT_ROOT
+# Notes live one level ABOVE the project (backend/ is <notes>/…/backend)
+Environment=NOTES_ROOT=$(dirname "$PROJECT_ROOT")
 Environment=PATH=$UV_DIR:/usr/local/bin:/usr/bin:/bin
 
 # Optional resource limits – uncomment to enable
@@ -384,11 +389,26 @@ else
 fi
 
 # ---------- 🎉 Finished ----------
+# Best-effort public IP: try a few local sources, then external fallback
+PUB_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+if [ -z "$PUB_IP" ]; then
+    PUB_IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") print $(i+1); exit}')"
+fi
+if [ -z "$PUB_IP" ]; then
+    PUB_IP="$(ip -4 -o addr show 2>/dev/null | awk 'NR==1 {print $4}' | cut -d/ -f1)"
+fi
+if [ -z "$PUB_IP" ]; then
+    PUB_IP="$(curl -sSf -m 3 -4 ifconfig.me 2>/dev/null || true)"
+fi
+if [ -z "$PUB_IP" ]; then
+    PUB_IP="<server-ip>"
+fi
+
 echo
 log "===================================================="
 log " AIScope deployment complete!"
-log "   Front‑end URL:  http://$(hostname -I 2>/dev/null | awk '{print $1}')"
-log "   API endpoint:   http://$(hostname -I 2>/dev/null | awk '{print $1}'):8000/api/health"
+log "   Front‑end URL:  http://$PUB_IP/"
+log "   API endpoint:   http://$PUB_IP:8000/api/health"
 if [ "$HAS_SYSTEMD" -eq 1 ]; then
     log "   Systemd service: aiscope.service (status: $(run_as_root systemctl is-active aiscope.service))"
     log "   Stop backend:   sudo systemctl stop aiscope.service"
