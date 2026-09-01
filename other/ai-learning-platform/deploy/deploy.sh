@@ -2,38 +2,19 @@
 set -euo pipefail
 
 # --------------------------------------------------------------
-#  One‑click AIScope installer (FastAPI + React/Vite)
+#  One‑click AIScope installer (FastAPI + React/Vite)
 # --------------------------------------------------------------
-# What the script does:
-#   1️⃣ Installs required OS packages (git, curl, build‑essential, nginx …)
-#   2️⃣ Installs the Python tool "uv"
-#   3️⃣ Installs Node.js LTS (includes npm)
-#   4️⃣ If a Git URL is supplied, clones the repo; otherwise works on the
-#      current directory (or on a path you pass as the first argument).
-#   5️⃣ Installs backend deps (uv sync) and frontend deps (npm ci)
-#   6️⃣ Builds the React app (npm run build)
-#   7️⃣ Copies the built assets to /var/www/<project>/frontend
-#   8️⃣ Generates a systemd service (aiscope.service) and starts it
-#   9️⃣ Generates an Nginx site config (using the embedded template)
-#  10️⃣ (Optional) obtains a free TLS cert via certbot if a DOMAIN env‑var is set.
-#
 # Usage (run as root or with sudo):
-#   ./deploy.sh                # use the current directory as project root
-#   ./deploy.sh /path/to/project
-#   ./deploy.sh https://github.com/your/repo.git   # clone then install
-#   export DOMAIN=your.domain.com && ./deploy.sh   # also request HTTPS
+#   ./deploy.sh                           # use current directory
+#   ./deploy.sh /path/to/project          # deploy a specific path
+#   ./deploy.sh https://github.com/...git # clone then install
+#   export DOMAIN=your.domain.com && ./deploy.sh  # also request HTTPS
 # --------------------------------------------------------------
 
-log() { echo -e "\033[1;36m[+] $*\033[0m"; }
-error() {
-    echo -e "\033[1;31m[-] $*\033[0m" >&2
-    exit 1
-}
+log()  { echo -e "\033[1;36m[+] $*\033[0m"; }
+error() { echo -e "\033[1;31m[-] $*\033[0m" >&2; exit 1; }
 
-# ---------- 1️⃣ Install OS packages ----------
-log "Detecting operating system and installing required packages…"
-
-# Helper: run a command with sudo if we are not root
+# ---------- Helper: run as root if not root ----------
 run_as_root() {
     if [ "$(id -u)" -eq 0 ]; then
         "$@"
@@ -42,9 +23,7 @@ run_as_root() {
     fi
 }
 
-# ------------------------------------------------------------
-# 1️⃣ Detect OS (Linux, macOS, or unsupported)
-# ------------------------------------------------------------
+# ---------- 1️⃣ Detect OS ----------
 OS_TYPE="$(uname -s)"
 case "$OS_TYPE" in
 Linux*) OS="linux" ;;
@@ -53,58 +32,49 @@ Darwin*) OS="macos" ;;
 esac
 
 if [ "$OS" = "unknown" ]; then
-    error "Unsupported operating system: $OS_TYPE. This installer only works on Linux or macOS."
+    error "Unsupported operating system: $OS_TYPE. This installer only works on Linux."
 fi
 
-# ------------------------------------------------------------
-# 2️⃣ Detect package manager for the current OS
-# ------------------------------------------------------------
-if [ "$OS" = "linux" ]; then
-    if command -v apt-get >/dev/null 2>&1; then
-        PKG_MGR="apt-get"
-        UPDATE_CMD="run_as_root $PKG_MGR update -y"
-        INSTALL_CMD="run_as_root $PKG_MGR install -y"
-    elif command -v apt >/dev/null 2>&1; then
-        PKG_MGR="apt"
-        UPDATE_CMD="run_as_root $PKG_MGR update -y"
-        INSTALL_CMD="run_as_root $PKG_MGR install -y"
-    elif command -v dnf >/dev/null 2>&1; then
-        PKG_MGR="dnf"
-        UPDATE_CMD="run_as_root $PKG_MGR check-update -y"
-        INSTALL_CMD="run_as_root $PKG_MGR install -y"
-    elif command -v yum >/dev/null 2>&1; then
-        PKG_MGR="yum"
-        UPDATE_CMD="run_as_root $PKG_MGR check-update -y"
-        INSTALL_CMD="run_as_root $PKG_MGR install -y"
-    elif command -v apk >/dev/null 2>&1; then
-        PKG_MGR="apk"
-        UPDATE_CMD="run_as_root $PKG_MGR update"
-        INSTALL_CMD="run_as_root $PKG_MGR add"
-    else
-        error "No supported package manager found on this Linux system (apt, dnf, yum, apk). Install required packages manually and re‑run the script."
-    fi
-elif [ "$OS" = "macos" ]; then
-    if command -v brew >/dev/null 2>&1; then
-        PKG_MGR="brew"
-        UPDATE_CMD="run_as_root $PKG_MGR update"
-        INSTALL_CMD="run_as_root $PKG_MGR install"
-    else
-        error "Homebrew not found on macOS. Install Homebrew first: https://brew.sh/"
-    fi
+if [ "$OS" = "macos" ]; then
+    error "macOS is not supported for production server deployment. Use Linux."
+fi
+
+# ---------- 2️⃣ Detect package manager ----------
+if command -v apt-get >/dev/null 2>&1; then
+    PKG_MGR="apt-get"
+    PKG_UPDATE="update -y"
+    PKG_INSTALL="install -y"
+elif command -v apt >/dev/null 2>&1; then
+    PKG_MGR="apt"
+    PKG_UPDATE="update -y"
+    PKG_INSTALL="install -y"
+elif command -v dnf >/dev/null 2>&1; then
+    PKG_MGR="dnf"
+    PKG_UPDATE="makecache -y"
+    PKG_INSTALL="install -y"
+elif command -v yum >/dev/null 2>&1; then
+    PKG_MGR="yum"
+    PKG_UPDATE="check-update -y"
+    PKG_INSTALL="install -y"
+elif command -v apk >/dev/null 2>&1; then
+    PKG_MGR="apk"
+    PKG_UPDATE="update"
+    PKG_INSTALL="add --no-interactive"
+else
+    error "No supported package manager found (apt, dnf, yum, apk)."
 fi
 
 log "Using $PKG_MGR to install system packages"
-$UPDATE_CMD
+run_as_root "$PKG_MGR" $PKG_UPDATE
 
-# Choose the correct package names for the detected distro
+# ---------- 3️⃣ Determine package names ----------
 if [ "$PKG_MGR" = "apk" ]; then
-    # Alpine – package names already match
     PKGS="git curl wget build-base nginx ca-certificates \
           python3 py3-pip py3-virtualenv \
           openssl-dev libffi-dev \
+          python3-dev gnupg lsb-release lsof rsync \
           certbot certbot-nginx"
 else
-    # Detect Amazon Linux (ID=amzn or ID=alinux) to override generic names
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         IS_AMZN=0
@@ -116,58 +86,59 @@ else
     fi
 
     if [ "$IS_AMZN" -eq 1 ] && [ "$PKG_MGR" = "dnf" ]; then
-        # Amazon Linux 2023 – dnf package names differ from Debian
         PKGS="git curl wget gcc gcc-c++ make \
               python3 python3-pip python3-virtualenv \
+              python3-devel \
               nginx ca-certificates \
               openssl-devel libffi-devel \
+              gnupg lsb-release lsof rsync \
               certbot python3-certbot-nginx"
     else
-        # Default list for Ubuntu/Debian/Fedora/RHEL/etc.
         PKGS="git curl wget build-essential \
               python3 python3-venv python3-pip \
+              python3-dev \
               nginx ca-certificates \
               libssl-dev libffi-dev \
+              gnupg lsb-release lsof rsync \
               certbot python3-certbot-nginx"
+        if [ "$PKG_MGR" = "apt-get" ] || [ "$PKG_MGR" = "apt" ]; then
+            PKGS="$PKGS apt-transport-https"
+        fi
     fi
 fi
 
-$INSTALL_CMD $PKGS || error "Failed to install required system packages with $PKG_MGR"
+run_as_root "$PKG_MGR" $PKG_INSTALL $PKGS || error "Failed to install system packages"
 
-# ---------- 2️⃣ Install uv (Python package manager) ----------
+# Ensure CA certificates are up to date
+if command -v update-ca-certificates >/dev/null 2>&1; then
+    run_as_root update-ca-certificates || true
+fi
+
+# ---------- 4️⃣ Install uv ----------
 if ! command -v uv >/dev/null 2>&1; then
     log "Installing uv…"
     tmp_uv=$(mktemp)
-    log "Downloading uv installer…"
     curl -LsSf https://github.com/astral-sh/uv/releases/latest/download/uv-installer.sh -o "$tmp_uv"
     sh "$tmp_uv"
     rm -f "$tmp_uv"
     export PATH="$HOME/.local/bin:$PATH"
 else
-    log "uv already present"
+    log "uv already present (v$(uv --version 2>/dev/null || echo 'unknown'))"
 fi
 
-# ---------- 3️⃣ Install Node.js LTS ----------
+# ---------- 5️⃣ Install Node.js LTS ----------
 if ! command -v node >/dev/null 2>&1; then
     log "Node.js not found – installing…"
-    if [ "$OS" = "linux" ]; then
-        tmp_node=$(mktemp)
-        log "Downloading Node.js setup script…"
-        curl -fsSL https://deb.nodesource.com/setup_lts.x -o "$tmp_node"
-        bash "$tmp_node"
-        rm -f "$tmp_node"
-        $INSTALL_CMD nodejs
-    elif [ "$OS" = "macos" ]; then
-        # Homebrew already installed the 'node' package in the generic PKGS list
-        error "Node.js not found on macOS and automatic installation is not supported – please install it via Homebrew (brew install node) and re‑run the script."
-    else
-        error "Unsupported OS for automatic Node.js installation. Install Node.js manually and re‑run the script."
-    fi
+    tmp_node=$(mktemp)
+    curl -fsSL https://deb.nodesource.com/setup_lts.x -o "$tmp_node"
+    bash "$tmp_node"
+    rm -f "$tmp_node"
+    run_as_root "$PKG_MGR" $PKG_INSTALL nodejs || run_as_root "$PKG_MGR" $PKG_INSTALL node
 else
     log "Node.js already present (v$(node -v))"
 fi
 
-# ---------- 4️⃣ Determine PROJECT_ROOT ----------
+# ---------- 6️⃣ Determine PROJECT_ROOT ----------
 if [[ $# -eq 0 ]]; then
     PROJECT_ROOT="$(pwd)"
 elif [[ "$1" =~ ^https?:// ]]; then
@@ -177,48 +148,65 @@ elif [[ "$1" =~ ^https?:// ]]; then
     mkdir -p "$PROJECT_ROOT"
     git clone "$GIT_URL" "$PROJECT_ROOT"
 else
-    PROJECT_ROOT="$(realpath "$1")"
+    if command -v realpath >/dev/null 2>&1; then
+        PROJECT_ROOT="$(realpath "$1")"
+    else
+        PROJECT_ROOT="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+    fi
 fi
 
-log "Project root resolved to: $PROJECT_ROOT"
+PROJECT_NAME="$(basename "$PROJECT_ROOT")"
+log "Project root resolved to: $PROJECT_ROOT (name: $PROJECT_NAME)"
 
-# ---------- 5️⃣ Verify expected sub‑folders ----------
+# ---------- 7️⃣ Verify expected sub-folders ----------
 if [[ ! -d "$PROJECT_ROOT/backend" ]] || [[ ! -d "$PROJECT_ROOT/frontend" ]]; then
-    error "Directory $PROJECT_ROOT does NOT contain expected 'backend' and 'frontend' sub‑folders."
+    error "Directory $PROJECT_ROOT does NOT contain 'backend' and 'frontend' sub-folders."
 fi
 
-# ---------- 6️⃣ Backend – install deps ----------
+# ---------- 8️⃣ Backend – install deps ----------
 log "Installing backend Python dependencies (uv sync)…"
 cd "$PROJECT_ROOT/backend"
 uv sync
 
-# ---------- 7️⃣ Frontend – install deps & build ----------
+# ---------- 9️⃣ Frontend – install deps & build ----------
 log "Installing frontend npm dependencies…"
 cd "$PROJECT_ROOT/frontend"
-npm ci
+npm install || error "Failed to install frontend dependencies"
 log "Building React front‑end…"
-npm run build
+npm run build || error "Frontend build failed"
 
-# ---------- 8️⃣ Deploy static assets ----------
-WWW_ROOT="/var/www/$(basename "$PROJECT_ROOT")"
-log "Copying built assets to $WWW_ROOT/frontend …"
-mkdir -p "$WWW_ROOT/frontend"
+# ---------- 🔟 Deploy static assets ----------
+if [[ ! -d "$PROJECT_ROOT/frontend/dist" ]]; then
+    error "Frontend build output not found at $PROJECT_ROOT/frontend/dist — 'npm run build' must produce it."
+fi
+
+WWW_ROOT="/var/www/$PROJECT_NAME"
+log "Creating web root at $WWW_ROOT/frontend …"
+run_as_root mkdir -p "$WWW_ROOT/frontend"
 rsync -a --delete "$PROJECT_ROOT/frontend/dist/" "$WWW_ROOT/frontend/"
 
-# ---------- 9️⃣ Create systemd service ----------
+# ---------- 1️⃣1️⃣ Create systemd service ----------
 SERVICE_FILE="/etc/systemd/system/aiscope.service"
 log "Creating systemd service at $SERVICE_FILE …"
+UV_PATH="$(command -v uv)"
+UV_DIR="$(dirname "$UV_PATH")"
+
 cat >"$SERVICE_FILE" <<EOF
 [Unit]
 Description=AI Learning Platform backend (FastAPI)
 After=network.target
 
 [Service]
+Type=simple
+User=root
 WorkingDirectory=$PROJECT_ROOT/backend
-ExecStart=$(which uv) run uvicorn app:app --host 0.0.0.0 --port 8000
+ExecStart=$UV_PATH run uvicorn app:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=5
-# Optional limits – uncomment to enable
+Environment=NOTES_ROOT=$PROJECT_ROOT
+Environment=PATH=$UV_DIR:/usr/local/bin:/usr/bin:/bin
+
+# Optional resource limits – uncomment to enable
 # MemoryLimit=200M
 # CPUQuota=50%
 
@@ -226,40 +214,60 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable aiscope.service
-systemctl restart aiscope.service
+run_as_root systemctl daemon-reload
+run_as_root systemctl enable aiscope.service
+run_as_root systemctl restart aiscope.service
 
-# ---------- 🔟 Generate Nginx site config ----------
+# Wait for backend to be healthy
+log "Waiting for backend to become healthy…"
+for i in $(seq 1 30); do
+    if curl -sf http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+        log "  Backend is up"
+        break
+    fi
+    if ! run_as_root systemctl is-active --quiet aiscope.service 2>/dev/null; then
+        error "Backend failed to start — check journalctl -u aiscope.service"
+    fi
+    sleep 1
+done
+
+# ---------- 1️⃣2️⃣ Generate Nginx site config ----------
 NGINX_CONF="/etc/nginx/sites-available/aiscope.conf"
 log "Generating Nginx config at $NGINX_CONF …"
-cat >"$NGINX_CONF" <<'EOT'
+
+# Remove default site if it exists (prevents conflicts)
+if [ -f /etc/nginx/sites-enabled/default ]; then
+    run_as_root rm -f /etc/nginx/sites-enabled/default
+fi
+
+cat >"$NGINX_CONF" <<EOF
 server {
     listen 80;
-    server_name _;                     # replace with your domain if you have one
+    server_name _;
 
-    # ---------- Front‑end static files ----------
-    root /var/www/<PROJECT_ROOT>/frontend;
+    # Front‑end static files
+    root $WWW_ROOT/frontend;
     index index.html;
 
     # SPA fallback – any non‑file request goes to index.html
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files \$uri \$uri/ /index.html;
     }
 
-    # ---------- Backend API ----------
+    # Backend API reverse proxy
     location /api/ {
         proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_read_timeout 300s;
     }
 
-    # ---------- Assets served by FastAPI ----------
+    # Backend static assets (paper images, etc.)
     location /assets/ {
         proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
         add_header Cache-Control "public, immutable";
         expires 7d;
     }
@@ -270,28 +278,32 @@ server {
         add_header Cache-Control "public, immutable";
     }
 }
-EOT
-# Replace placeholder with the absolute project path
-sed -i "s|<PROJECT_ROOT>|$PROJECT_ROOT|g" "$NGINX_CONF"
+EOF
 
 ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/aiscope.conf
-nginx -t && systemctl reload nginx
+
+# Test and reload nginx
+nginx -t || error "Nginx config test failed"
+run_as_root systemctl reload nginx || run_as_root systemctl start nginx
 log "Nginx configuration installed and reloaded."
 
-# ---------- 1️⃣1️⃣ (Optional) Obtain HTTPS certificate ----------
+# ---------- 1️⃣3️⃣ (Optional) Obtain HTTPS certificate ----------
 if [[ -n "${DOMAIN:-}" ]]; then
-    log "Attempting to obtain Let\'s Encrypt certificate for $DOMAIN …"
-    certbot --nginx -d "$DOMAIN"
-    log "TLS certificate installed."
+    log "Attempting to obtain Let's Encrypt certificate for $DOMAIN …"
+    certbot --nginx -d "$DOMAIN" || log "Certbot failed – you can get a cert later"
+    log "TLS certificate installation attempted."
 else
-    log "DOMAIN variable not set – skipping TLS. You can get a cert later with:\n    export DOMAIN=your.domain.com && $0"
+    log "DOMAIN variable not set – skipping TLS. Set it later with: export DOMAIN=your.domain.com && $0"
 fi
 
 # ---------- 🎉 Finished ----------
+echo
 log "===================================================="
-log "✅  AIScope deployment complete!"
-log "   Front‑end URL:  http://<your‑host-or‑IP> (or https://$DOMAIN if set)"
-log "   API proxy:      http://<your‑host-or‑IP>/api"
-log "   Systemd service: aiscope.service (status: $(systemctl is-active aiscope.service))"
-log "   Nginx site:     /etc/nginx/sites-available/aiscope.conf"
+log " AIScope deployment complete!"
+log "   Front‑end URL:  http://$(hostname -I 2>/dev/null | awk '{print $1}')"
+log "   API endpoint:   http://$(hostname -I 2>/dev/null | awk '{print $1}'):8000/api/health"
+log "   Systemd service: aiscope.service (status: $(run_as_root systemctl is-active aiscope.service))"
+log "   Nginx site:     $NGINX_CONF"
+log "   Web root:       $WWW_ROOT/frontend"
+log "   Stop backend:   sudo systemctl stop aiscope.service"
 log "===================================================="
