@@ -1,15 +1,11 @@
 # AIScope backend — single-container FastAPI + sklearn + notes data.
 #
-# HOW TO DEPLOY (one-click, no server, no nginx/systemd):
-#   The GIT REPO ROOT is $HOME/Documents/ml (git rev-parse --show-toplevel).
-#   Inside it everything lives under other/, so all COPY paths are other/…
-#   Build context = the GIT REPO ROOT:
-#     docker build -f other/ai-learning-platform/Dockerfile -t aiscope .
+# This file sits at the GIT REPO ROOT ($HOME/Documents/ml) ON PURPOSE:
+# Render / Railway automatically detect a root-level Dockerfile and use Docker
+# — no manual "Dockerfile Path" needed. The build context is the repo root,
+# and everything lives under other/ here, so every COPY path is other/….
 #
-#   On Render / Railway / Fly:
-#     - Root Directory:  (repo root / leave empty)
-#     - Dockerfile Path: other/ai-learning-platform/Dockerfile
-#   The platform builds from GitHub automatically.
+#   docker build -f Dockerfile -t aiscope .     # from the repo root
 
 FROM python:3.11-slim
 
@@ -43,9 +39,6 @@ RUN pip install --no-cache-dir \
 COPY other/ai-learning-platform/backend /app
 
 # ---- 3. Note data (repo root: other/zh, other/en, other/images) ----
-# NOTES_ROOT in app.py defaults to the "parents[2]" of backend/, i.e.
-# $HOME/Documents/ml/other — which is exactly where zh/ en/ images/ live.
-# Here we place the same layout under /data and point NOTES_ROOT at it.
 COPY other/zh /data/zh
 COPY other/en /data/en
 COPY other/images /data/images
