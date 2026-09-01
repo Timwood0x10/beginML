@@ -51,11 +51,11 @@ elif command -v apt >/dev/null 2>&1; then
 elif command -v dnf >/dev/null 2>&1; then
     PKG_MGR="dnf"
     PKG_UPDATE="makecache -y"
-    PKG_INSTALL="install -y"
+    PKG_INSTALL="install -y --allowerasing"
 elif command -v yum >/dev/null 2>&1; then
     PKG_MGR="yum"
     PKG_UPDATE="check-update -y"
-    PKG_INSTALL="install -y"
+    PKG_INSTALL="install -y --allowerasing"
 elif command -v apk >/dev/null 2>&1; then
     PKG_MGR="apk"
     PKG_UPDATE="update"
