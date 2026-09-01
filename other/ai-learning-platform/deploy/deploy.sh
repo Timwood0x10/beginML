@@ -297,8 +297,22 @@ for i in $(seq 1 30); do
     sleep 1
 done
 
+# Ensure nginx config directories exist
+run_as_root mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/conf.d
+
+# Determine which nginx config directory to use
+if [ -d /etc/nginx/sites-enabled ] && grep -q "sites-enabled" /etc/nginx/nginx.conf 2>/dev/null; then
+    NGINX_CONF="/etc/nginx/sites-available/aiscope.conf"
+    NGINX_LINK="/etc/nginx/sites-enabled/aiscope.conf"
+elif [ -d /etc/nginx/conf.d ]; then
+    NGINX_CONF="/etc/nginx/conf.d/aiscope.conf"
+    NGINX_LINK=""
+else
+    NGINX_CONF="/etc/nginx/sites-available/aiscope.conf"
+    NGINX_LINK="/etc/nginx/sites-enabled/aiscope.conf"
+fi
+
 # ---------- 1️⃣2️⃣ Generate Nginx site config ----------
-NGINX_CONF="/etc/nginx/sites-available/aiscope.conf"
 log "Generating Nginx config at $NGINX_CONF …"
 
 # Remove default site if it exists (prevents conflicts)
@@ -346,7 +360,10 @@ server {
 }
 EOF
 
-ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/aiscope.conf
+# Create symlink if needed (sites-available → sites-enabled)
+if [ -n "$NGINX_LINK" ]; then
+    run_as_root ln -sf "$NGINX_CONF" "$NGINX_LINK"
+fi
 
 # Test and reload/start nginx
 nginx -t || error "Nginx config test failed"
