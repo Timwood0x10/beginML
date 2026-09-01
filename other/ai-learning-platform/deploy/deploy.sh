@@ -23,6 +23,54 @@ run_as_root() {
     fi
 }
 
+# ---------- Detect whether systemd is available ----------
+if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
+    HAS_SYSTEMD=1
+else
+    HAS_SYSTEMD=0
+    log "systemd not detected — will start services directly in the background"
+fi
+
+# ---------- Helper: start/stop services ----------
+PID_DIR="/tmp/aiscope"
+BACKEND_PID_FILE="$PID_DIR/backend.pid"
+FRONTEND_PID_FILE="$PID_DIR/frontend.pid"
+BACKEND_LOG="/tmp/aiscope/backend.log"
+FRONTEND_LOG="/tmp/aiscope/frontend.log"
+
+start_backend() {
+    run_as_root mkdir -p "$PID_DIR"
+    log "Starting backend on http://127.0.0.1:8000 …"
+    (
+        cd "$PROJECT_ROOT/backend"
+        uv run uvicorn app:app --host 0.0.0.0 --port 8000
+    ) >"$BACKEND_LOG" 2>&1 &
+    echo $! > "$BACKEND_PID_FILE"
+}
+
+start_frontend_nginx() {
+    log "Starting nginx …"
+    if [ "$HAS_SYSTEMD" -eq 1 ]; then
+        run_as_root systemctl start nginx || true
+    else
+        nginx || log "nginx may already be running"
+    fi
+}
+
+stop_services() {
+    for f in "$BACKEND_PID_FILE" "$FRONTEND_PID_FILE"; do
+        if [[ -f "$f" ]]; then
+            pid="$(cat "$f" 2>/dev/null || true)"
+            if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+                kill "$pid" 2>/dev/null || true
+                pkill -P "$pid" 2>/dev/null || true
+                log "  stopped pid $pid ($(basename "$f"))"
+            fi
+            rm -f "$f"
+        fi
+    done
+}
+
 # ---------- 1️⃣ Detect OS ----------
 OS_TYPE="$(uname -s)"
 case "$OS_TYPE" in
@@ -185,13 +233,14 @@ log "Creating web root at $WWW_ROOT/frontend …"
 run_as_root mkdir -p "$WWW_ROOT/frontend"
 rsync -a --delete "$PROJECT_ROOT/frontend/dist/" "$WWW_ROOT/frontend/"
 
-# ---------- 1️⃣1️⃣ Create systemd service ----------
-SERVICE_FILE="/etc/systemd/system/aiscope.service"
-log "Creating systemd service at $SERVICE_FILE …"
-UV_PATH="$(command -v uv)"
-UV_DIR="$(dirname "$UV_PATH")"
+# ---------- 1️⃣1️⃣ Create systemd service (if systemd available) ----------
+if [ "$HAS_SYSTEMD" -eq 1 ]; then
+    SERVICE_FILE="/etc/systemd/system/aiscope.service"
+    log "Creating systemd service at $SERVICE_FILE …"
+    UV_PATH="$(command -v uv)"
+    UV_DIR="$(dirname "$UV_PATH")"
 
-cat >"$SERVICE_FILE" <<EOF
+    cat >"$SERVICE_FILE" <<EOF
 [Unit]
 Description=AI Learning Platform backend (FastAPI)
 After=network.target
@@ -214,9 +263,20 @@ Environment=PATH=$UV_DIR:/usr/local/bin:/usr/bin:/bin
 WantedBy=multi-user.target
 EOF
 
-run_as_root systemctl daemon-reload
-run_as_root systemctl enable aiscope.service
-run_as_root systemctl restart aiscope.service
+    run_as_root systemctl daemon-reload
+    run_as_root systemctl enable aiscope.service
+    run_as_root systemctl restart aiscope.service
+else
+    log "Skipping systemd service creation (no systemd)"
+    run_as_root mkdir -p "$PID_DIR"
+fi
+
+# ---------- Start backend ----------
+if [ "$HAS_SYSTEMD" -eq 1 ]; then
+    run_as_root systemctl restart aiscope.service
+else
+    start_backend
+fi
 
 # Wait for backend to be healthy
 log "Waiting for backend to become healthy…"
@@ -225,8 +285,14 @@ for i in $(seq 1 30); do
         log "  Backend is up"
         break
     fi
-    if ! run_as_root systemctl is-active --quiet aiscope.service 2>/dev/null; then
-        error "Backend failed to start — check journalctl -u aiscope.service"
+    if [ "$HAS_SYSTEMD" -eq 1 ]; then
+        if ! run_as_root systemctl is-active --quiet aiscope.service 2>/dev/null; then
+            error "Backend failed to start — check journalctl -u aiscope.service"
+        fi
+    else
+        if [[ -f "$BACKEND_PID_FILE" ]] && ! kill -0 "$(cat "$BACKEND_PID_FILE")" 2>/dev/null; then
+            error "Backend failed to start — check $BACKEND_LOG"
+        fi
     fi
     sleep 1
 done
@@ -282,9 +348,13 @@ EOF
 
 ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/aiscope.conf
 
-# Test and reload nginx
+# Test and reload/start nginx
 nginx -t || error "Nginx config test failed"
-run_as_root systemctl reload nginx || run_as_root systemctl start nginx
+if [ "$HAS_SYSTEMD" -eq 1 ]; then
+    run_as_root systemctl reload nginx || run_as_root systemctl start nginx
+else
+    start_frontend_nginx
+fi
 log "Nginx configuration installed and reloaded."
 
 # ---------- 1️⃣3️⃣ (Optional) Obtain HTTPS certificate ----------
@@ -302,8 +372,14 @@ log "===================================================="
 log " AIScope deployment complete!"
 log "   Front‑end URL:  http://$(hostname -I 2>/dev/null | awk '{print $1}')"
 log "   API endpoint:   http://$(hostname -I 2>/dev/null | awk '{print $1}'):8000/api/health"
-log "   Systemd service: aiscope.service (status: $(run_as_root systemctl is-active aiscope.service))"
+if [ "$HAS_SYSTEMD" -eq 1 ]; then
+    log "   Systemd service: aiscope.service (status: $(run_as_root systemctl is-active aiscope.service))"
+    log "   Stop backend:   sudo systemctl stop aiscope.service"
+else
+    log "   Backend PID:    $(cat "$BACKEND_PID_FILE" 2>/dev/null || echo 'N/A')"
+    log "   Backend log:    $BACKEND_LOG"
+    log "   Stop backend:   kill \$(cat $BACKEND_PID_FILE)"
+fi
 log "   Nginx site:     $NGINX_CONF"
 log "   Web root:       $WWW_ROOT/frontend"
-log "   Stop backend:   sudo systemctl stop aiscope.service"
 log "===================================================="
