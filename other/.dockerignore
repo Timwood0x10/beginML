@@ -1,0 +1,15 @@
+# Build context = the git repo root ($HOME/Documents/ml). Keep it small.
+
+**/node_modules
+**/dist
+**/.git
+**/.gitignore
+**/*.log
+**/*.pyc
+**/__pycache__
+**/.venv
+**/.idea
+**/.vscode
+**/deploy
+**/docs
+**/*.tsbuildinfo

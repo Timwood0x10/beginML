@@ -1,0 +1,29 @@
+# Everything not uploaded to Vercel. The build runs on Vercel (npm install +
+# npm run build) using the root vercel.json, so only source is needed.
+#
+# IMPORTANT: frontend/patches/ is NOT ignored — page-flip ships a postinstall
+# patch (patch-package) that must be available during `npm install`.
+
+# deps & build output (recreated on Vercel)
+node_modules
+frontend/node_modules
+frontend/dist
+dist
+.vite
+frontend/.vite
+
+# VCS / tooling
+.git
+.gitignore
+.vscode
+node_modules_backup
+
+# runtime logs
+*.log
+backend.log
+frontend.log
+
+# non-front-end project dirs (backend is served separately by our API host)
+backend
+docs
+deploy

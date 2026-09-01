@@ -1,12 +1,24 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "buildCommand": "cd frontend && npm install --no-audit --no-fund && npm run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://YOUR-BACKEND-IP:8000/api/$1"
+      "destination": "https://${BACKEND_URL}/api/$1"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "https://${BACKEND_URL}/assets/$1"
+    },
+    {
+      "source": "/raw/(.*)",
+      "destination": "https://${BACKEND_URL}/raw/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

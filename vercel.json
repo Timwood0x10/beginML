@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "installCommand": "cd other/ai-learning-platform/frontend && npm install",
+  "buildCommand": "cd other/ai-learning-platform/frontend && npm run build",
+  "outputDirectory": "other/ai-learning-platform/frontend/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://<PUBLIC-BACKEND-URL>/api/$1" },
     { "source": "/:path*", "destination": "/index.html" }
